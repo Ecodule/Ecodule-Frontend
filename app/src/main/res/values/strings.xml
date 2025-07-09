@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Ecodule</string>
+    <string name="statisticsStiring">ここは統計画面</string>
+    <string name="SettingsString">ここは設定画面です</string>
+    <string name="CalendarScreenString">ここはカレンダー画面です</string>
+    <string name="AddTaskScreenString">ここはタスク追加画面です（今はボトムバーで移動だけど、あとでカレンダー画面から移動できるようにする）</string>
+    <string name="destination_calendar">Calendar</string>
+    <string name="destination_tasks">Tasks</string>
+    <string name="destination_statistics">Statistics</string>
+    <string name="destination_settings">Settings</string>
+</resources>
