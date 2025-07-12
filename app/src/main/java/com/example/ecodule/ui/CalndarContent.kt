@@ -42,7 +42,7 @@ fun CalendarContentScreen(
     ) {
         Text(
             modifier = Modifier.padding(8.dp),
-            text = stringResource(R.string.CalendarScreenString),
+            text = "あああああ",
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary
