@@ -2,15 +2,35 @@ package com.example.ecodule.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,8 +38,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ecodule.ui.components.CategoryTabs
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun AddTaskContent(
@@ -84,39 +106,11 @@ fun AddTaskContent(
         )
 
         // カテゴリータブ（追加部分）
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Text(
-                text = "カテゴリー",
-                fontSize = 13.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                categories.forEach { (cat, color) ->
-                    val isSelected = category == cat
-                    Text(
-                        text = cat,
-                        color = Color.Black,
-                        fontSize = 13.sp,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .background(
-                                if (isSelected) color else Color(0xFFF4F4F4),
-                                RoundedCornerShape(6.dp)
-                            )
-                            .clickable { category = cat }
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        }
+        CategoryTabs(
+            categories = categories,
+            selectedCategory = category,
+            onCategorySelected = { category = it }
+        )
 
         // 終日スイッチ
         Row(
@@ -235,23 +229,6 @@ fun AddTaskContent(
             ) {
                 Text("追加")
             }
-        }
-
-        // スライドバーのイメージ（画面上下スクロール）
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(24.dp)
-                .padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Divider(
-                Modifier
-                    .width(60.dp)
-                    .height(6.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                thickness = 6.dp
-            )
         }
     }
 }
