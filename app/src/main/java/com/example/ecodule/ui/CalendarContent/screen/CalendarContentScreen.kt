@@ -63,17 +63,13 @@ fun CalendarContentScreen(
     val swipeRefreshState = rememberSwipeRefreshState(refreshing)
 
     // 1日・週・3日スクロール制御
-    var currentDay by remember { mutableStateOf(LocalDate.of(yearMonth.year, yearMonth.month, 1)) }
-    var currentWeekStart by remember { mutableStateOf(
-        getStartOfWeek(
-            LocalDate.of(
-                yearMonth.year,
-                yearMonth.month,
-                1
-            )
-        )
-    ) }
-    var currentThreeDayStart by remember { mutableStateOf(LocalDate.of(yearMonth.year, yearMonth.month, 1)) }
+    var currentDay by remember { mutableStateOf(LocalDate.now()) }
+    var currentWeekStart by remember {
+        mutableStateOf(getStartOfWeek(LocalDate.now()))
+    }
+    var currentThreeDayStart by remember {
+        mutableStateOf(LocalDate.now().minusDays(1)) // 昨日
+    }
 
     // 年号付き月表示
     val currentYear = LocalDate.now().year
@@ -239,7 +235,7 @@ fun CalendarContentScreen(
                         CalendarMode.SCHEDULE -> {
                             CalendarScheduleView(
                                 yearMonth = yearMonth,
-                                events = filteredEvents,
+                                events = filteredEvents.sortedBy { it.day }, // 日付順に
                                 onDayClick = { day -> selectedDay = day }
                             )
                         }
