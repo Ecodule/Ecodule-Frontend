@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 
 @Composable
 fun EcoduleApp() {
