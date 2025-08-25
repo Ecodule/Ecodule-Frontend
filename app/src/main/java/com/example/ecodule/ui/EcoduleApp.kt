@@ -17,9 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 
+@Preview(showBackground = true)
 @Composable
 fun EcoduleApp() {
     EcoduleAppContent()
@@ -30,7 +32,7 @@ fun EcoduleAppContent(
     modifier: Modifier = Modifier
 ) {
 
-    val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
+    val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }    //こここここ
 
     Column(
         modifier = modifier
@@ -38,7 +40,10 @@ fun EcoduleAppContent(
     ) {
 
         if (selectedDestination.value == EcoduleRoute.CALENDAR) {
-            CalendarContentScreen(modifier = Modifier.weight(1f))
+            CalendarContentScreen(
+                modifier = Modifier.weight(1f),
+                selectedDestination = selectedDestination
+            )
         } else if (selectedDestination.value == EcoduleRoute.TASKS) {
             AddTaskContent(modifier = Modifier.weight(1f))
         } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {

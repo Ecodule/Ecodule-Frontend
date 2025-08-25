@@ -23,8 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ecodule.ui.AddTaskContent
 import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
 import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
@@ -35,6 +37,7 @@ import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
+import com.example.ecodule.ui.EcoduleRoute
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
@@ -47,6 +50,7 @@ import kotlinx.coroutines.launch
 fun CalendarContentScreen(
     modifier: Modifier = Modifier,
     initialYearMonth: YearMonth = YearMonth.now(),
+    selectedDestination: MutableState<String>,
     events: List<CalendarEvent> = listOf(
         CalendarEvent(25, "企画進捗", Color(0xFF81C784), 7),
         CalendarEvent(29, "買い物", Color(0xFFE57373), 7),
@@ -251,7 +255,7 @@ fun CalendarContentScreen(
         }
         // 予定追加ボタン
         FloatingActionButton(
-            onClick = { showAddTaskDialog = true },
+            onClick = { selectedDestination.value = EcoduleRoute.TASKS },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
@@ -274,19 +278,6 @@ fun CalendarContentScreen(
                     showModeDialog = false
                 },
                 onDismiss = { showModeDialog = false }
-            )
-        }
-        // タスク追加ダイアログ
-        if (showAddTaskDialog) {
-            AlertDialog(
-                onDismissRequest = { showAddTaskDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showAddTaskDialog = false }) {
-                        Text("OK")
-                    }
-                },
-                title = { Text("タスク追加") },
-                text = { Text("これはタスク追加ポップアップです") }
             )
         }
         // 日付クリック時の予定一覧ダイアログ（月表示のみで反応）
@@ -361,4 +352,10 @@ fun CalendarModeDialog(
             }
         }
     )
+}
+@Preview(showBackground = true)
+@Composable
+fun CalendarContentPreview() {
+    val dummySelectedDestination = remember { mutableStateOf("Calendar") }
+    CalendarContentScreen(selectedDestination = dummySelectedDestination)
 }
