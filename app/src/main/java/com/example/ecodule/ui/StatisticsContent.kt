@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.sp
 fun StatisticsContent(
     modifier: Modifier = Modifier
 ) {
-    val co2Value = 1.23   // Kg
-    val savingValue = 12345   // 円
-    val savingDiff = -5500    // 円
-    val appleCount = 26       // 個
+    val co2Value = 1.23
+    val savingValue = 12345
+    val savingDiff = -5500
+    val appleCount = 26
 
     Column(
         modifier = modifier
