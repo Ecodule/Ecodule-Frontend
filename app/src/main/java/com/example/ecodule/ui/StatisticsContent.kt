@@ -17,6 +17,11 @@ import androidx.compose.ui.unit.sp
 fun StatisticsContent(
     modifier: Modifier = Modifier
 ) {
+    val co2Value = 1.23   // Kg
+    val savingValue = 12345   // 円
+    val savingDiff = -5500    // 円
+    val appleCount = 26       // 個
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -35,21 +40,21 @@ fun StatisticsContent(
         StatItemWithIcon(
             icon = "🌱",
             label = "CO₂削減量",
-            value = "1.23 Kg"
+            value = "${co2Value} Kg"
         )
 
         StatItemWithIconAndDifference(
             icon = "💴",
             label = "今月の節約額",
-            value = "12,345 円",
-            difference = "-5,500",
+            value = "${savingValue} 円",
+            difference = "${savingDiff}",
             differenceColor = Color.Blue
         )
 
         StatItemWithIcon(
             icon = "🍎",
             label = "集めたりんごの数",
-            value = "26 個"
+            value = "${appleCount} 個"
         )
     }
 }
