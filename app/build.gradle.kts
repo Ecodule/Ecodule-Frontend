@@ -65,4 +65,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    //Glance関連
+    implementation(libs.androidx.glance.material3)
+    implementation(libs.androidx.glance.appwidget)
+
 }
