@@ -51,16 +51,12 @@ fun CalendarContentScreen(
     modifier: Modifier = Modifier,
     initialYearMonth: YearMonth = YearMonth.now(),
     selectedDestination: MutableState<String>,
-    events: List<CalendarEvent> = listOf(
-        CalendarEvent(25, "企画進捗", Color(0xFF81C784), 7),
-        CalendarEvent(29, "買い物", Color(0xFFE57373), 7),
-        CalendarEvent(10, "買い物", Color(0xFFE57373), 7, 10, 11), // 動作テスト用（10:00-11:00）
-    ),
+    events: List<CalendarEvent> = emptyList(),
+    onEventClick: (String) -> Unit = {}
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
     var showModeDialog by remember { mutableStateOf(false) }
-    var showAddTaskDialog by remember { mutableStateOf(false) }
     var selectedDay by remember { mutableStateOf<Int?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -72,7 +68,7 @@ fun CalendarContentScreen(
         mutableStateOf(getStartOfWeek(LocalDate.now()))
     }
     var currentThreeDayStart by remember {
-        mutableStateOf(LocalDate.now().minusDays(1)) // 昨日
+        mutableStateOf(LocalDate.now().minusDays(1))
     }
 
     // 年号付き月表示
@@ -102,8 +98,8 @@ fun CalendarContentScreen(
         }
     }
 
-    // 7月の予定だけ表示
-    val filteredEvents = events.filter { it.month == 7 }
+    // 現在の年月の予定だけ表示
+    val filteredEvents = events.filter { it.month == yearMonth.monthValue }
 
     Box(
         modifier = modifier
@@ -212,35 +208,40 @@ fun CalendarContentScreen(
                             CalendarMonthView(
                                 yearMonth = yearMonth,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day }
+                                onDayClick = { day -> selectedDay = day },
+                                // onEventClick は一旦削除
                             )
                         }
                         CalendarMode.WEEK -> {
                             ScrollableWeekDayTimeView(
                                 weekStart = currentWeekStart,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day }
+                                onDayClick = { day -> selectedDay = day },
+                                // onEventClick は一旦削除
                             )
                         }
                         CalendarMode.DAY -> {
                             ScrollableDayTimeView(
                                 day = currentDay,
                                 events = filteredEvents,
-                                onDayClick = { date -> selectedDay = date.dayOfMonth }
+                                onDayClick = { date -> selectedDay = date.dayOfMonth },
+                                // onEventClick は一旦削除
                             )
                         }
                         CalendarMode.THREE_DAY -> {
                             ScrollableThreeDayTimeView(
                                 startDay = currentThreeDayStart,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day }
+                                onDayClick = { day -> selectedDay = day },
+                                // onEventClick は一旦削除
                             )
                         }
                         CalendarMode.SCHEDULE -> {
                             CalendarScheduleView(
                                 yearMonth = yearMonth,
-                                events = filteredEvents.sortedBy { it.day }, // 日付順に
-                                onDayClick = { day -> selectedDay = day }
+                                events = filteredEvents.sortedBy { it.day },
+                                onDayClick = { day -> selectedDay = day },
+                                // onEventClick は一旦削除
                             )
                         }
                     }
@@ -253,6 +254,7 @@ fun CalendarContentScreen(
                 }
             }
         }
+
         // 予定追加ボタン
         FloatingActionButton(
             onClick = { selectedDestination.value = EcoduleRoute.TASKS },
@@ -280,6 +282,7 @@ fun CalendarContentScreen(
                 onDismiss = { showModeDialog = false }
             )
         }
+
         // 日付クリック時の予定一覧ダイアログ（月表示のみで反応）
         if (selectedDay != null && calendarMode == CalendarMode.MONTH) {
             AlertDialog(
@@ -295,10 +298,24 @@ fun CalendarContentScreen(
                     if (plans.isEmpty()) {
                         Text("予定はありません")
                     } else {
-                        Column {
-                            plans.forEach {
-                                val timeText = if (it.startHour != null && it.endHour != null) "（${it.startHour}:00〜${it.endHour}:00）" else ""
-                                Text("・${it.label} $timeText", color = it.color)
+                        LazyColumn {
+                            items(plans.size) { index ->
+                                val event = plans[index]
+                                val timeText = if (event.startHour != null && event.endHour != null)
+                                    "（${event.startHour}:00〜${event.endHour}:00）" else ""
+
+                                TextButton(
+                                    onClick = {
+                                        selectedDay = null
+                                        onEventClick(event.id)
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        "・${event.label} $timeText",
+                                        color = event.color
+                                    )
+                                }
                             }
                         }
                     }
@@ -308,6 +325,7 @@ fun CalendarContentScreen(
     }
 }
 
+// 既存のダイアログコンポーネントは変更なし
 @Composable
 fun CalendarModeDialog(
     currentMode: CalendarMode,
@@ -353,6 +371,7 @@ fun CalendarModeDialog(
         }
     )
 }
+
 @Preview(showBackground = true)
 @Composable
 fun CalendarContentPreview() {
