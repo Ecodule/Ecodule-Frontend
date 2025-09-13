@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +28,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,15 +42,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.ui.components.CategoryTabs
+import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.time.ZoneId
 
 @Composable
 fun AddTaskContent(
     modifier: Modifier = Modifier,
     onSaveTask: (String, String, String, Boolean, Date?, Date?, String, String, Int) -> Unit = { _, _, _, _, _, _, _, _, _ -> },
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {} ,
+    selectedDestination: MutableState<String>,
+    taskViewModel: TaskViewModel,
+    editingEventId: String? = null,
+    onEditComplete: () -> Unit = {}
 ) {
     // State variables
     var title by remember { mutableStateOf("") }
@@ -60,6 +69,43 @@ fun AddTaskContent(
     var notificationMinutes by remember { mutableStateOf(10) }
     var memo by remember { mutableStateOf("") }
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
+
+    val isEditing = editingEventId != null
+    val titleText = if (isEditing) "タスクを編集" else "タスクを追加"
+    val buttonText = if (isEditing) "更新" else "追加"
+
+    // 編集時のデータ読み込み
+    LaunchedEffect(editingEventId) {
+        if (editingEventId != null) {
+            val event = taskViewModel.getEventById(editingEventId)
+            event?.let {
+                title = it.label
+                category = it.category
+                allDay = it.allDay
+                startDateText = it.startDate?.let { date ->
+                    sdf.format(Date.from(date.atZone(ZoneId.systemDefault()).toInstant()))
+                } ?: ""
+                endDateText = it.endDate?.let { date ->
+                    sdf.format(Date.from(date.atZone(ZoneId.systemDefault()).toInstant()))
+                } ?: ""
+                repeatOption = it.repeatOption
+                memo = it.memo
+                notificationMinutes = it.notificationMinutes
+            }
+        } else {
+            // 新規作成時は初期化
+            title = ""
+            category = "ゴミ出し"
+            description = ""
+            allDay = false
+            startDateText = ""
+            endDateText = ""
+            repeatOption = "しない"
+            notificationMinutes = 10
+            memo = ""
+        }
+    }
+
     // カテゴリータブ情報
     val categories = listOf(
         "ゴミ出し" to Color(0xFFB3E6FF),
@@ -84,15 +130,20 @@ fun AddTaskContent(
         )
 
         // 編集ボタン（えんぴつマーク）
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = { /* 編集ロジック */ }) {
-                Icon(Icons.Default.Edit, contentDescription = "編集")
+        if (isEditing) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = {
+                    editingEventId?.let { taskViewModel.deleteEvent(it) }
+                    onEditComplete()
+                    selectedDestination.value = EcoduleRoute.CALENDAR
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red)
+                }
             }
         }
-
         // タスクタイトル入力
         OutlinedTextField(
             value = title,
@@ -212,7 +263,12 @@ fun AddTaskContent(
                 .padding(top = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            OutlinedButton(onClick = onCancel) {
+            OutlinedButton(
+                onClick = {
+                    // カレンダー画面に戻る
+                    selectedDestination.value = EcoduleRoute.CALENDAR
+                }
+            ) {
                 Text("キャンセル")
             }
             Button(
@@ -220,10 +276,22 @@ fun AddTaskContent(
                     // ここで保存処理
                     val startDate = try { sdf.parse(startDateText) } catch (e: Exception) { null }
                     val endDate = try { sdf.parse(endDateText) } catch (e: Exception) { null }
-                    onSaveTask(
-                        title, category, description, allDay,
-                        startDate, endDate, repeatOption, memo, notificationMinutes
-                    )
+
+                    if (isEditing && editingEventId != null) {
+                        taskViewModel.updateEvent(
+                            editingEventId,
+                            title, category, description, allDay,
+                            startDate, endDate, repeatOption, memo, notificationMinutes
+                        )
+                    } else {
+                        taskViewModel.addEvent(
+                            title, category, description, allDay,
+                            startDate, endDate, repeatOption, memo, notificationMinutes
+                        )
+                    }
+
+                    onEditComplete()
+                    selectedDestination.value = EcoduleRoute.CALENDAR
                 },
                 enabled = title.isNotBlank()
             ) {
@@ -236,5 +304,11 @@ fun AddTaskContent(
 @Preview(showBackground = true)
 @Composable
 fun AddTaskContentPreview() {
-    AddTaskContent()
+    // プレビュー用にダミーの mutableState を渡す
+    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
+    val dummyTaskViewModel = remember { TaskViewModel() }
+    AddTaskContent(
+        selectedDestination = dummySelectedDestination,
+        taskViewModel = dummyTaskViewModel
+    )
 }
