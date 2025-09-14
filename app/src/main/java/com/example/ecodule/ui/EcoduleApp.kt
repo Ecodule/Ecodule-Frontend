@@ -17,8 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
+import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 
+@Preview(showBackground = true)
 @Composable
 fun EcoduleApp() {
     EcoduleAppContent()
@@ -28,18 +32,32 @@ fun EcoduleApp() {
 fun EcoduleAppContent(
     modifier: Modifier = Modifier
 ) {
-
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
+    val taskViewModel = remember { TaskViewModel() }
+    val editingEventId = remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
     ) {
-
         if (selectedDestination.value == EcoduleRoute.CALENDAR) {
-            CalendarContentScreen(modifier = Modifier.weight(1f))
+            CalendarContentScreen(
+                modifier = Modifier.weight(1f),
+                selectedDestination = selectedDestination,
+                events = taskViewModel.events,
+                onEventClick = { eventId ->
+                    editingEventId.value = eventId
+                    selectedDestination.value = EcoduleRoute.TASKS
+                }
+            )
         } else if (selectedDestination.value == EcoduleRoute.TASKS) {
-            AddTaskContent(modifier = Modifier.weight(1f))
+            AddTaskContent(
+                modifier = Modifier.weight(1f),
+                selectedDestination = selectedDestination,
+                taskViewModel = taskViewModel,
+                editingEventId = editingEventId.value,
+                onEditComplete = { editingEventId.value = null }
+            )
         } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
             StatisticsContent(modifier = Modifier.weight(1f))
         } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
@@ -50,7 +68,12 @@ fun EcoduleAppContent(
             TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
                 NavigationBarItem(
                     selected = selectedDestination.value == replyDestination.route,
-                    onClick = { selectedDestination.value = replyDestination.route },
+                    onClick = {
+                        selectedDestination.value = replyDestination.route
+                        if (replyDestination.route != EcoduleRoute.TASKS) {
+                            editingEventId.value = null
+                        }
+                    },
                     icon = {
                         Icon(
                             imageVector = replyDestination.selectedIcon,
