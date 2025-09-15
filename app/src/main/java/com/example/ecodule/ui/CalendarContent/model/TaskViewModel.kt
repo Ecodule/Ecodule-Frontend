@@ -18,21 +18,25 @@ class TaskViewModel {
                 day = 25,
                 label = "企画進捗",
                 color = Color(0xFF81C784),
-                month = 7
+                month = 9, // 現在の月に変更
+                startHour = 14,
+                endHour = 16
             ),
             CalendarEvent(
                 id = "2",
                 day = 29,
                 label = "買い物",
                 color = Color(0xFFE57373),
-                month = 7
+                month = 9, // 現在の月に変更
+                startHour = 10,
+                endHour = 11
             ),
             CalendarEvent(
                 id = "3",
-                day = 10,
-                label = "買い物",
+                day = 14, // 今日の日付
+                label = "ミーティング",
                 color = Color(0xFFE57373),
-                month = 7,
+                month = 9, // 現在の月に変更
                 startHour = 10,
                 endHour = 11
             )
@@ -105,8 +109,8 @@ class TaskViewModel {
                 color = categoryColor,
                 day = startDateTime?.dayOfMonth ?: _events[index].day,
                 month = startDateTime?.monthValue ?: _events[index].month,
-                startHour = if (!allDay) startDateTime?.hour else null,
-                endHour = if (!allDay) endDateTime?.hour else null,
+                startHour = if (!allDay && startDateTime != null) startDateTime.hour else null,
+                endHour = if (!allDay && endDateTime != null) endDateTime.hour else null,
                 startDate = startDateTime,
                 endDate = endDateTime,
                 category = category,
