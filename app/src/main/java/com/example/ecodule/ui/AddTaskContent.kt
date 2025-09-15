@@ -1,7 +1,5 @@
 package com.example.ecodule.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,12 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -40,19 +39,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.ecodule.ui.components.CategoryTabs
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
-import java.time.ZoneId
 
 @Composable
 fun AddTaskContent(
     modifier: Modifier = Modifier,
     onSaveTask: (String, String, String, Boolean, Date?, Date?, String, String, Int) -> Unit = { _, _, _, _, _, _, _, _, _ -> },
-    onCancel: () -> Unit = {} ,
+    onCancel: () -> Unit = {},
     selectedDestination: MutableState<String>,
     taskViewModel: TaskViewModel,
     editingEventId: String? = null,
@@ -68,6 +66,7 @@ fun AddTaskContent(
     var repeatOption by remember { mutableStateOf("しない") }
     var notificationMinutes by remember { mutableStateOf(10) }
     var memo by remember { mutableStateOf("") }
+    var showDeleteDialog by remember { mutableStateOf(false) } // 削除確認ダイアログの状態
     val sdf = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
 
     val isEditing = editingEventId != null
@@ -123,27 +122,26 @@ fun AddTaskContent(
     ) {
         // タイトル
         Text(
-            text = "タスクを追加",
+            text = titleText,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // 編集ボタン（えんぴつマーク）
+        // 編集・削除ボタン（編集時のみ表示）
         if (isEditing) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = {
-                    editingEventId?.let { taskViewModel.deleteEvent(it) }
-                    onEditComplete()
-                    selectedDestination.value = EcoduleRoute.CALENDAR
+                    showDeleteDialog = true // ダイアログを表示
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red)
                 }
             }
         }
+
         // タスクタイトル入力
         OutlinedTextField(
             value = title,
@@ -156,7 +154,7 @@ fun AddTaskContent(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
 
-        // カテゴリータブ（追加部分）
+        // カテゴリータブ
         CategoryTabs(
             categories = categories,
             selectedCategory = category,
@@ -265,7 +263,7 @@ fun AddTaskContent(
         ) {
             OutlinedButton(
                 onClick = {
-                    // カレンダー画面に戻る
+                    onEditComplete()
                     selectedDestination.value = EcoduleRoute.CALENDAR
                 }
             ) {
@@ -273,7 +271,6 @@ fun AddTaskContent(
             }
             Button(
                 onClick = {
-                    // ここで保存処理
                     val startDate = try { sdf.parse(startDateText) } catch (e: Exception) { null }
                     val endDate = try { sdf.parse(endDateText) } catch (e: Exception) { null }
 
@@ -295,16 +292,43 @@ fun AddTaskContent(
                 },
                 enabled = title.isNotBlank()
             ) {
-                Text("追加")
+                Text(buttonText)
             }
         }
+    }
+
+    // 削除確認ダイアログ
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("予定を削除") },
+            text = { Text("この予定を削除しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        editingEventId?.let { taskViewModel.deleteEvent(it) }
+                        showDeleteDialog = false
+                        onEditComplete()
+                        selectedDestination.value = EcoduleRoute.CALENDAR
+                    }
+                ) {
+                    Text("削除", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("キャンセル")
+                }
+            }
+        )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun AddTaskContentPreview() {
-    // プレビュー用にダミーの mutableState を渡す
     val dummySelectedDestination = remember { mutableStateOf("Tasks") }
     val dummyTaskViewModel = remember { TaskViewModel() }
     AddTaskContent(
