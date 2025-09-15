@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.CalendarContent.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,15 +9,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ecodule.ui.CalendarContent.ui.DayCellGrid
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import java.time.LocalDate
@@ -26,7 +31,8 @@ import java.time.YearMonth
 fun CalendarMonthView(
     yearMonth: YearMonth,
     events: List<CalendarEvent>,
-    onDayClick: (Int) -> Unit
+    onDayClick: (Int) -> Unit = {},
+    onEventClick: (String) -> Unit = {}
 ) {
     val today = LocalDate.now()
     val firstDayOfWeekIndex = yearMonth.atDay(1).dayOfWeek.value % 7
@@ -74,7 +80,8 @@ fun CalendarMonthView(
                                 DayCellGrid(
                                     day = dayCounter,
                                     isToday = (today.year == yearMonth.year && today.monthValue == yearMonth.monthValue && today.dayOfMonth == dayCounter),
-                                    events = events.filter { it.day == dayCounter }
+                                    events = events.filter { it.day == dayCounter },
+                                    onEventClick = onEventClick
                                 )
                                 dayCounter++
                             }
