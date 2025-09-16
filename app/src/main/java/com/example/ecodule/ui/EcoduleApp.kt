@@ -35,7 +35,6 @@ fun EcoduleAppContent(
         modifier = modifier
             .fillMaxSize()
     ) {
-
         if (selectedDestination.value == EcoduleRoute.CALENDAR) {
             CalendarContentScreen(modifier = Modifier.weight(1f))
         } else if (selectedDestination.value == EcoduleRoute.TASKS) {
@@ -45,7 +44,6 @@ fun EcoduleAppContent(
         } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
             SettingsContent(modifier = Modifier.weight(1f))
         }
-
         NavigationBar(modifier = Modifier.fillMaxWidth()) {
             TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
                 NavigationBarItem(
