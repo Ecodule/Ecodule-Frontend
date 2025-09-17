@@ -50,6 +50,12 @@ fun EcoduleAppContent(
                     selectedDestination.value = EcoduleRoute.TASKS
                 }
             )
+        } else if (selectedDestination.value == EcoduleRoute.TASKSLIST) {
+            TaskListContent(modifier = Modifier.weight(1f))
+        } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
+            StatisticsContent(modifier = Modifier.weight(1f))
+        } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
+            SettingsContent(modifier = Modifier.weight(1f))
         } else if (selectedDestination.value == EcoduleRoute.TASKS) {
             AddTaskContent(
                 modifier = Modifier.weight(1f),
@@ -58,11 +64,8 @@ fun EcoduleAppContent(
                 editingEventId = editingEventId.value,
                 onEditComplete = { editingEventId.value = null }
             )
-        } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
-            StatisticsContent(modifier = Modifier.weight(1f))
-        } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
-            SettingsContent(modifier = Modifier.weight(1f))
         }
+
 
         NavigationBar(modifier = Modifier.fillMaxWidth()) {
             TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
@@ -89,9 +92,10 @@ fun EcoduleAppContent(
 
 object EcoduleRoute {
     const val CALENDAR = "Calendar"
-    const val TASKS = "Tasks"
+    const val TASKSLIST = "TasksList"
     const val STATISTICS = "Statistics"
     const val SETTINGS = "Settings"
+    const val TASKS = "Tasks"
 }
 
 data class EcoduleTopLevelDestination(
@@ -109,10 +113,10 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         iconTextId = R.string.destination_calendar
     ),
     EcoduleTopLevelDestination(
-        route = EcoduleRoute.TASKS,
+        route = EcoduleRoute.TASKSLIST,
         selectedIcon = Icons.Default.Task,
         unselectedIcon = Icons.Default.Task,
-        iconTextId = R.string.destination_tasks
+        iconTextId = R.string.destination_tasksList
     ),
     EcoduleTopLevelDestination(
         route = EcoduleRoute.STATISTICS,

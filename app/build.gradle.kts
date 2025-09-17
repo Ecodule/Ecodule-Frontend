@@ -55,6 +55,7 @@ dependencies {
 
     // Material3 を使用している場合
     implementation(libs.androidx.material3.android)
+//    implementation("androidx.compose.material3:material3-jvmstubs:1.4.0-alpha01")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
