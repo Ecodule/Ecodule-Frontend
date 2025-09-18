@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import java.time.LocalDate
 
 @Preview(showBackground = true)
 @Composable
@@ -35,6 +36,13 @@ fun EcoduleAppContent(
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
     val editingEventId = remember { mutableStateOf<String?>(null) }
+
+
+    // みやそう変更点
+    val today = LocalDate.now()
+    val todayMonth: Int = today.monthValue
+    val todayDay: Int = today.dayOfMonth
+    val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
 
     Column(
         modifier = modifier
@@ -51,7 +59,11 @@ fun EcoduleAppContent(
                 }
             )
         } else if (selectedDestination.value == EcoduleRoute.TASKSLIST) {
-            TaskListContent(modifier = Modifier.weight(1f))
+            TaskListContent(
+                modifier = Modifier.weight(1f),
+                // みやそう変更点
+                hasTasks = todayEvents.isNotEmpty()
+            )
         } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
             StatisticsContent(modifier = Modifier.weight(1f))
         } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
