@@ -83,16 +83,21 @@ fun EcoduleAppNavigation() {
             )
         }
         AppState.SIGNUP -> {
-            // サインアップ画面（実装が必要）
-            AccountSignUpScreen(
-                onSignUpSuccess = {
-                    // サインアップ成功時にメインアプリへ
+            // アカウント作成画面
+            AccountCreateScreen(
+                onCreateSuccess = {
+                    // アカウント作成成功時にメインアプリへ
                     isGuestMode.value = false
                     appState.value = AppState.MAIN_APP
                 },
                 onBackToLogin = {
                     // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
+                },
+                onGoogleCreate = {
+                    // Googleアカウント作成成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
                 }
             )
         }
@@ -190,21 +195,7 @@ fun EcoduleAppContent(
     }
 }
 
-// 仮のサインアップ画面（実装が必要）
-@Composable
-fun AccountSignUpScreen(
-    onSignUpSuccess: () -> Unit,
-    onBackToLogin: () -> Unit
-) {
-    // TODO: サインアップ画面の実装
-    // 今は簡単なプレースホルダー
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // サインアップ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
-    }
-}
+// 削除：AccountSignUpScreen関数を削除（AccountCreate.ktで実装済み）
 
 // 仮のパスワード忘れ画面（実装が必要）
 @Composable
