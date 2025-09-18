@@ -1,16 +1,24 @@
 package com.example.ecodule.ui.CalendarContent.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,10 +38,17 @@ import java.time.LocalDate
 fun ScrollableDayTimeView(
     day: LocalDate,
     events: List<CalendarEvent>,
-    onDayClick: (LocalDate) -> Unit
+    onDayClick: (LocalDate) -> Unit = {},
+    onEventClick: (String) -> Unit = {}
 ) {
     val today = LocalDate.now()
     val scrollState = rememberScrollState()
+
+    // その日の予定をフィルタ
+    val dayEvents = events.filter {
+        it.day == day.dayOfMonth && it.month == day.monthValue
+    }
+
     Box(Modifier.fillMaxSize()) {
         Row {
             HourBar(scrollState)
@@ -45,6 +60,8 @@ fun ScrollableDayTimeView(
             ) {
                 // 時間ごとの横線
                 TimeGridLines(verticalLines = 1)
+
+                // 日付表示
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(Modifier.height(16.dp))
                     if (day == today) {
@@ -71,9 +88,93 @@ fun ScrollableDayTimeView(
                         )
                     }
                 }
+
+                // 予定表示エリア
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 60.dp)
+                        .verticalScroll(scrollState)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        // 24時間分のスペースを作成
+                        repeat(24) { hour ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp) // 1時間 = 60dp
+                            ) {
+                                // この時間の予定をフィルタ
+                                val hourEvents = dayEvents.filter { event ->
+                                    event.startHour == hour ||
+                                            (event.startHour != null && event.endHour != null &&
+                                                    hour >= event.startHour && hour < event.endHour)
+                                }
+
+                                // 予定を表示
+                                hourEvents.forEachIndexed { index, event ->
+                                    val eventHeight = if (event.startHour != null && event.endHour != null) {
+                                        ((event.endHour - event.startHour) * 60).dp
+                                    } else {
+                                        50.dp
+                                    }
+
+                                    val topOffset = if (event.startHour == hour) {
+                                        0.dp
+                                    } else {
+                                        0.dp
+                                    }
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(eventHeight)
+                                            .offset(y = topOffset)
+                                            .padding(vertical = 2.dp, horizontal = if (index > 0) 4.dp else 0.dp)
+                                            .clickable { onEventClick(event.id) },
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = event.color.copy(alpha = 0.8f),
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(8.dp)
+                                        ) {
+                                            Text(
+                                                text = event.label,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp
+                                            )
+                                            if (event.startHour != null && event.endHour != null) {
+                                                Text(
+                                                    text = "${event.startHour}:00 - ${event.endHour}:00",
+                                                    fontSize = 12.sp,
+                                                    color = Color.White.copy(alpha = 0.9f)
+                                                )
+                                            }
+                                            if (event.memo.isNotEmpty()) {
+                                                Text(
+                                                    text = event.memo,
+                                                    fontSize = 11.sp,
+                                                    color = Color.White.copy(alpha = 0.8f),
+                                                    maxLines = 2
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        // スクロールエリア
-        Box(modifier = Modifier.matchParentSize().verticalScroll(scrollState))
     }
 }
