@@ -24,6 +24,7 @@ import java.util.*
 import java.util.Date
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -41,14 +42,12 @@ fun DatePickerTextButton(
 
     // 日付表示整形: 年を表示するかどうか
     val displayDate: String = if (dateText.isNotBlank()) {
-        // dateTextは "yyyy/MM/dd" 形式
         val parts = dateText.split("/")
         if (parts.size == 3) {
             val year = parts[0].toIntOrNull() ?: currentYear
             val month = parts[1]
             val day = parts[2]
             if (year == currentYear) {
-                // 年非表示
                 "$month/$day"
             } else {
                 "$year/$month/$day"
@@ -57,7 +56,6 @@ fun DatePickerTextButton(
             dateText
         }
     } else {
-        // 未選択なら今日を表示（今年なら年なし）
         val year = todayLocalDate.year
         val month = todayLocalDate.monthValue.toString().padStart(2, '0')
         val day = todayLocalDate.dayOfMonth.toString().padStart(2, '0')
@@ -109,7 +107,6 @@ fun TimePickerTextButton(
     var showTimePicker by remember { mutableStateOf(false) }
     val calendar = Calendar.getInstance()
 
-    // 未選択ならデフォルト値として 07:00/08:00 を出す
     val displayTime: String = timeText.ifBlank {
         if (label == "開始" || label.isBlank()) "07:00" else "08:00"
     }
@@ -188,7 +185,7 @@ fun AddTaskContent(
         "買い物" to Color(0xFFC9E4D7)
     )
 
-    // 編集時のデータ読み込み（編集時は上書き）
+    // 編集時のデータ読み込み（保存した時刻を初期化に使う）
     LaunchedEffect(editingEventId) {
         if (editingEventId != null) {
             val event = taskViewModel.getEventById(editingEventId)
@@ -196,17 +193,40 @@ fun AddTaskContent(
                 title = it.label
                 category = it.category
                 allDay = it.allDay
+                // 型変換：LocalDateTime → Date
                 it.startDate?.let { date ->
-                    val cal = Calendar.getInstance()
-                    cal.time = Date()
-                    startDateText = "%04d/%02d/%02d".format(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
-                    startTimeText = "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                    val actualDate = when (date) {
+                        is LocalDateTime -> Date.from(date.atZone(ZoneId.systemDefault()).toInstant())
+                        is Date -> date
+                        else -> null
+                    }
+                    if (actualDate != null) {
+                        val cal = Calendar.getInstance()
+                        cal.time = actualDate
+                        startDateText = "%04d/%02d/%02d".format(
+                            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+                        )
+                        startTimeText = "%02d:%02d".format(
+                            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)
+                        )
+                    }
                 }
                 it.endDate?.let { date ->
-                    val cal = Calendar.getInstance()
-                    cal.time = Date()
-                    endDateText = "%04d/%02d/%02d".format(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
-                    endTimeText = "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                    val actualDate = when (date) {
+                        is LocalDateTime -> Date.from(date.atZone(ZoneId.systemDefault()).toInstant())
+                        is Date -> date
+                        else -> null
+                    }
+                    if (actualDate != null) {
+                        val cal = Calendar.getInstance()
+                        cal.time = actualDate
+                        endDateText = "%04d/%02d/%02d".format(
+                            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+                        )
+                        endTimeText = "%02d:%02d".format(
+                            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)
+                        )
+                    }
                 }
                 repeatOption = it.repeatOption
                 memo = it.memo
@@ -442,7 +462,6 @@ fun AddTaskContent(
             Button(
                 onClick = {
                     if (!canSave) return@Button
-                    // 保存処理
                     if (isEditing && editingEventId != null) {
                         taskViewModel.updateEvent(
                             editingEventId,
