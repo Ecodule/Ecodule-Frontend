@@ -22,15 +22,99 @@ import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 
+// アプリの状態を定義
+enum class AppState {
+    LOGIN,
+    MAIN_APP,
+    SIGNUP,
+    FORGOT_PASSWORD
+}
+
 @Preview(showBackground = true)
 @Composable
 fun EcoduleApp() {
-    EcoduleAppContent()
+    EcoduleAppNavigation()
+}
+
+@Composable
+fun EcoduleAppNavigation() {
+    // アプリ全体の状態管理
+    val appState = remember { mutableStateOf(AppState.LOGIN) }
+    val isGuestMode = remember { mutableStateOf(false) }
+
+    when (appState.value) {
+        AppState.LOGIN -> {
+            AccountSignInScreen(
+                onLoginSuccess = {
+                    // ログイン成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onForgotPassword = {
+                    // パスワード忘れ画面へ
+                    appState.value = AppState.FORGOT_PASSWORD
+                },
+                onSignUp = {
+                    // サインアップ画面へ
+                    appState.value = AppState.SIGNUP
+                },
+                onGoogleSignIn = {
+                    // Googleサインイン成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onGuestMode = {
+                    // ゲストモードでメインアプリへ
+                    isGuestMode.value = true
+                    appState.value = AppState.MAIN_APP
+                }
+            )
+        }
+        AppState.MAIN_APP -> {
+            EcoduleAppContent(
+                isGuestMode = isGuestMode.value,
+                onLogout = {
+                    // ログアウト時にログイン画面へ戻る
+                    isGuestMode.value = false
+                    appState.value = AppState.LOGIN
+                }
+            )
+        }
+        AppState.SIGNUP -> {
+            // サインアップ画面（実装が必要）
+            AccountSignUpScreen(
+                onSignUpSuccess = {
+                    // サインアップ成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onBackToLogin = {
+                    // ログイン画面へ戻る
+                    appState.value = AppState.LOGIN
+                }
+            )
+        }
+        AppState.FORGOT_PASSWORD -> {
+            // パスワード忘れ画面（実装が必要）
+            ForgotPasswordScreen(
+                onBackToLogin = {
+                    // ログイン画面へ戻る
+                    appState.value = AppState.LOGIN
+                },
+                onPasswordResetSent = {
+                    // パスワードリセット送信後ログイン画面へ
+                    appState.value = AppState.LOGIN
+                }
+            )
+        }
+    }
 }
 
 @Composable
 fun EcoduleAppContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isGuestMode: Boolean = false,
+    onLogout: () -> Unit = {}
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
@@ -40,28 +124,33 @@ fun EcoduleAppContent(
         modifier = modifier
             .fillMaxSize()
     ) {
-        if (selectedDestination.value == EcoduleRoute.CALENDAR) {
-            CalendarContentScreen(
-                modifier = Modifier.weight(1f),
-                selectedDestination = selectedDestination,
-                events = taskViewModel.events,
-                onEventClick = { eventId ->
-                    editingEventId.value = eventId
-                    selectedDestination.value = EcoduleRoute.TASKS
-                }
-            )
-        } else if (selectedDestination.value == EcoduleRoute.TASKS) {
-            AddTaskContent(
-                modifier = Modifier.weight(1f),
-                selectedDestination = selectedDestination,
-                taskViewModel = taskViewModel,
-                editingEventId = editingEventId.value,
-                onEditComplete = { editingEventId.value = null }
-            )
-        } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
-            StatisticsContent(modifier = Modifier.weight(1f))
-        } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
-            SettingsContent(modifier = Modifier.weight(1f))
+        when (selectedDestination.value) {
+            EcoduleRoute.CALENDAR -> {
+                CalendarContentScreen(
+                    modifier = Modifier.weight(1f),
+                    selectedDestination = selectedDestination,
+                    events = taskViewModel.events,
+                    onEventClick = { eventId ->
+                        editingEventId.value = eventId
+                        selectedDestination.value = EcoduleRoute.TASKS
+                    }
+                )
+            }
+            EcoduleRoute.TASKS -> {
+                AddTaskContent(
+                    modifier = Modifier.weight(1f),
+                    selectedDestination = selectedDestination,
+                    taskViewModel = taskViewModel,
+                    editingEventId = editingEventId.value,
+                    onEditComplete = { editingEventId.value = null }
+                )
+            }
+            EcoduleRoute.STATISTICS -> {
+                StatisticsContent(modifier = Modifier.weight(1f))
+            }
+            EcoduleRoute.SETTINGS -> {
+                SettingsContent(modifier = Modifier.weight(1f))
+            }
         }
 
         NavigationBar(modifier = Modifier.fillMaxWidth()) {
@@ -86,6 +175,37 @@ fun EcoduleAppContent(
     }
 }
 
+// 仮のサインアップ画面（実装が必要）
+@Composable
+fun AccountSignUpScreen(
+    onSignUpSuccess: () -> Unit,
+    onBackToLogin: () -> Unit
+) {
+    // TODO: サインアップ画面の実装
+    // 今は簡単なプレースホルダー
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // サインアップ画面の実装はファイルで分ける
+        // 現在はonBackToLogin()を呼び出すボタンなどを配置
+    }
+}
+
+// 仮のパスワード忘れ画面（実装が必要）
+@Composable
+fun ForgotPasswordScreen(
+    onBackToLogin: () -> Unit,
+    onPasswordResetSent: () -> Unit
+) {
+    // TODO: パスワード忘れ画面の実装
+    // 今は簡単なプレースホルダー
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // パスワード忘れ画面の実装はファイルで分ける
+        // 現在はonBackToLogin()を呼び出すボタンなどを配置
+    }
+}
 
 object EcoduleRoute {
     const val CALENDAR = "Calendar"
