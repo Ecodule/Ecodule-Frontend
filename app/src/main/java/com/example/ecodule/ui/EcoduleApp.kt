@@ -21,6 +21,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.AccountCreateScreen
+import com.example.ecodule.ui.account.AccountForgotPasswordScreen
+import com.example.ecodule.ui.account.AccountSignInScreen
 import java.time.LocalDate
 
 
@@ -102,8 +105,8 @@ fun EcoduleAppNavigation() {
             )
         }
         AppState.FORGOT_PASSWORD -> {
-            // パスワード忘れ画面（実装が必要）
-            ForgotPasswordScreen(
+            // パスワード忘れ画面
+            AccountForgotPasswordScreen(
                 onBackToLogin = {
                     // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
@@ -192,24 +195,6 @@ fun EcoduleAppContent(
                 )
             }
         }
-    }
-}
-
-// 削除：AccountSignUpScreen関数を削除（AccountCreate.ktで実装済み）
-
-// 仮のパスワード忘れ画面（実装が必要）
-@Composable
-fun ForgotPasswordScreen(
-    onBackToLogin: () -> Unit,
-    onPasswordResetSent: () -> Unit
-) {
-    // TODO: パスワード忘れ画面の実装
-    // 今は簡単なプレースホルダー
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // パスワード忘れ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
     }
 }
 
