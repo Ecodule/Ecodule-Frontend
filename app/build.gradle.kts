@@ -55,6 +55,7 @@ dependencies {
 
     // Material3 を使用している場合
     implementation(libs.androidx.material3.android)
+//    implementation("androidx.compose.material3:material3-jvmstubs:1.4.0-alpha01")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -63,5 +64,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.accompanist.swiperefresh)
+    // ViewModel Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
 }

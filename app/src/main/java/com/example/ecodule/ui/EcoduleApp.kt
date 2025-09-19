@@ -17,40 +17,175 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
+import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.AccountCreateScreen
+import com.example.ecodule.ui.account.AccountForgotPasswordScreen
+import com.example.ecodule.ui.account.AccountSignInScreen
+import java.time.LocalDate
 
+
+// アプリの状態を定義
+enum class AppState {
+    LOGIN,
+    MAIN_APP,
+    SIGNUP,
+    FORGOT_PASSWORD
+}
+
+@Preview(showBackground = true)
 @Composable
 fun EcoduleApp() {
-    EcoduleAppContent()
+    EcoduleAppNavigation()
+}
+
+@Composable
+fun EcoduleAppNavigation() {
+    // アプリ全体の状態管理
+    val appState = remember { mutableStateOf(AppState.LOGIN) }
+    val isGuestMode = remember { mutableStateOf(false) }
+
+    when (appState.value) {
+        AppState.LOGIN -> {
+            AccountSignInScreen(
+                onLoginSuccess = {
+                    // ログイン成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onForgotPassword = {
+                    // パスワード忘れ画面へ
+                    appState.value = AppState.FORGOT_PASSWORD
+                },
+                onSignUp = {
+                    // サインアップ画面へ
+                    appState.value = AppState.SIGNUP
+                },
+                onGoogleSignIn = {
+                    // Googleサインイン成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onGuestMode = {
+                    // ゲストモードでメインアプリへ
+                    isGuestMode.value = true
+                    appState.value = AppState.MAIN_APP
+                }
+            )
+        }
+        AppState.MAIN_APP -> {
+            EcoduleAppContent(
+                isGuestMode = isGuestMode.value,
+                onLogout = {
+                    // ログアウト時にログイン画面へ戻る
+                    isGuestMode.value = false
+                    appState.value = AppState.LOGIN
+                }
+            )
+        }
+        AppState.SIGNUP -> {
+            // アカウント作成画面
+            AccountCreateScreen(
+                onCreateSuccess = {
+                    // アカウント作成成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                },
+                onBackToLogin = {
+                    // ログイン画面へ戻る
+                    appState.value = AppState.LOGIN
+                },
+                onGoogleCreate = {
+                    // Googleアカウント作成成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
+                }
+            )
+        }
+        AppState.FORGOT_PASSWORD -> {
+            // パスワード忘れ画面
+            AccountForgotPasswordScreen(
+                onBackToLogin = {
+                    // ログイン画面へ戻る
+                    appState.value = AppState.LOGIN
+                },
+                onPasswordResetSent = {
+                    // パスワードリセット送信後ログイン画面へ
+                    appState.value = AppState.LOGIN
+                }
+            )
+        }
+    }
 }
 
 @Composable
 fun EcoduleAppContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isGuestMode: Boolean = false,
+    onLogout: () -> Unit = {}
 ) {
-
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
+    val taskViewModel = remember { TaskViewModel() }
+    val editingEventId = remember { mutableStateOf<String?>(null) }
+
+    // みやそう変更点
+    val today = LocalDate.now()
+    val todayMonth: Int = today.monthValue
+    val todayDay: Int = today.dayOfMonth
+    val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
 
     Column(
         modifier = modifier
             .fillMaxSize()
     ) {
-
-        if (selectedDestination.value == EcoduleRoute.CALENDAR) {
-            CalendarContentScreen(modifier = Modifier.weight(1f))
-        } else if (selectedDestination.value == EcoduleRoute.TASKS) {
-            AddTaskContent(modifier = Modifier.weight(1f))
-        } else if (selectedDestination.value == EcoduleRoute.STATISTICS) {
-            StatisticsContent(modifier = Modifier.weight(1f))
-        } else if (selectedDestination.value == EcoduleRoute.SETTINGS) {
-            SettingsContent(modifier = Modifier.weight(1f))
+        when (selectedDestination.value) {
+            EcoduleRoute.CALENDAR -> {
+                CalendarContentScreen(
+                    modifier = Modifier.weight(1f),
+                    selectedDestination = selectedDestination,
+                    events = taskViewModel.events,
+                    onEventClick = { eventId ->
+                        editingEventId.value = eventId
+                        selectedDestination.value = EcoduleRoute.TASKS
+                    }
+                )
+            }
+            EcoduleRoute.TASKS -> {
+                AddTaskContent(
+                    modifier = Modifier.weight(1f),
+                    selectedDestination = selectedDestination,
+                    taskViewModel = taskViewModel,
+                    editingEventId = editingEventId.value,
+                    onEditComplete = { editingEventId.value = null }
+                )
+            }
+            EcoduleRoute.TASKSLIST -> {
+                TaskListContent(
+                    modifier = Modifier.weight(1f),
+                    // みやそう変更点
+                    hasTasks = todayEvents.isNotEmpty()
+                )
+            }
+            EcoduleRoute.STATISTICS -> {
+                StatisticsContent(modifier = Modifier.weight(1f))
+            }
+            EcoduleRoute.SETTINGS -> {
+                SettingsContent(modifier = Modifier.weight(1f))
+            }
         }
 
         NavigationBar(modifier = Modifier.fillMaxWidth()) {
             TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
                 NavigationBarItem(
                     selected = selectedDestination.value == replyDestination.route,
-                    onClick = { selectedDestination.value = replyDestination.route },
+                    onClick = {
+                        selectedDestination.value = replyDestination.route
+                        if (replyDestination.route != EcoduleRoute.TASKS) {
+                            editingEventId.value = null
+                        }
+                    },
                     icon = {
                         Icon(
                             imageVector = replyDestination.selectedIcon,
@@ -63,12 +198,12 @@ fun EcoduleAppContent(
     }
 }
 
-
 object EcoduleRoute {
     const val CALENDAR = "Calendar"
     const val TASKS = "Tasks"
     const val STATISTICS = "Statistics"
     const val SETTINGS = "Settings"
+    const val TASKSLIST = "TasksList"
 }
 
 data class EcoduleTopLevelDestination(
@@ -86,7 +221,7 @@ val TOP_LEVEL_DESTINATIONS = listOf(
         iconTextId = R.string.destination_calendar
     ),
     EcoduleTopLevelDestination(
-        route = EcoduleRoute.TASKS,
+        route = EcoduleRoute.TASKSLIST,
         selectedIcon = Icons.Default.Task,
         unselectedIcon = Icons.Default.Task,
         iconTextId = R.string.destination_tasks

@@ -8,7 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.ecodule.ui.CalendarViewModel
+import com.example.ecodule.ui.CalendarContent.CalendarViewModel
 import com.example.ecodule.ui.EcoduleApp
 
 
