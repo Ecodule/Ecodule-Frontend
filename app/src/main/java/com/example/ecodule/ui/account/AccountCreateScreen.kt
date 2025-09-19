@@ -1,4 +1,4 @@
-package com.example.ecodule.ui
+package com.example.ecodule.ui.account
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,12 +24,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.R
+import com.example.ecodule.ui.account.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,8 +53,8 @@ fun AccountCreateScreen(
     var termsAccepted by remember { mutableStateOf(false) }
 
     // メールアドレス検証
-    val isValidEmail = email.isBlank() || (email.contains("@") && email.contains("."))
-    val showEmailError = email.isNotBlank() && !isValidEmail
+    val isValidEmailAddress = EmailValidator.isValidEmailForSignup(email)
+    val showEmailError = email.isNotBlank() && !isValidEmailAddress
 
     // パスワード一致チェック
     val passwordsMatch = password == confirmPassword || confirmPassword.isEmpty()
@@ -60,7 +62,7 @@ fun AccountCreateScreen(
 
     // アカウント作成ボタンの有効性をチェック
     val isCreateEnabled = email.isNotBlank() &&
-            isValidEmail &&
+            isValidEmailAddress &&
             password.isNotBlank() &&
             confirmPassword.isNotBlank() &&
             username.isNotBlank() &&
@@ -143,7 +145,11 @@ fun AccountCreateScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { emailFocused = it.isFocused },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = if (showEmailError) Color.Red else Color(0xFF7CB342),
                     unfocusedBorderColor = if (showEmailError) Color.Red else Color.LightGray,
@@ -187,7 +193,11 @@ fun AccountCreateScreen(
                 } else {
                     CustomPasswordVisualTransformation()
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
@@ -228,7 +238,11 @@ fun AccountCreateScreen(
                 } else {
                     CustomPasswordVisualTransformation()
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                         Icon(
@@ -276,6 +290,10 @@ fun AccountCreateScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { usernameFocused = it.isFocused },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF7CB342),
                     unfocusedBorderColor = Color.LightGray,

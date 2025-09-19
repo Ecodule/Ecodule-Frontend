@@ -1,4 +1,4 @@
-package com.example.ecodule.ui
+package com.example.ecodule.ui.account
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.R
+import com.example.ecodule.ui.account.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +44,7 @@ fun AccountSignInScreen(
     var passwordFocused by remember { mutableStateOf(false) }
 
     // メールアドレス検証
-    val isValidEmail = email.isBlank() || (email.contains("@") && email.contains("."))
+    val isValidEmail = EmailValidator.isValidEmailForSignup(email)
     val showEmailError = email.isNotBlank() && !isValidEmail
 
     // ログインボタンの有効性をチェック
@@ -81,7 +83,11 @@ fun AccountSignInScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { emailFocused = it.isFocused },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (showEmailError) Color.Red else Color(0xFF7CB342),
                 unfocusedBorderColor = if (showEmailError) Color.Red else Color.LightGray,
@@ -123,7 +129,11 @@ fun AccountSignInScreen(
             } else {
                 CustomPasswordVisualTransformation()
             },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            singleLine = true,
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
