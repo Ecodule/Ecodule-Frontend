@@ -45,6 +45,10 @@ fun AccountSignInScreen(
     var emailFocused by remember { mutableStateOf(false) }
     var passwordFocused by remember { mutableStateOf(false) }
 
+    // メールアドレス検証
+    val isValidEmail = email.isBlank() || (email.contains("@") && email.contains("."))
+    val showEmailError = email.isNotBlank() && !isValidEmail
+
     // ログインボタンの有効性をチェック
     val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
 
@@ -83,12 +87,25 @@ fun AccountSignInScreen(
                 .onFocusChanged { emailFocused = it.isFocused },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF7CB342),
-                unfocusedBorderColor = Color.LightGray,
+                focusedBorderColor = if (showEmailError) Color.Red else Color(0xFF7CB342),
+                unfocusedBorderColor = if (showEmailError) Color.Red else Color.LightGray,
                 cursorColor = Color(0xFF7CB342)
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            isError = showEmailError
         )
+
+        // メールアドレスエラーメッセージ
+        if (showEmailError) {
+            Text(
+                text = "有効なメールアドレスではありません",
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
