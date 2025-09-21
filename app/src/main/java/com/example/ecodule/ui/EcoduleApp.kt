@@ -24,6 +24,7 @@ import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.account.AccountCreateScreen
 import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
+import com.example.ecodule.ui.settings.SettingsContent
 import java.time.LocalDate
 
 
