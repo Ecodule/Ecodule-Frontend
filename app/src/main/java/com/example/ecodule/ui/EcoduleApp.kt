@@ -21,6 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.AccountSignInScreen
+import com.example.ecodule.ui.settings.SettingsContent
 import java.time.LocalDate
 
 enum class AppState {
