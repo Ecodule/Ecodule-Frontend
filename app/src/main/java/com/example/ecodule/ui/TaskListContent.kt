@@ -1,56 +1,46 @@
 package com.example.ecodule.ui
 
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun TaskListContent(
-    hasTasks: Boolean,
-    modifier: Modifier = Modifier
+    todayEvents: List<CalendarEvent>,
+    modifier: Modifier = Modifier,
+    viewModel: TaskCheckViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    if (hasTasks) {
-        val taskLabels = listOf(
-            stringResource(R.string.task_turn_off_electricity),
-            stringResource(R.string.task_walk_transportation),
-            stringResource(R.string.task_use_my_bag),
-            stringResource(R.string.task_make_shopping_list),
-        )
+    if (todayEvents.isNotEmpty()) {
+        val checkedStates by viewModel.checkedStates.collectAsState()
 
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 6.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 画像の例にならって同じセクションを複数回表示
-            items(1) {
-                TaskSection(
-                    title = stringResource(R.string.section_title_shopping),
-                    items = taskLabels
+            items(todayEvents.size) { index ->
+                val event = todayEvents[index]
+                val ecoActions = getEcoActionsForLabel(event.category)
+                TaskSectionWithTitleAndTime(
+                    event = event,
+                    items = ecoActions,
+                    checkedStates = checkedStates,
+                    onCheckedChange = { label, checked ->
+                        val key = "${event.label}-${label}-${event.startHour ?: ""}"
+                        viewModel.setChecked(key, checked)
+                    }
                 )
             }
         }
@@ -62,7 +52,7 @@ fun TaskListContent(
         ) {
             Text(
                 modifier = Modifier.padding(8.dp),
-                text = stringResource(R.string.TaskListScreenString_noTasks),
+                text = "今日のタスクはありません", // 必要ならstringResourceに変更
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
@@ -71,25 +61,46 @@ fun TaskListContent(
     }
 }
 
+class TaskCheckViewModel : androidx.lifecycle.ViewModel() {
+    private val _checkedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val checkedStates: StateFlow<Map<String, Boolean>> = _checkedStates
+
+    fun setChecked(key: String, checked: Boolean) {
+        _checkedStates.value = _checkedStates.value.toMutableMap().apply {
+            put(key, checked)
+        }
+    }
+}
+
 @Composable
-private fun TaskSection(
-    title: String,
+private fun TaskSectionWithTitleAndTime(
+    event: CalendarEvent,
     items: List<String>,
+    checkedStates: Map<String, Boolean>,
+    onCheckedChange: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(
-            text = title,
+            text = event.label,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        Spacer(Modifier.height(8.dp))
+        if (event.startHour != null && event.endHour != null) {
+            Text(
+                text = "${event.startHour}:00 ～ ${event.endHour}:00",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
+        Spacer(Modifier.height(0.dp))
 
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(-(15).dp)) {
             items.forEach { label ->
-                var checked by remember { mutableStateOf(false) }
+                val key = "${event.label}-${label}-${event.startHour ?: ""}"
+                val checked = checkedStates[key] ?: false
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = checked, onCheckedChange = { checked = it })
+                    Checkbox(checked = checked, onCheckedChange = { onCheckedChange(label, it) })
                     Text(
                         text = label,
                         style = MaterialTheme.typography.bodyLarge
@@ -100,8 +111,36 @@ private fun TaskSection(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TaskListContentPreview() {
-    TaskListContent(hasTasks = true)
+fun getEcoActionsForLabel(category: String): List<String> {
+    val normalized = category.trim()
+    return when (normalized) {
+        "買い物" -> listOf(
+            "マイバッグを持参する",
+            "買い物リストを事前に作る",
+            "地元の野菜・商品を選ぶ",
+            "レジ袋を断る"
+        )
+        "外出" -> listOf(
+            "徒歩や自転車で移動する",
+            "公共交通機関を利用する",
+            "エコボトルを持参する",
+            "ゴミは持ち帰る"
+        )
+        "ゴミ出し" -> listOf(
+            "ゴミを分別する",
+            "生ゴミはコンポスト利用",
+            "ゴミ袋を再利用する",
+            "ゴミ出しは決められた時間に行う"
+        )
+        "通勤/通学" -> listOf(
+            "徒歩や自転車で通う",
+            "エコバッグ・水筒を持参する",
+            "公共交通機関を使う",
+            "職場・学校で省エネを意識する"
+        )
+        else -> listOf(
+            "未設定の環境行動です",
+            "ラベルを確認してください",
+        )
+    }
 }

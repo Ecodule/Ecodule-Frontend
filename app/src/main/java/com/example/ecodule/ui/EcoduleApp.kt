@@ -23,8 +23,6 @@ import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarC
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import java.time.LocalDate
 
-
-// アプリの状態を定義
 enum class AppState {
     LOGIN,
     MAIN_APP,
@@ -40,7 +38,6 @@ fun EcoduleApp() {
 
 @Composable
 fun EcoduleAppNavigation() {
-    // アプリ全体の状態管理
     val appState = remember { mutableStateOf(AppState.LOGIN) }
     val isGuestMode = remember { mutableStateOf(false) }
 
@@ -48,25 +45,20 @@ fun EcoduleAppNavigation() {
         AppState.LOGIN -> {
             AccountSignInScreen(
                 onLoginSuccess = {
-                    // ログイン成功時にメインアプリへ
                     isGuestMode.value = false
                     appState.value = AppState.MAIN_APP
                 },
                 onForgotPassword = {
-                    // パスワード忘れ画面へ
                     appState.value = AppState.FORGOT_PASSWORD
                 },
                 onSignUp = {
-                    // サインアップ画面へ
                     appState.value = AppState.SIGNUP
                 },
                 onGoogleSignIn = {
-                    // Googleサインイン成功時にメインアプリへ
                     isGuestMode.value = false
                     appState.value = AppState.MAIN_APP
                 },
                 onGuestMode = {
-                    // ゲストモードでメインアプリへ
                     isGuestMode.value = true
                     appState.value = AppState.MAIN_APP
                 }
@@ -76,35 +68,28 @@ fun EcoduleAppNavigation() {
             EcoduleAppContent(
                 isGuestMode = isGuestMode.value,
                 onLogout = {
-                    // ログアウト時にログイン画面へ戻る
                     isGuestMode.value = false
                     appState.value = AppState.LOGIN
                 }
             )
         }
         AppState.SIGNUP -> {
-            // サインアップ画面（実装が必要）
             AccountSignUpScreen(
                 onSignUpSuccess = {
-                    // サインアップ成功時にメインアプリへ
                     isGuestMode.value = false
                     appState.value = AppState.MAIN_APP
                 },
                 onBackToLogin = {
-                    // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
                 }
             )
         }
         AppState.FORGOT_PASSWORD -> {
-            // パスワード忘れ画面（実装が必要）
             ForgotPasswordScreen(
                 onBackToLogin = {
-                    // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
                 },
                 onPasswordResetSent = {
-                    // パスワードリセット送信後ログイン画面へ
                     appState.value = AppState.LOGIN
                 }
             )
@@ -122,15 +107,13 @@ fun EcoduleAppContent(
     val taskViewModel = remember { TaskViewModel() }
     val editingEventId = remember { mutableStateOf<String?>(null) }
 
-    // みやそう変更点
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
     val todayDay: Int = today.dayOfMonth
     val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         when (selectedDestination.value) {
             EcoduleRoute.CALENDAR -> {
@@ -156,8 +139,7 @@ fun EcoduleAppContent(
             EcoduleRoute.TASKSLIST -> {
                 TaskListContent(
                     modifier = Modifier.weight(1f),
-                    // みやそう変更点
-                    hasTasks = todayEvents.isNotEmpty()
+                    todayEvents = todayEvents
                 )
             }
             EcoduleRoute.STATISTICS -> {
@@ -190,35 +172,27 @@ fun EcoduleAppContent(
     }
 }
 
-// 仮のサインアップ画面（実装が必要）
 @Composable
 fun AccountSignUpScreen(
     onSignUpSuccess: () -> Unit,
     onBackToLogin: () -> Unit
 ) {
-    // TODO: サインアップ画面の実装
-    // 今は簡単なプレースホルダー
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // サインアップ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
+        // サインアップ画面の実装
     }
 }
 
-// 仮のパスワード忘れ画面（実装が必要）
 @Composable
 fun ForgotPasswordScreen(
     onBackToLogin: () -> Unit,
     onPasswordResetSent: () -> Unit
 ) {
-    // TODO: パスワード忘れ画面の実装
-    // 今は簡単なプレースホルダー
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // パスワード忘れ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
+        // パスワード忘れ画面の実装
     }
 }
 

@@ -37,6 +37,7 @@ import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
+import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth // <- 追加
 import com.example.ecodule.ui.EcoduleRoute
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -110,7 +111,8 @@ fun CalendarContentScreen(
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
         when (calendarMode) {
             CalendarMode.MONTH -> {
-                events.filter { it.month == yearMonth.monthValue }
+                // 変更点：繰り返し含む表示用イベントリスト
+                getDisplayEventsForMonth(events, yearMonth)
             }
             CalendarMode.DAY -> {
                 events.filter {
