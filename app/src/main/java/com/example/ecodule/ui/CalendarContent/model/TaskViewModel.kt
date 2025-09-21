@@ -2,7 +2,6 @@ package com.example.ecodule.ui.CalendarContent.model
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.graphics.Color
-import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import java.time.LocalDateTime
 import java.util.*
 
@@ -11,14 +10,13 @@ class TaskViewModel {
     val events: List<CalendarEvent> = _events
 
     init {
-        // 初期データ（テスト用）
         _events.addAll(listOf(
             CalendarEvent(
                 id = "1",
                 day = 25,
                 label = "企画進捗",
                 color = Color(0xFF81C784),
-                month = 9, // 現在の月に変更
+                month = 9,
                 startHour = 14,
                 endHour = 16
             ),
@@ -27,16 +25,16 @@ class TaskViewModel {
                 day = 29,
                 label = "買い物",
                 color = Color(0xFFE57373),
-                month = 9, // 現在の月に変更
+                month = 9,
                 startHour = 10,
                 endHour = 11
             ),
             CalendarEvent(
                 id = "3",
-                day = 14, // 今日の日付
+                day = 14,
                 label = "ミーティング",
                 color = Color(0xFFE57373),
-                month = 9, // 現在の月に変更
+                month = 9,
                 startHour = 10,
                 endHour = 11
             )
@@ -52,7 +50,8 @@ class TaskViewModel {
         endDate: Date?,
         repeatOption: String,
         memo: String,
-        notificationMinutes: Int
+        notificationMinutes: Int,
+        repeatGroupId: String? = null
     ) {
         val categoryColor = getCategoryColor(category)
         val startDateTime = startDate?.let {
@@ -76,7 +75,8 @@ class TaskViewModel {
             allDay = allDay,
             repeatOption = repeatOption,
             memo = memo,
-            notificationMinutes = notificationMinutes
+            notificationMinutes = notificationMinutes,
+            repeatGroupId = repeatGroupId
         )
 
         _events.add(event)
@@ -121,6 +121,27 @@ class TaskViewModel {
             )
 
             _events[index] = updatedEvent
+        }
+    }
+
+    fun updateEventsByRepeatGroup(
+        repeatGroupId: String,
+        title: String,
+        category: String,
+        description: String,
+        allDay: Boolean,
+        startDate: Date?,
+        endDate: Date?,
+        repeatOption: String,
+        memo: String,
+        notificationMinutes: Int
+    ) {
+        val eventsToUpdate = _events.filter { it.repeatGroupId == repeatGroupId }
+        eventsToUpdate.forEach { event ->
+            updateEvent(
+                event.id, title, category, description, allDay,
+                startDate, endDate, repeatOption, memo, notificationMinutes
+            )
         }
     }
 

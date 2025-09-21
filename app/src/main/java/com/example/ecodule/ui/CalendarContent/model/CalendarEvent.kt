@@ -18,5 +18,6 @@ data class CalendarEvent(
     val allDay: Boolean = false,
     val repeatOption: String = "しない",
     val memo: String = "",
-    val notificationMinutes: Int = 10
+    val notificationMinutes: Int = 10,
+    val repeatGroupId: String? = null // ←追加
 )
