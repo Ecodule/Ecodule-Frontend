@@ -48,7 +48,7 @@ fun SettingsContentScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF8F8F8))
             .padding(top = 32.dp)
     ) {
         // タイトル
@@ -65,7 +65,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .clickable { onNavigateUserName() }
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp),
@@ -109,7 +109,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp)
         ) {
@@ -183,7 +183,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .padding(horizontal = 10.dp)
         ) {
             Row(
@@ -249,7 +249,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -280,7 +280,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp)
         ) {
@@ -362,7 +362,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .clickable { onNavigateNotifications() }
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp),
@@ -393,7 +393,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .clickable { onNavigateGoogleCalendar() }
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp),
@@ -424,7 +424,7 @@ fun SettingsContentScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(Color(0xFFF4F4F4), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
                 .clickable { onNavigateDetail() }
                 .padding(vertical = 12.dp)
                 .padding(horizontal = 10.dp),
