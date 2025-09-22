@@ -25,6 +25,7 @@ import com.example.ecodule.ui.account.AccountCreateScreen
 import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
+import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
 import java.time.LocalDate
 
 
@@ -131,16 +132,21 @@ fun EcoduleAppContent(
     val taskViewModel = remember { TaskViewModel() }
     val editingEventId = remember { mutableStateOf<String?>(null) }
 
-    // みやそう変更点
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
     val todayDay: Int = today.dayOfMonth
     val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
 
+    // ボトムナビゲーションバーを表示しない画面のリスト
+    val hideBottomBarRoutes = listOf(
+        EcoduleRoute.SETTINGSDETAILS
+        // 将来的に他の詳細画面も追加可能
+    )
+
     Column(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
+        // メインコンテンツ
         when (selectedDestination.value) {
             EcoduleRoute.CALENDAR -> {
                 CalendarContentScreen(
@@ -165,7 +171,6 @@ fun EcoduleAppContent(
             EcoduleRoute.TASKSLIST -> {
                 TaskListContent(
                     modifier = Modifier.weight(1f),
-                    // みやそう変更点
                     todayEvents = todayEvents
                 )
             }
@@ -179,28 +184,47 @@ fun EcoduleAppContent(
                     onNavigateTimeZone = { /* 画面遷移: タイムゾーン */ },
                     onNavigateNotifications = { /* 画面遷移: 通知 */ },
                     onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
-                    onNavigateDetail = { /* 画面遷移: 詳細 */ }
+                    onNavigateDetail = {
+                        selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
+                    }
+                )
+            }
+            EcoduleRoute.SETTINGSDETAILS -> {
+                SettingsDetailsScreen(
+                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.weight(1f)
+                    },
+                    onBackToSettings = {
+                        selectedDestination.value = EcoduleRoute.SETTINGS
+                    },
+                    onNavigateLicense = { /* ライセンス画面への遷移 */ },
+                    onNavigateTerms = { /* 利用規約画面への遷移 */ }
                 )
             }
         }
 
-        NavigationBar(modifier = Modifier.fillMaxWidth()) {
-            TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
-                NavigationBarItem(
-                    selected = selectedDestination.value == replyDestination.route,
-                    onClick = {
-                        selectedDestination.value = replyDestination.route
-                        if (replyDestination.route != EcoduleRoute.TASKS) {
-                            editingEventId.value = null
+        // ナビゲーションバー（特定の画面では非表示）
+        if (!hideBottomBarRoutes.contains(selectedDestination.value)) {
+            NavigationBar(modifier = Modifier.fillMaxWidth()) {
+                TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
+                    NavigationBarItem(
+                        selected = selectedDestination.value == replyDestination.route,
+                        onClick = {
+                            selectedDestination.value = replyDestination.route
+                            if (replyDestination.route != EcoduleRoute.TASKS) {
+                                editingEventId.value = null
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = replyDestination.selectedIcon,
+                                contentDescription = stringResource(id = replyDestination.iconTextId)
+                            )
                         }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = replyDestination.selectedIcon,
-                            contentDescription = stringResource(id = replyDestination.iconTextId)
-                        )
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -210,10 +234,15 @@ object EcoduleRoute {
     const val CALENDAR = "Calendar"
     const val TASKS = "Tasks"
     const val STATISTICS = "Statistics"
-    const val SETTINGS = "Settings"
     const val TASKSLIST = "TasksList"
-}
+    const val SETTINGS = "Settings"
+    const val SETTINGSDETAILS = "SettingsDetails" // 新しく追加
 
+    // 将来的に他の詳細画面も追加可能
+    // const val SETTINGSUSERNAME = "SettingsUserName"
+    // const val SETTINGSTIMEZONE = "SettingsTimeZone"
+    // const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
+}
 data class EcoduleTopLevelDestination(
     val route: String,
     val selectedIcon: ImageVector,
