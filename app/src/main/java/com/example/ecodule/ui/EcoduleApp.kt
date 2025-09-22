@@ -22,7 +22,8 @@ import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.account.AccountSignInScreen
-import com.example.ecodule.ui.settings.SettingsContent
+import com.example.ecodule.ui.settings.SettingsContentScreen
+
 import java.time.LocalDate
 
 enum class AppState {
@@ -148,9 +149,17 @@ fun EcoduleAppContent(
                 StatisticsContent(modifier = Modifier.weight(1f))
             }
             EcoduleRoute.SETTINGS -> {
-                SettingsContent(modifier = Modifier.weight(1f))
+                SettingsContentScreen(
+                    modifier = Modifier.weight(1f),
+                    onNavigateUserName = { /* 画面遷移: ユーザー名 */ },
+                    onNavigateTimeZone = { /* 画面遷移: タイムゾーン */ },
+                    onNavigateNotifications = { /* 画面遷移: 通知 */ },
+                    onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
+                    onNavigateDetail = { /* 画面遷移: 詳細 */ }
+                )
             }
         }
+
 
         NavigationBar(modifier = Modifier.fillMaxWidth()) {
             TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
