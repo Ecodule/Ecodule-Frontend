@@ -173,6 +173,7 @@ fun AddTaskContent(
     val sdfDateTime = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
     val sdfDate = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
 
+    var showDeleteDialog by remember { mutableStateOf(false) } // 削除確認ダイアログの状態
     val isEditing = editingEventId != null
     val titleText = if (isEditing) "タスクを編集" else "タスクを追加"
     val buttonText = if (isEditing) "更新" else "追加"
@@ -278,9 +279,7 @@ fun AddTaskContent(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = {
-                    editingEventId?.let { taskViewModel.deleteEvent(it) }
-                    onEditComplete()
-                    selectedDestination.value = EcoduleRoute.CALENDAR
+                    showDeleteDialog = true // ダイアログを表示
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red)
                 }
@@ -494,6 +493,34 @@ fun AddTaskContent(
                 Text(buttonText)
             }
         }
+    }
+
+    // 削除確認ダイアログ
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("予定を削除") },
+            text = { Text("この予定を削除しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        editingEventId?.let { taskViewModel.deleteEvent(it) }
+                        showDeleteDialog = false
+                        onEditComplete()
+                        selectedDestination.value = EcoduleRoute.CALENDAR
+                    }
+                ) {
+                    Text("削除", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("キャンセル")
+                }
+            }
+        )
     }
 }
 
