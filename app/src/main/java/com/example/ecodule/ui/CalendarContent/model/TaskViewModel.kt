@@ -10,6 +10,9 @@ class TaskViewModel {
     val events: List<CalendarEvent> = _events
 
     init {
+        // 現在の日時情報を取得
+        val now = LocalDateTime.now()
+
         _events.addAll(listOf(
             CalendarEvent(
                 id = "1",
@@ -17,6 +20,9 @@ class TaskViewModel {
                 label = "企画進捗",
                 color = Color(0xFF81C784),
                 month = 9,
+                // startDateとendDateを追加
+                startDate = LocalDateTime.of(now.year, 9, 25, 14, 0),
+                endDate = LocalDateTime.of(now.year, 9, 25, 16, 0),
                 startHour = 14,
                 endHour = 16
             ),
@@ -26,6 +32,9 @@ class TaskViewModel {
                 label = "買い物",
                 color = Color(0xFFE57373),
                 month = 9,
+                // startDateとendDateを追加
+                startDate = LocalDateTime.of(now.year, 9, 29, 10, 0),
+                endDate = LocalDateTime.of(now.year, 9, 29, 11, 0),
                 startHour = 10,
                 endHour = 11
             ),
@@ -35,6 +44,9 @@ class TaskViewModel {
                 label = "ミーティング",
                 color = Color(0xFFE57373),
                 month = 9,
+                // startDateとendDateを追加
+                startDate = LocalDateTime.of(now.year, 9, 14, 10, 0),
+                endDate = LocalDateTime.of(now.year, 9, 14, 11, 0),
                 startHour = 10,
                 endHour = 11
             )
