@@ -10,34 +10,36 @@ object LoginApi {
     private val client = OkHttpClient()
 
     fun login(email: String, password: String, callback: (success: Boolean, message: String?) -> Unit) {
-        val url = "https://ecodule.ddns.net/auth/login" // ← サーバーのAPIエンドポイント
-        Log.d("asdfghjkqwertyuiopecodule", "aaa")
+        val url = "https://ecodule.ddns.net/auth/login"
 
-        val json = JSONObject()
-        json.put("email", email)
-        json.put("password", password)
-
-        val body = RequestBody.create(
-            "application/json; charset=utf-8".toMediaTypeOrNull(),
-            json.toString()
-        )
+        val formBody = FormBody.Builder()
+            .add("username", email)
+            .add("password", password)
+            .build()
 
         val request = Request.Builder()
             .url(url)
-            .post(body)
+            .post(formBody)
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 callback(false, "ネットワークエラー: ${e.message}")
+                Log.d("Ecodule", e.message.toString())
             }
 
             override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    // ここでレスポンス内容（例: トークンなど）を取得して処理
-                    callback(true, null)
-                } else {
-                    callback(false, "認証失敗: ${response.message}")
+                // responseオブジェクトが利用可能になった時に実行する
+                response.use {
+                    if (!response.isSuccessful) throw IOException("Unexpected code $response")
+
+                    // headers
+                    for ((name, value) in response.headers) {
+                        Log.d("Ecodule", "$name: $value")
+                    }
+
+                    // レスポンス処理
+                    Log.d("Ecodule", response.body!!.string())
                 }
             }
         })
