@@ -8,13 +8,4 @@
     <string name="destination_tasks">Tasks</string>
     <string name="destination_statistics">Statistics</string>
     <string name="destination_settings">Settings</string>
-    <string name="TaskListScreenString_hasTasks">予定があります</string>
-    <string name="TaskListScreenString_noTasks">予定がありません</string>
-    <string name="destination_tasksList">環境行動リスト</string>
-
-    <string name="section_title_shopping">買い物</string>
-    <string name="task_turn_off_electricity">電気の消し忘れ</string>
-    <string name="task_walk_transportation">徒歩での移動</string>
-    <string name="task_use_my_bag">マイバッグの使用</string>
-    <string name="task_make_shopping_list">買い物リストの作成</string>
 </resources>
