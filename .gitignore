@@ -1,3 +1,8 @@
+# 手動で追加
+.idea/copilot.data.migration.agent.xml
+.idea/copilot.data.migration.ask.xml
+.idea/copilot.data.migration.edit.xml
+
 # 自動生成
 *.iml
 .gradle
