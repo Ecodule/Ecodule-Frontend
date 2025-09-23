@@ -3,29 +3,33 @@ package com.example.ecodule.ui.widget
 import androidx.glance.appwidget.GlanceAppWidget
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+//import androidx.compose.runtime.remember
+//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.LocalContext
+//import androidx.glance.LocalContext
 import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
-import androidx.glance.layout.Box
+//import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.height
+import androidx.glance.layout.fillMaxWidth
+//import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.example.ecodule.R
+//import com.example.ecodule.R
 import java.time.LocalDate
 
 class AppWidget : GlanceAppWidget() {
@@ -63,7 +67,7 @@ class AppWidget : GlanceAppWidget() {
                 .fillMaxSize()
                 .padding(8.dp)
         ) {
-                provideSchedule()
+                ProvideSchedule()
             /*
             getSampleSchedules().forEach { schedule ->
                 Text("📅 ${schedule.title} (${schedule.date})", style = TextStyle(fontWeight = FontWeight.Bold))
@@ -122,7 +126,7 @@ class AppWidget : GlanceAppWidget() {
         )
     }*/
 
-    @Composable
+
     private fun getSchedule():List<Schedule> {//サーバから予定を取得する
         return listOf(//get()でスケジュールを取得　もしかしたらスケジュール全部を取得、リストに時間順でまとめて最初の予定をprovideに渡すかも？.
             // 　以下はスケジュールのテスト用データ1
@@ -133,30 +137,77 @@ class AppWidget : GlanceAppWidget() {
                 tasks = listOf(
                     Task(1, "スライド作成", false),
                     Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
+                    Task(3, "資料印刷", true),
+                    Task(1, "スライド作成", false),
+                    Task(2, "発表練習", false),
                     Task(3, "資料印刷", true)
                 )
             )
         )
 
     }
+
     @Composable
-    private fun provideSchedule(){//ウィジェットに予定とタスクを表示する
+    private fun ProvideSchedule(
+
+    ){//ウィジェットに予定とタスクを表示する
         getSchedule().forEach{ schedule ->
-            Text(schedule.title + schedule.date, style = TextStyle(fontWeight = FontWeight.Bold))
-            LazyColumn {
-                items(schedule.tasks) { task ->
-                    Row(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CheckBox(
-                            checked = task.isDone,
-                            onCheckedChange = null//{update(it.id)}
-                        )
-                        Text(task.title)
+            Column(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .background(GlanceTheme.colors.background)
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Row(modifier = GlanceModifier
+                    .padding(0.dp, 0.dp, 0.dp, 0.dp)
+                ){
+                    Text(schedule.title + schedule.date, style = TextStyle(fontWeight = FontWeight.Bold))
+                    Spacer(GlanceModifier.width(8.dp))
+                    Button(
+                        text = "完了",
+                        onClick = {}
+                    )
+
+                }
+
+                LazyColumn {
+                    items(schedule.tasks) { task ->
+                        Row(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CheckBox(
+                                checked = task.isDone,
+                                onCheckedChange = null//{update(it.id)}
+                            )
+                            Text(task.title)
+                        }
                     }
                 }
             }
+
+
+
         }
     }
 
