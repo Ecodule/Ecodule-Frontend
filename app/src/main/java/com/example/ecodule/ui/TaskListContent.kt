@@ -38,7 +38,7 @@ fun TaskListContent(
                     items = ecoActions,
                     checkedStates = checkedStates,
                     onCheckedChange = { label, checked ->
-                        val key = "${event.label}-${label}-${event.startHour ?: ""}"
+                        val key = "${event.label}-${label}-${event.startDate.hour}"
                         viewModel.setChecked(key, checked)
                     }
                 )
@@ -86,9 +86,9 @@ private fun TaskSectionWithTitleAndTime(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-        if (event.startHour != null && event.endHour != null) {
+        if (event.startDate.hour != null && event.endDate.hour != null) {
             Text(
-                text = "${event.startHour}:00 ～ ${event.endHour}:00",
+                text = "${event.startDate.hour}:00 ～ ${event.endDate.hour}:00",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -97,7 +97,7 @@ private fun TaskSectionWithTitleAndTime(
 
         Column(verticalArrangement = Arrangement.spacedBy(-(15).dp)) {
             items.forEach { label ->
-                val key = "${event.label}-${label}-${event.startHour ?: ""}"
+                val key = "${event.label}-${label}-${event.startDate.hour}"
                 val checked = checkedStates[key] ?: false
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = checked, onCheckedChange = { onCheckedChange(label, it) })

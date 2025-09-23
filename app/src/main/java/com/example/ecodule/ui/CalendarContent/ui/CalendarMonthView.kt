@@ -80,7 +80,7 @@ fun CalendarMonthView(
                                 DayCellGrid(
                                     day = dayCounter,
                                     isToday = (today.year == yearMonth.year && today.monthValue == yearMonth.monthValue && today.dayOfMonth == dayCounter),
-                                    events = events.filter { it.day == dayCounter },
+                                    events = events.filter { it.startDate.dayOfMonth == dayCounter },
                                     onEventClick = onEventClick
                                 )
                                 dayCounter++

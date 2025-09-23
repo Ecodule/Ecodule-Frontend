@@ -16,39 +16,39 @@ class TaskViewModel {
         _events.addAll(listOf(
             CalendarEvent(
                 id = "1",
-                day = 25,
+//                day = 25,
                 label = "企画進捗",
                 color = Color(0xFF81C784),
-                month = 9,
+//                month = 9,
                 // startDateとendDateを追加
-                startDate = LocalDateTime.of(now.year, 9, 25, 14, 0),
-                endDate = LocalDateTime.of(now.year, 9, 25, 16, 0),
-                startHour = 14,
-                endHour = 16
+                startDate = LocalDateTime.of(now.year, 9, 25, 14, 0), //日付から開始時刻まで管理
+                endDate = LocalDateTime.of(now.year, 9, 25, 16, 0), //日付から終了時刻まで管理
+//                startHour = 14,
+//                endHour = 16
             ),
             CalendarEvent(
                 id = "2",
-                day = 29,
+//                day = 29,
                 label = "買い物",
                 color = Color(0xFFE57373),
-                month = 9,
+//                month = 9,
                 // startDateとendDateを追加
                 startDate = LocalDateTime.of(now.year, 9, 29, 10, 0),
                 endDate = LocalDateTime.of(now.year, 9, 29, 11, 0),
-                startHour = 10,
-                endHour = 11
+//                startHour = 10,
+//                endHour = 11
             ),
             CalendarEvent(
                 id = "3",
-                day = 14,
+//                day = 14,
                 label = "ミーティング",
                 color = Color(0xFFE57373),
-                month = 9,
+//                month = 9,
                 // startDateとendDateを追加
                 startDate = LocalDateTime.of(now.year, 9, 14, 10, 0),
                 endDate = LocalDateTime.of(now.year, 9, 14, 11, 0),
-                startHour = 10,
-                endHour = 11
+//                startHour = 10,
+//                endHour = 11
             )
         ))
     }
@@ -58,29 +58,25 @@ class TaskViewModel {
         category: String,
         description: String,
         allDay: Boolean,
-        startDate: Date?,
-        endDate: Date?,
+        startDate: Date,
+        endDate: Date,
         repeatOption: String,
         memo: String,
         notificationMinutes: Int,
         repeatGroupId: String? = null
     ) {
         val categoryColor = getCategoryColor(category)
-        val startDateTime = startDate?.let {
-            LocalDateTime.ofInstant(it.toInstant(), java.time.ZoneId.systemDefault())
-        }
-        val endDateTime = endDate?.let {
-            LocalDateTime.ofInstant(it.toInstant(), java.time.ZoneId.systemDefault())
-        }
+        val startDateTime = LocalDateTime.ofInstant(startDate.toInstant(), java.time.ZoneId.systemDefault())
+        val endDateTime = LocalDateTime.ofInstant(endDate.toInstant(), java.time.ZoneId.systemDefault())
 
         val event = CalendarEvent(
             id = UUID.randomUUID().toString(),
-            day = startDateTime?.dayOfMonth ?: 1,
+//            day = startDateTime?.dayOfMonth ?: 1,
             label = title,
             color = categoryColor,
-            month = startDateTime?.monthValue ?: 1,
-            startHour = if (!allDay) startDateTime?.hour else null,
-            endHour = if (!allDay) endDateTime?.hour else null,
+//            month = startDateTime?.monthValue ?: 1,
+//            startHour = if (!allDay) startDateTime?.hour else null,
+//            endHour = if (!allDay) endDateTime?.hour else null,
             startDate = startDateTime,
             endDate = endDateTime,
             category = category,
@@ -100,8 +96,8 @@ class TaskViewModel {
         category: String,
         description: String,
         allDay: Boolean,
-        startDate: Date?,
-        endDate: Date?,
+        startDate: Date,
+        endDate: Date,
         repeatOption: String,
         memo: String,
         notificationMinutes: Int
@@ -109,20 +105,18 @@ class TaskViewModel {
         val index = _events.indexOfFirst { it.id == id }
         if (index != -1) {
             val categoryColor = getCategoryColor(category)
-            val startDateTime = startDate?.let {
-                LocalDateTime.ofInstant(it.toInstant(), java.time.ZoneId.systemDefault())
-            }
-            val endDateTime = endDate?.let {
-                LocalDateTime.ofInstant(it.toInstant(), java.time.ZoneId.systemDefault())
-            }
+            val startDateTime = LocalDateTime.ofInstant(startDate.toInstant(), java.time.ZoneId.systemDefault())
+
+            val endDateTime = LocalDateTime.ofInstant(endDate.toInstant(), java.time.ZoneId.systemDefault())
+
 
             val updatedEvent = _events[index].copy(
                 label = title,
                 color = categoryColor,
-                day = startDateTime?.dayOfMonth ?: _events[index].day,
-                month = startDateTime?.monthValue ?: _events[index].month,
-                startHour = if (!allDay && startDateTime != null) startDateTime.hour else null,
-                endHour = if (!allDay && endDateTime != null) endDateTime.hour else null,
+//                day = startDateTime?.dayOfMonth ?: _events[index].day,
+//                month = startDateTime?.monthValue ?: _events[index].month,
+//                startHour = if (!allDay && startDateTime != null) startDateTime.hour else null,
+//                endHour = if (!allDay && endDateTime != null) endDateTime.hour else null,
                 startDate = startDateTime,
                 endDate = endDateTime,
                 category = category,
@@ -142,8 +136,8 @@ class TaskViewModel {
         category: String,
         description: String,
         allDay: Boolean,
-        startDate: Date?,
-        endDate: Date?,
+        startDate: Date,
+        endDate: Date,
         repeatOption: String,
         memo: String,
         notificationMinutes: Int

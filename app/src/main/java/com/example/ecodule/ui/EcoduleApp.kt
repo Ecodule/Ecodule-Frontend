@@ -135,7 +135,7 @@ fun EcoduleAppContent(
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
     val todayDay: Int = today.dayOfMonth
-    val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
+    val todayEvents = taskViewModel.events.filter { it.startDate.dayOfMonth == todayDay && it.startDate.monthValue == todayMonth }
 
     // ボトムナビゲーションバーを表示しない画面のリスト
     val hideBottomBarRoutes = listOf(

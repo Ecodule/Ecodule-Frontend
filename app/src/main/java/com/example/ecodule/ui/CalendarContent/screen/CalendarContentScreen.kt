@@ -107,7 +107,7 @@ fun CalendarContentScreen(
     val nextMonth = yearMonth.plusMonths(1)
     val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
 
-    // 表示範囲の予定をフィルタリング
+    // 表示範囲の予定をフィルタリング（LocalDateTimeベース）
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
         when (calendarMode) {
             CalendarMode.MONTH -> {
@@ -116,25 +116,27 @@ fun CalendarContentScreen(
             }
             CalendarMode.DAY -> {
                 events.filter {
-                    it.month == currentDay.monthValue && it.day == currentDay.dayOfMonth
+                    it.startDate.monthValue == currentDay.monthValue &&
+                            it.startDate.dayOfMonth == currentDay.dayOfMonth &&
+                            it.startDate.year == currentDay.year
                 }
             }
             CalendarMode.WEEK -> {
                 val weekEnd = currentWeekStart.plusDays(6)
                 events.filter { event ->
-                    val eventDate = LocalDate.of(yearMonth.year, event.month, event.day)
+                    val eventDate = event.startDate.toLocalDate()
                     !eventDate.isBefore(currentWeekStart) && !eventDate.isAfter(weekEnd)
                 }
             }
             CalendarMode.THREE_DAY -> {
                 val threeDayEnd = currentThreeDayStart.plusDays(2)
                 events.filter { event ->
-                    val eventDate = LocalDate.of(yearMonth.year, event.month, event.day)
+                    val eventDate = event.startDate.toLocalDate()
                     !eventDate.isBefore(currentThreeDayStart) && !eventDate.isAfter(threeDayEnd)
                 }
             }
             CalendarMode.SCHEDULE -> {
-                events.filter { it.month == yearMonth.monthValue }
+                events.filter { it.startDate.monthValue == yearMonth.monthValue && it.startDate.year == yearMonth.year }
             }
         }
     }
@@ -305,7 +307,7 @@ fun CalendarContentScreen(
                         CalendarMode.SCHEDULE -> {
                             CalendarScheduleView(
                                 yearMonth = yearMonth,
-                                events = filteredEvents.sortedBy { it.day },
+                                events = filteredEvents.sortedBy { it.startDate },
                                 onDayClick = { day -> selectedDay = day },
                                 onEventClick = onEventClick
                             )
@@ -360,16 +362,13 @@ fun CalendarContentScreen(
                 },
                 title = { Text("${monthLabel}${selectedDay}日の予定") },
                 text = {
-                    val plans = filteredEvents.filter { it.day == selectedDay }
+                    val plans = filteredEvents.filter { it.startDate.dayOfMonth == selectedDay }
                     if (plans.isEmpty()) {
                         Text("予定はありません")
                     } else {
                         LazyColumn {
                             items(plans.size) { index ->
                                 val event = plans[index]
-                                val timeText = if (event.startHour != null && event.endHour != null)
-                                    "（${event.startHour}:00〜${event.endHour}:00）" else ""
-
                                 TextButton(
                                     onClick = {
                                         selectedDay = null
@@ -378,7 +377,7 @@ fun CalendarContentScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "・${event.label} $timeText",
+                                        "・${event.label} ${event.timeRangeText}",
                                         color = event.color
                                     )
                                 }

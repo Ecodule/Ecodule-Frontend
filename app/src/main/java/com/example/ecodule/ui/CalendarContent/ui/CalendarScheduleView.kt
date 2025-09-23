@@ -43,7 +43,7 @@ fun CalendarScheduleView(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .noRippleClickable { onDayClick(event.day) }
+                    .noRippleClickable { onDayClick(event.startDate.dayOfMonth) }
                     .padding(vertical = 8.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -53,13 +53,13 @@ fun CalendarScheduleView(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${event.day}",
+                        text = "${event.startDate.dayOfMonth}",
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                         color = Color(0xFF444444)
                     )
                     Text(
-                        text = "${event.month}月",
+                        text = "${event.startDate.monthValue}月",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
@@ -90,10 +90,10 @@ fun CalendarScheduleView(
                         )
 
                         // 時間表示
-                        if (event.startHour != null && event.endHour != null) {
+                        if (event.startDate.hour != null && event.endDate.hour != null) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "${event.startHour}:00 - ${event.endHour}:00",
+                                text = "${event.startDate.hour}:00 - ${event.endDate.hour}:00",
                                 fontSize = 14.sp,
                                 color = Color.White.copy(alpha = 0.9f)
                             )
