@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.R
-import com.example.ecodule.ui.account.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,7 +169,15 @@ fun AccountSignInScreen(
         Button(
             onClick = {
                 if (isLoginEnabled) {
-                    onLoginSuccess()
+                    // ログインAPI通信
+                    LoginApi.login(email, password) { success, message ->
+                        if (success) {
+                            onLoginSuccess()
+                        } else {
+                            // エラーメッセージ表示用のState（例: loginError）を作って表示する
+                            // 例: loginError = message
+                        }
+                    }
                 }
             },
             modifier = Modifier
