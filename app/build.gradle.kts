@@ -36,6 +36,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -55,7 +56,6 @@ dependencies {
 
     // Material3 を使用している場合
     implementation(libs.androidx.material3.android)
-//    implementation("androidx.compose.material3:material3-jvmstubs:1.4.0-alpha01")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -66,8 +66,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.accompanist.swiperefresh)
-    // ViewModel Compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.okhttp)
 
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    //Glance
+    implementation(libs.androidx.glance.material3)
+    implementation(libs.androidx.glance.appwidget)
 }
