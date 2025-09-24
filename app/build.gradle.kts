@@ -99,4 +99,7 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.security.crypto)
+
+    // serializer
+    implementation(libs.kotlinx.serialization.json)
 }
