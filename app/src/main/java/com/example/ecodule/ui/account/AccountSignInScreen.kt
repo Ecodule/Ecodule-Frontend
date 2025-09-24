@@ -30,11 +30,14 @@ import com.example.ecodule.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSignInScreen(
-    onLoginSuccess: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    onLoginSuccess: (String, String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
     onGoogleSignIn: () -> Unit,
-    onGuestMode: () -> Unit
+    onGuestMode: () -> Unit,
+    onClearError: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -72,7 +75,12 @@ fun AccountSignInScreen(
         // メールアドレス入力フィールド
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange =
+                {
+                    email = it
+                    if (errorMessage != null) onClearError()
+                },
+
             label = {
                 Text(
                     "メールアドレス",
@@ -93,7 +101,8 @@ fun AccountSignInScreen(
                 cursorColor = Color(0xFF7CB342)
             ),
             shape = RoundedCornerShape(8.dp),
-            isError = showEmailError
+            isError = showEmailError,
+            enabled = !isLoading
         )
 
         // メールアドレスエラーメッセージ
@@ -113,7 +122,11 @@ fun AccountSignInScreen(
         // パスワード入力フィールド
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange =
+                {
+                    password = it
+                    if (errorMessage != null) onClearError()
+                },
             label = {
                 Text(
                     "パスワード",
@@ -147,10 +160,20 @@ fun AccountSignInScreen(
                 unfocusedBorderColor = Color.LightGray,
                 cursorColor = Color(0xFF7CB342)
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
         // パスワードをお忘れですか？
         Text(
@@ -167,29 +190,24 @@ fun AccountSignInScreen(
 
         // ログインボタン
         Button(
-            onClick = {
-                if (isLoginEnabled) {
-                    // ログインAPI通信
-                    LoginApi.login(email, password) { success, message ->
-                        if (success) {
-                            onLoginSuccess()
-                        } else {
-                            // エラーメッセージ表示用のState（例: loginError）を作って表示する
-                            // 例: loginError = message
-                        }
-                    }
-                }
-            },
+            onClick = { onLoginSuccess(email, password) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            enabled = isLoginEnabled,
+            enabled = isLoginEnabled && !isLoading,
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isLoginEnabled) Color(0xFF7CB342) else Color.LightGray,
                 disabledContainerColor = Color.LightGray
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(
                 "ログイン",
                 color = Color.White,
@@ -205,8 +223,8 @@ fun AccountSignInScreen(
             text = "アカウントをお持ちでないですか？",
             color = Color(0xFF2196F3),
             fontSize = 14.sp,
-            modifier = Modifier.clickable { onSignUp() },
-            textDecoration = TextDecoration.Underline
+            modifier = Modifier.clickable { if(!isLoading) { onSignUp()} },
+            textDecoration = TextDecoration.Underline,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -241,7 +259,8 @@ fun AccountSignInScreen(
                 .fillMaxWidth()
                 .height(50.dp),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isLoading
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -278,7 +297,8 @@ fun AccountSignInScreen(
         // ゲストモードで続行
         TextButton(
             onClick = { onGuestMode() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
             Text(
                 "ゲストモードで続行",

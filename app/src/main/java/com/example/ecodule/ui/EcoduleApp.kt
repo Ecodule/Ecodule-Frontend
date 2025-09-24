@@ -18,6 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.hilt.navigation.compose.hiltViewModel
+
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
@@ -26,11 +34,15 @@ import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.ecodule.android.security.AuthenticationState
+import com.ecodule.android.ui.auth.LoginViewModel
+
 import java.time.LocalDate
 
 
 // アプリの状態を定義
 enum class AppState {
+    INITIALIZING,
     LOGIN,
     MAIN_APP,
     SIGNUP,
@@ -44,19 +56,61 @@ fun EcoduleApp() {
 }
 
 @Composable
-fun EcoduleAppNavigation() {
+fun EcoduleAppNavigation(
+    loginViewModel: LoginViewModel = hiltViewModel()
+) {
     // アプリ全体の状態管理
-    val appState = remember { mutableStateOf(AppState.LOGIN) }
+    val appState = remember { mutableStateOf(AppState.INITIALIZING) }
     val isGuestMode = remember { mutableStateOf(false) }
 
+    val authState by loginViewModel.authState.collectAsState(initial = AuthenticationState.Unauthenticated)
+    val uiState by loginViewModel.uiState.collectAsState()
+
+    // 認証状態に基づいてアプリ状態を更新
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthenticationState.Authenticated -> {
+                if (appState.value == AppState.INITIALIZING) {
+                    appState.value = AppState.MAIN_APP
+                    isGuestMode.value = false
+                }
+            }
+            is AuthenticationState.RefreshRequired -> {
+                // トークンリフレッシュが必要な場合の処理
+                appState.value = AppState.MAIN_APP
+                isGuestMode.value = false
+            }
+            is AuthenticationState.Unauthenticated -> {
+                if (appState.value == AppState.INITIALIZING) {
+                    appState.value = AppState.LOGIN
+                }
+            }
+        }
+    }
+
     when (appState.value) {
+        AppState.INITIALIZING -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
         AppState.LOGIN -> {
             AccountSignInScreen(
-                onLoginSuccess = {
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                onLoginSuccess = { email, password ->
                     // ログイン成功時にメインアプリへ
-                    isGuestMode.value = false
-                    appState.value = AppState.MAIN_APP
+//                    isGuestMode.value = false
+//                    appState.value = AppState.MAIN_APP
+                    loginViewModel.login(email, password)
                 },
+
+                /*
+                    ここまでAIのコードを追加
+                 */
                 onForgotPassword = {
                     // パスワード忘れ画面へ
                     appState.value = AppState.FORGOT_PASSWORD

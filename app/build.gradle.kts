@@ -72,4 +72,24 @@ dependencies {
     //Glance
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
+
+    // Jetpack DataStore
+    implementation(libs.androidx.datastore.preferences)
+
+    // Tink Encryption
+    implementation(libs.tink.android)
+
+    // Kotlinx Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }
