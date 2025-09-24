@@ -1,8 +1,10 @@
 package com.example.ecodule.ui
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Settings
@@ -12,12 +14,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
@@ -45,6 +51,17 @@ fun EcoduleApp() {
 
 @Composable
 fun EcoduleAppNavigation() {
+    val context = LocalContext.current
+    val view = LocalView.current
+    SideEffect {
+        val window = (context as? Activity)?.window
+        window?.let {
+            WindowCompat.setDecorFitsSystemWindows(it, false)
+            val insetsController = WindowCompat.getInsetsController(it, view)
+            insetsController?.isAppearanceLightStatusBars = true // これでステータスバーの文字色が黒
+        }
+    }
+
     // アプリ全体の状態管理
     val appState = remember { mutableStateOf(AppState.LOGIN) }
     val isGuestMode = remember { mutableStateOf(false) }
@@ -144,7 +161,9 @@ fun EcoduleAppContent(
     )
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
     ) {
         // メインコンテンツ
         when (selectedDestination.value) {
