@@ -37,6 +37,30 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
+    }
+
+    flavorDimensions("env")
+
+    val baseUrl = project.findProperty("BASE_URL") as? String ?: "https://ecodule.ddns.net"
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
     }
 }
 
@@ -72,4 +96,7 @@ dependencies {
     //Glance
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
+
+    // DataStore
+    implementation(libs.androidx.security.crypto)
 }
