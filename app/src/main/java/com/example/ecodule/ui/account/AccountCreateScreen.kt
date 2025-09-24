@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.R
-import com.example.ecodule.ui.account.EmailValidator
+import com.example.ecodule.ui.account.util.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
