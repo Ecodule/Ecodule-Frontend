@@ -3,6 +3,7 @@ package com.example.ecodule.di
 import android.content.Context
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.repository.datastore.DataStoreUserRepository
+import com.example.ecodule.ui.util.TokenManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,5 +21,14 @@ object AppModule {
         @ApplicationContext context: Context
     ): UserRepository {
         return DataStoreUserRepository(context)
+    }
+
+    // 以下を追加
+    @Provides
+    @Singleton
+    fun provideTokenManager(
+        @ApplicationContext context: Context
+    ): TokenManager {
+        return TokenManager(context)
     }
 }

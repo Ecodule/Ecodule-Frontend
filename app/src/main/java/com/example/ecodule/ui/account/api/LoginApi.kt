@@ -2,6 +2,8 @@ package com.example.ecodule.ui.account.api
 
 import android.util.Log
 import com.example.ecodule.BuildConfig
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.FormBody
@@ -11,85 +13,88 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 
+// 戻り値を表現するsealed classを定義
+sealed class LoginResult {
+    data class Success(
+        val id: String,
+        val accessToken: String,
+        val refreshToken: String,
+        val expiresIn: Long
+    ) : LoginResult()
+    data class Error(val message: String) : LoginResult()
+}
+
 object LoginApi {
     private val client = OkHttpClient()
 
-    fun login(
+    suspend fun login(
         email: String,
         password: String,
-        callback: (
-            success: Boolean,
-            message: String?,
-            id: String?,
-            accessToken: String?,
-            refreshToken: String?,
-            expiresIn: Long? ) -> Unit
-    ) {
-        val url = BuildConfig.BASE_URL + "/auth/login"
+    ): LoginResult {
+        return suspendCancellableCoroutine { continuation ->
+            val url = BuildConfig.BASE_URL + "/auth/login"
 
-        val formBody = FormBody.Builder()
-            .add("username", email)
-            .add("password", password)
-            .build()
+            val formBody = FormBody.Builder()
+                .add("username", email)
+                .add("password", password)
+                .build()
 
-        val request = Request.Builder()
-            .url(url)
-            .post(formBody)
-            .build()
+            val request = Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build()
 
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                // accessTokenはnullで渡す
-                callback(false, "ネットワークエラー: ${e.message}", null, null, null, null)
-                Log.d("Ecodule", e.message.toString())
-            }
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    continuation.resume(LoginResult.Error("ネットワークエラー: ${e.message}"))
+                }
 
-            override fun onResponse(call: Call, response: Response) {
-                response.use {
-                    // 失敗時
-                    if (!response.isSuccessful) {
-                        val statusCode = response.code
-                        val errorMessage = when (statusCode) {
-                            in 400..499 -> {
-                                // 400番台はクライアント側のエラー (例: ID/パスワード間違い、リクエスト不正)
-                                "メールアドレスかパスワードが間違っています。\n間違いがないかご確認ください"
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        // 失敗時
+                        if (!it.isSuccessful) {
+                            val statusCode = response.code
+                            val errorMessage = when (statusCode) {
+                                in 400..499 -> {
+                                    // 400番台はクライアント側のエラー (例: ID/パスワード間違い、リクエスト不正)
+                                    "メールアドレスかパスワードが間違っています。\n間違いがないかご確認ください"
+                                }
+                                in 500..599 -> {
+                                    // 500番台はサーバー側のエラー
+                                    "サーバーエラーが発生しました。しばらくしてからもう一度お試しください。"
+                                }
+                                else -> {
+                                    // その他のエラー
+                                    "予期せぬエラーが発生しました。 status code: $statusCode"
+                                }
                             }
-                            in 500..599 -> {
-                                // 500番台はサーバー側のエラー
-                                "サーバーエラーが発生しました。しばらくしてからもう一度お試しください。"
-                            }
-                            else -> {
-                                // その他のエラー
-                                "予期せぬエラーが発生しました。 status code: $statusCode"
-                            }
+                            Log.d("Ecodule", "Login failed with status code: $statusCode")
+
+                            return
                         }
-                        Log.d("Ecodule", "Login failed with status code: $statusCode")
-                        callback(false, errorMessage, null, null, null, null)
-                        return
-                    }
 
-                    // レスポンスボディからJSONをパースしてトークンを取得
-                    val responseBody = it.body?.string()
-                    if (responseBody != null) {
-                        try {
-                            val json = JSONObject(responseBody)
-                            val id = json.getString("id")
-                            val accessToken = json.getString("access_token")
-                            val refreshToken = json.getString("refresh_token")
-                            val expiresIn = json.getString("expires_in")
-
-                            // 成功時にトークンを渡す
-                            callback(true, "ログインに成功しました。", id, accessToken, refreshToken, expiresIn.toLong())
-                        } catch (e: Exception) {
-                            // JSONのパース失敗時
-                            callback(false, "レスポンスの解析に失敗しました。",null, null, null, null)
+                        // レスポンスボディからJSONをパースしてトークンを取得
+                        val responseBody = it.body?.string()
+                        if (responseBody != null) {
+                            try {
+                                val json = JSONObject(responseBody)
+                                val result = LoginResult.Success(
+                                    id = json.getString("id"),
+                                    accessToken = json.getString("access_token"),
+                                    refreshToken = json.getString("refresh_token"),
+                                    expiresIn = json.getLong("expires_in")
+                                )
+                                continuation.resume(result)
+                            } catch (e: Exception) {
+                                continuation.resume(LoginResult.Error("レスポンスの解析に失敗しました。"))
+                            }
+                        } else {
+                            continuation.resume(LoginResult.Error("レスポンスボディが空です。"))
                         }
-                    } else {
-                        // レスポンスボディが空の場合
-                        callback(false, "レスポンスが空です。",null, null, null, null)
                     }
                 }
-            }
-        })
+            })
+        }
+
     }
 }
