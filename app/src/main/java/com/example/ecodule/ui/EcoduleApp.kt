@@ -16,16 +16,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
+
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.model.UserViewModel
+
 import com.example.ecodule.ui.account.AccountCreateScreen
 import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+
 import java.time.LocalDate
 
 
@@ -130,6 +135,7 @@ fun EcoduleAppContent(
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
+    val userViewModel = remember { UserViewModel() }
     val editingEventId = remember { mutableStateOf<String?>(null) }
 
     val today = LocalDate.now()
@@ -156,7 +162,8 @@ fun EcoduleAppContent(
                     onEventClick = { eventId ->
                         editingEventId.value = eventId
                         selectedDestination.value = EcoduleRoute.TASKS
-                    }
+                    },
+                    userViewModel = userViewModel,
                 )
             }
             EcoduleRoute.TASKS -> {

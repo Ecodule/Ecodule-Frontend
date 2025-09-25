@@ -1,5 +1,7 @@
 package com.example.ecodule.ui.account
 
+import android.app.Application
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -25,16 +28,23 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.R
+import com.example.ecodule.ui.account.api.LoginApi
+import com.example.ecodule.ui.account.util.EmailValidator
+import com.example.ecodule.ui.account.model.LoginViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSignInScreen(
+    // ViewModelを引数として受け取る
+    viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
     onGoogleSignIn: () -> Unit,
-    onGuestMode: () -> Unit
+    onGuestMode: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -48,6 +58,16 @@ fun AccountSignInScreen(
 
     // ログインボタンの有効性をチェック
     val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
+
+    // ログインエラーメッセージ
+    var loginError = viewModel.loginError
+
+    // ログイン成功イベントを監視し、画面遷移を実行
+    LaunchedEffect(Unit) {
+        viewModel.loginSuccessEvent.collect {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -169,15 +189,7 @@ fun AccountSignInScreen(
         Button(
             onClick = {
                 if (isLoginEnabled) {
-                    // ログインAPI通信
-                    LoginApi.login(email, password) { success, message ->
-                        if (success) {
-                            onLoginSuccess()
-                        } else {
-                            // エラーメッセージ表示用のState（例: loginError）を作って表示する
-                            // 例: loginError = message
-                        }
-                    }
+                    viewModel.login(email, password)
                 }
             },
             modifier = Modifier
@@ -190,11 +202,31 @@ fun AccountSignInScreen(
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
+            if (viewModel.isLoading.value == false) {
+                Text(
+                    "ログイン",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            } else {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+        /* ログインエラーメッセージ */
+
+        if (loginError.value?.isNotEmpty() == true) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "ログイン",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                text = loginError.value ?: "",
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 

@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.CalendarContentui.CalendarContent.screen
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 //import com.example.ecodule.ui.AddTaskContent
 import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
 import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
@@ -39,6 +41,8 @@ import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
 import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth // <- 追加
 import com.example.ecodule.ui.EcoduleRoute
+import com.example.ecodule.ui.account.model.UserViewModel
+import com.example.ecodule.ui.util.TokenManager
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
@@ -53,7 +57,8 @@ fun CalendarContentScreen(
     initialYearMonth: YearMonth = YearMonth.now(),
     selectedDestination: MutableState<String>,
     events: List<CalendarEvent> = emptyList(),
-    onEventClick: (String) -> Unit = {}
+    onEventClick: (String) -> Unit = {},
+    userViewModel: UserViewModel
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -106,6 +111,9 @@ fun CalendarContentScreen(
     val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
     val nextMonth = yearMonth.plusMonths(1)
     val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
+
+    val user = userViewModel.user.collectAsState().value
+    Log.d("CalendarContentScreen", "Current user: $user")
 
     // 表示範囲の予定をフィルタリング（LocalDateTimeベース）
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
@@ -440,5 +448,6 @@ fun CalendarModeDialog(
 @Composable
 fun CalendarContentPreview() {
     val dummySelectedDestination = remember { mutableStateOf("Calendar") }
-    CalendarContentScreen(selectedDestination = dummySelectedDestination)
+    val dummyUserViewModel: UserViewModel = remember { UserViewModel() }
+    CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
 }
