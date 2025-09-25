@@ -1,6 +1,6 @@
 package com.example.ecodule.ui.CalendarContentui.CalendarContent.screen
 
-//import com.example.ecodule.ui.AddTaskContent
+//import com.example.ecodule.ui.CalendarContent.AddTaskContent
 import android.app.Application
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -58,7 +58,7 @@ import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.EcoduleRoute
-import com.example.ecodule.ui.UserViewModel
+import com.example.ecodule.ui.sharedViewModel.UserViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay

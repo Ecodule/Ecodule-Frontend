@@ -1,6 +1,5 @@
 package com.example.ecodule.ui
 
-import android.app.Application
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,11 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContent.AddTaskContent
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.example.ecodule.ui.sharedViewModel.UserViewModel
+import com.example.ecodule.ui.statistics.StatisticsContent
+import com.example.ecodule.ui.taskListContent.TaskListContent
 import java.time.LocalDate
 
 @Composable
@@ -35,7 +39,7 @@ fun EcoduleAppNavigation(
     val context = LocalContext.current
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
-    val userViewModel = remember { UserViewModel(context.applicationContext as Application) }
+    val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val editingEventId = remember { mutableStateOf<String?>(null) }
 
     val today = LocalDate.now()
