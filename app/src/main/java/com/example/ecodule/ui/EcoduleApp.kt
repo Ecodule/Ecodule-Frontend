@@ -1,8 +1,10 @@
 package com.example.ecodule.ui
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Settings
@@ -12,15 +14,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.AccountCreateScreen
+import com.example.ecodule.ui.account.AccountForgotPasswordScreen
+import com.example.ecodule.ui.account.AccountSignInScreen
+import com.example.ecodule.ui.settings.SettingsContentScreen
+import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
 import java.time.LocalDate
 
 
@@ -40,6 +51,17 @@ fun EcoduleApp() {
 
 @Composable
 fun EcoduleAppNavigation() {
+    val context = LocalContext.current
+    val view = LocalView.current
+    SideEffect {
+        val window = (context as? Activity)?.window
+        window?.let {
+            WindowCompat.setDecorFitsSystemWindows(it, false)
+            val insetsController = WindowCompat.getInsetsController(it, view)
+            insetsController?.isAppearanceLightStatusBars = true // これでステータスバーの文字色が黒
+        }
+    }
+
     // アプリ全体の状態管理
     val appState = remember { mutableStateOf(AppState.LOGIN) }
     val isGuestMode = remember { mutableStateOf(false) }
@@ -83,22 +105,27 @@ fun EcoduleAppNavigation() {
             )
         }
         AppState.SIGNUP -> {
-            // サインアップ画面（実装が必要）
-            AccountSignUpScreen(
-                onSignUpSuccess = {
-                    // サインアップ成功時にメインアプリへ
+            // アカウント作成画面
+            AccountCreateScreen(
+                onCreateSuccess = {
+                    // アカウント作成成功時にメインアプリへ
                     isGuestMode.value = false
                     appState.value = AppState.MAIN_APP
                 },
                 onBackToLogin = {
                     // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
+                },
+                onGoogleCreate = {
+                    // Googleアカウント作成成功時にメインアプリへ
+                    isGuestMode.value = false
+                    appState.value = AppState.MAIN_APP
                 }
             )
         }
         AppState.FORGOT_PASSWORD -> {
-            // パスワード忘れ画面（実装が必要）
-            ForgotPasswordScreen(
+            // パスワード忘れ画面
+            AccountForgotPasswordScreen(
                 onBackToLogin = {
                     // ログイン画面へ戻る
                     appState.value = AppState.LOGIN
@@ -122,16 +149,23 @@ fun EcoduleAppContent(
     val taskViewModel = remember { TaskViewModel() }
     val editingEventId = remember { mutableStateOf<String?>(null) }
 
-    // みやそう変更点
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
     val todayDay: Int = today.dayOfMonth
-    val todayEvents = taskViewModel.events.filter { it.day == todayDay && it.month == todayMonth }
+    val todayEvents = taskViewModel.events.filter { it.startDate.dayOfMonth == todayDay && it.startDate.monthValue == todayMonth }
+
+    // ボトムナビゲーションバーを表示しない画面のリスト
+    val hideBottomBarRoutes = listOf(
+        EcoduleRoute.SETTINGSDETAILS
+        // 将来的に他の詳細画面も追加可能
+    )
 
     Column(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
     ) {
+        // メインコンテンツ
         when (selectedDestination.value) {
             EcoduleRoute.CALENDAR -> {
                 CalendarContentScreen(
@@ -156,69 +190,62 @@ fun EcoduleAppContent(
             EcoduleRoute.TASKSLIST -> {
                 TaskListContent(
                     modifier = Modifier.weight(1f),
-                    // みやそう変更点
-                    hasTasks = todayEvents.isNotEmpty()
+                    todayEvents = todayEvents
                 )
             }
             EcoduleRoute.STATISTICS -> {
                 StatisticsContent(modifier = Modifier.weight(1f))
             }
             EcoduleRoute.SETTINGS -> {
-                SettingsContent(modifier = Modifier.weight(1f))
-            }
-        }
-
-        NavigationBar(modifier = Modifier.fillMaxWidth()) {
-            TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
-                NavigationBarItem(
-                    selected = selectedDestination.value == replyDestination.route,
-                    onClick = {
-                        selectedDestination.value = replyDestination.route
-                        if (replyDestination.route != EcoduleRoute.TASKS) {
-                            editingEventId.value = null
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = replyDestination.selectedIcon,
-                            contentDescription = stringResource(id = replyDestination.iconTextId)
-                        )
+                SettingsContentScreen(
+                    modifier = Modifier.weight(1f),
+                    onNavigateUserName = { /* 画面遷移: ユーザー名 */ },
+                    onNavigateTimeZone = { /* 画面遷移: タイムゾーン */ },
+                    onNavigateNotifications = { /* 画面遷移: 通知 */ },
+                    onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
+                    onNavigateDetail = {
+                        selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
                     }
                 )
             }
+            EcoduleRoute.SETTINGSDETAILS -> {
+                SettingsDetailsScreen(
+                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.weight(1f)
+                    },
+                    onBackToSettings = {
+                        selectedDestination.value = EcoduleRoute.SETTINGS
+                    },
+                    onNavigateLicense = { /* ライセンス画面への遷移 */ },
+                    onNavigateTerms = { /* 利用規約画面への遷移 */ }
+                )
+            }
         }
-    }
-}
 
-// 仮のサインアップ画面（実装が必要）
-@Composable
-fun AccountSignUpScreen(
-    onSignUpSuccess: () -> Unit,
-    onBackToLogin: () -> Unit
-) {
-    // TODO: サインアップ画面の実装
-    // 今は簡単なプレースホルダー
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // サインアップ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
-    }
-}
-
-// 仮のパスワード忘れ画面（実装が必要）
-@Composable
-fun ForgotPasswordScreen(
-    onBackToLogin: () -> Unit,
-    onPasswordResetSent: () -> Unit
-) {
-    // TODO: パスワード忘れ画面の実装
-    // 今は簡単なプレースホルダー
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // パスワード忘れ画面の実装はファイルで分ける
-        // 現在はonBackToLogin()を呼び出すボタンなどを配置
+        // ナビゲーションバー（特定の画面では非表示）
+        if (!hideBottomBarRoutes.contains(selectedDestination.value)) {
+            NavigationBar(modifier = Modifier.fillMaxWidth()) {
+                TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
+                    NavigationBarItem(
+                        selected = selectedDestination.value == replyDestination.route,
+                        onClick = {
+                            selectedDestination.value = replyDestination.route
+                            if (replyDestination.route != EcoduleRoute.TASKS) {
+                                editingEventId.value = null
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = replyDestination.selectedIcon,
+                                contentDescription = stringResource(id = replyDestination.iconTextId)
+                            )
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -226,10 +253,15 @@ object EcoduleRoute {
     const val CALENDAR = "Calendar"
     const val TASKS = "Tasks"
     const val STATISTICS = "Statistics"
-    const val SETTINGS = "Settings"
     const val TASKSLIST = "TasksList"
-}
+    const val SETTINGS = "Settings"
+    const val SETTINGSDETAILS = "SettingsDetails" // 新しく追加
 
+    // 将来的に他の詳細画面も追加可能
+    // const val SETTINGSUSERNAME = "SettingsUserName"
+    // const val SETTINGSTIMEZONE = "SettingsTimeZone"
+    // const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
+}
 data class EcoduleTopLevelDestination(
     val route: String,
     val selectedIcon: ImageVector,

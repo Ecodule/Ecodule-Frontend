@@ -46,7 +46,7 @@ fun ScrollableDayTimeView(
 
     // その日の予定をフィルタ
     val dayEvents = events.filter {
-        it.day == day.dayOfMonth && it.month == day.monthValue
+        it.startDate.dayOfMonth == day.dayOfMonth && it.startDate.monthValue == day.monthValue
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -110,20 +110,20 @@ fun ScrollableDayTimeView(
                             ) {
                                 // この時間の予定をフィルタ
                                 val hourEvents = dayEvents.filter { event ->
-                                    event.startHour == hour ||
-                                            (event.startHour != null && event.endHour != null &&
-                                                    hour >= event.startHour && hour < event.endHour)
+                                    event.startDate.hour == hour ||
+                                            (event.startDate.hour != null && event.endDate.hour != null &&
+                                                    hour >= event.startDate.hour && hour < event.endDate.hour)
                                 }
 
                                 // 予定を表示
                                 hourEvents.forEachIndexed { index, event ->
-                                    val eventHeight = if (event.startHour != null && event.endHour != null) {
-                                        ((event.endHour - event.startHour) * 60).dp
+                                    val eventHeight = if (event.startDate.hour != null && event.endDate.hour != null) {
+                                        ((event.endDate.hour - event.startDate.hour) * 60).dp
                                     } else {
                                         50.dp
                                     }
 
-                                    val topOffset = if (event.startHour == hour) {
+                                    val topOffset = if (event.startDate.hour == hour) {
                                         0.dp
                                     } else {
                                         0.dp
@@ -152,9 +152,9 @@ fun ScrollableDayTimeView(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp
                                             )
-                                            if (event.startHour != null && event.endHour != null) {
+                                            if (event.startDate.hour != null && event.endDate.hour != null) {
                                                 Text(
-                                                    text = "${event.startHour}:00 - ${event.endHour}:00",
+                                                    text = "${event.startDate.hour}:00 - ${event.endDate.hour}:00",
                                                     fontSize = 12.sp,
                                                     color = Color.White.copy(alpha = 0.9f)
                                                 )

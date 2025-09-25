@@ -1,8 +1,7 @@
-package com.example.ecodule.ui
+package com.example.ecodule.ui.account
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,17 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +41,10 @@ fun AccountSignInScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var emailFocused by remember { mutableStateOf(false) }
     var passwordFocused by remember { mutableStateOf(false) }
+
+    // メールアドレス検証
+    val isValidEmail = EmailValidator.isValidEmailForSignup(email)
+    val showEmailError = email.isNotBlank() && !isValidEmail
 
     // ログインボタンの有効性をチェック
     val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
@@ -81,14 +82,31 @@ fun AccountSignInScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { emailFocused = it.isFocused },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF7CB342),
-                unfocusedBorderColor = Color.LightGray,
+                focusedBorderColor = if (showEmailError) Color.Red else Color(0xFF7CB342),
+                unfocusedBorderColor = if (showEmailError) Color.Red else Color.LightGray,
                 cursorColor = Color(0xFF7CB342)
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            isError = showEmailError
         )
+
+        // メールアドレスエラーメッセージ
+        if (showEmailError) {
+            Text(
+                text = "有効なメールアドレスではありません",
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -110,7 +128,11 @@ fun AccountSignInScreen(
             } else {
                 CustomPasswordVisualTransformation()
             },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            singleLine = true,
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
@@ -147,7 +169,15 @@ fun AccountSignInScreen(
         Button(
             onClick = {
                 if (isLoginEnabled) {
-                    onLoginSuccess()
+                    // ログインAPI通信
+                    LoginApi.login(email, password) { success, message ->
+                        if (success) {
+                            onLoginSuccess()
+                        } else {
+                            // エラーメッセージ表示用のState（例: loginError）を作って表示する
+                            // 例: loginError = message
+                        }
+                    }
                 }
             },
             modifier = Modifier

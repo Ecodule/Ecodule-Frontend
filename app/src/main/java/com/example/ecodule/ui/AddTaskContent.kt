@@ -40,7 +40,6 @@ fun DatePickerTextButton(
     val todayLocalDate = LocalDate.now()
     val currentYear = todayLocalDate.year
 
-    // 日付表示整形: 年を表示するかどうか
     val displayDate: String = if (dateText.isNotBlank()) {
         val parts = dateText.split("/")
         if (parts.size == 3) {
@@ -174,6 +173,7 @@ fun AddTaskContent(
     val sdfDateTime = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
     val sdfDate = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
 
+    var showDeleteDialog by remember { mutableStateOf(false) } // 削除確認ダイアログの状態
     val isEditing = editingEventId != null
     val titleText = if (isEditing) "タスクを編集" else "タスクを追加"
     val buttonText = if (isEditing) "更新" else "追加"
@@ -185,7 +185,7 @@ fun AddTaskContent(
         "買い物" to Color(0xFFC9E4D7)
     )
 
-    // 編集時のデータ読み込み（保存した時刻を初期化に使う）
+    // 編集時のデータ読み込み
     LaunchedEffect(editingEventId) {
         if (editingEventId != null) {
             val event = taskViewModel.getEventById(editingEventId)
@@ -193,7 +193,6 @@ fun AddTaskContent(
                 title = it.label
                 category = it.category
                 allDay = it.allDay
-                // 型変換：LocalDateTime → Date
                 it.startDate?.let { date ->
                     val actualDate = when (date) {
                         is LocalDateTime -> Date.from(date.atZone(ZoneId.systemDefault()).toInstant())
@@ -235,7 +234,6 @@ fun AddTaskContent(
         }
     }
 
-    // デフォルト値セット（未選択なら今日・開始07:00/終了08:00）
     val actualStartDate = startDateText.ifBlank { todayString }
     val actualStartTime = startTimeText.ifBlank { "07:00" }
     val actualEndDate = endDateText.ifBlank { todayString }
@@ -281,9 +279,7 @@ fun AddTaskContent(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = {
-                    editingEventId?.let { taskViewModel.deleteEvent(it) }
-                    onEditComplete()
-                    selectedDestination.value = EcoduleRoute.CALENDAR
+                    showDeleteDialog = true // ダイアログを表示
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red)
                 }
@@ -323,7 +319,6 @@ fun AddTaskContent(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // 開始
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -352,7 +347,6 @@ fun AddTaskContent(
                     )
                 }
             }
-            // 終了
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -399,21 +393,23 @@ fun AddTaskContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("繰り返し", modifier = Modifier.weight(1f))
-            Button(onClick = { repeatMenuExpanded = true }) {
-                Text(repeatOption)
-            }
-            DropdownMenu(
-                expanded = repeatMenuExpanded,
-                onDismissRequest = { repeatMenuExpanded = false }
-            ) {
-                listOf("しない", "毎日", "毎週", "毎月", "カスタム").forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            repeatOption = option
-                            repeatMenuExpanded = false
-                        }
-                    )
+            Box {
+                Button(onClick = { repeatMenuExpanded = true }) {
+                    Text(repeatOption)
+                }
+                DropdownMenu(
+                    expanded = repeatMenuExpanded,
+                    onDismissRequest = { repeatMenuExpanded = false }
+                ) {
+                    listOf("しない", "毎日", "毎週", "毎月", "毎年").forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                repeatOption = option
+                                repeatMenuExpanded = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -462,16 +458,30 @@ fun AddTaskContent(
             Button(
                 onClick = {
                     if (!canSave) return@Button
+
                     if (isEditing && editingEventId != null) {
-                        taskViewModel.updateEvent(
-                            editingEventId,
-                            title, category, description, allDay,
-                            startDate, endDate, repeatOption, memo, notificationMinutes
-                        )
+                        val event = taskViewModel.getEventById(editingEventId)
+                        if (event?.repeatGroupId != null) {
+                            // 繰り返しグループ全体編集
+                            taskViewModel.updateEventsByRepeatGroup(
+                                event.repeatGroupId,
+                                title, category, description, allDay,
+                                startDate, endDate, repeatOption, memo, notificationMinutes
+                            )
+                        } else {
+                            // 単体編集
+                            taskViewModel.updateEvent(
+                                editingEventId,
+                                title, category, description, allDay,
+                                startDate, endDate, repeatOption, memo, notificationMinutes
+                            )
+                        }
                     } else {
+                        // 追加時（1件だけ追加）
                         taskViewModel.addEvent(
                             title, category, description, allDay,
-                            startDate, endDate, repeatOption, memo, notificationMinutes
+                            startDate, endDate, repeatOption, memo, notificationMinutes,
+                            repeatGroupId = null
                         )
                     }
 
@@ -483,6 +493,34 @@ fun AddTaskContent(
                 Text(buttonText)
             }
         }
+    }
+
+    // 削除確認ダイアログ
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("予定を削除") },
+            text = { Text("この予定を削除しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        editingEventId?.let { taskViewModel.deleteEvent(it) }
+                        showDeleteDialog = false
+                        onEditComplete()
+                        selectedDestination.value = EcoduleRoute.CALENDAR
+                    }
+                ) {
+                    Text("削除", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("キャンセル")
+                }
+            }
+        )
     }
 }
 

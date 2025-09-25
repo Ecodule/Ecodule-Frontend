@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.ecodule.ui
+package com.example.ecodule.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

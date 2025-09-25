@@ -1,56 +1,75 @@
 package com.example.ecodule.ui
 
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlin.math.roundToInt
+
+// カテゴリごとの色定義
+val CategoryColorMap = mapOf(
+    "ゴミ出し" to Color(0xFFB3E6FF),
+    "通勤/通学" to Color(0xFFFFD2C5),
+    "外出" to Color(0xFFE4EFCF),
+    "買い物" to Color(0xFFC9E4D7)
+)
+
+/**
+ * 背景色を暗く変換するヘルパー関数
+ */
+fun darkenColor(color: Color, factor: Float = 0.6f): Color {
+    // factor: 0.0 = 真っ黒, 1.0 = 変化なし
+    val r = (color.red * factor).coerceIn(0f, 1f)
+    val g = (color.green * factor).coerceIn(0f, 1f)
+    val b = (color.blue * factor).coerceIn(0f, 1f)
+    return Color(r, g, b, color.alpha)
+}
 
 @Composable
 fun TaskListContent(
-    hasTasks: Boolean,
-    modifier: Modifier = Modifier
+    todayEvents: List<CalendarEvent>,
+    modifier: Modifier = Modifier,
+    viewModel: TaskCheckViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    if (hasTasks) {
-        val taskLabels = listOf(
-            stringResource(R.string.task_turn_off_electricity),
-            stringResource(R.string.task_walk_transportation),
-            stringResource(R.string.task_use_my_bag),
-            stringResource(R.string.task_make_shopping_list),
-        )
+    if (todayEvents.isNotEmpty()) {
+        val checkedStates by viewModel.checkedStates.collectAsState()
 
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 6.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 画像の例にならって同じセクションを複数回表示
-            items(1) {
-                TaskSection(
-                    title = stringResource(R.string.section_title_shopping),
-                    items = taskLabels
+            items(todayEvents.size) { index ->
+                val event = todayEvents[index]
+                val ecoActions = getEcoActionsForLabel(event.category)
+                val bgColor = CategoryColorMap[event.category] ?: Color(0xFFE0E0E0) // デフォルトグレー
+
+                TaskSectionWithTitleAndTime(
+                    event = event,
+                    items = ecoActions,
+                    checkedStates = checkedStates,
+                    backgroundColor = bgColor, // 色を渡す
+                    onCheckedChange = { label, checked ->
+                        val key = "${event.label}-${label}-${event.startDate.hour}"
+                        viewModel.setChecked(key, checked)
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -62,7 +81,7 @@ fun TaskListContent(
         ) {
             Text(
                 modifier = Modifier.padding(8.dp),
-                text = stringResource(R.string.TaskListScreenString_noTasks),
+                text = "今日のタスクはありません", // 必要ならstringResourceに変更
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary
@@ -71,37 +90,104 @@ fun TaskListContent(
     }
 }
 
+class TaskCheckViewModel : androidx.lifecycle.ViewModel() {
+    private val _checkedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val checkedStates: StateFlow<Map<String, Boolean>> = _checkedStates
+
+    fun setChecked(key: String, checked: Boolean) {
+        _checkedStates.value = _checkedStates.value.toMutableMap().apply {
+            put(key, checked)
+        }
+    }
+}
+
 @Composable
-private fun TaskSection(
-    title: String,
+private fun TaskSectionWithTitleAndTime(
+    event: CalendarEvent,
     items: List<String>,
+    checkedStates: Map<String, Boolean>,
+    backgroundColor: Color, // 追加
+    onCheckedChange: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(8.dp))
+    // Cardで角丸背景
+    Card(
+        modifier = modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = event.label,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            if (event.startDate.hour != null && event.endDate.hour != null) {
+                Text(
+                    text = "${event.startDate.hour}:00 ～ ${event.endDate.hour}:00",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Spacer(Modifier.height(0.dp)) // 少し余白
 
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            items.forEach { label ->
-                var checked by remember { mutableStateOf(false) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = checked, onCheckedChange = { checked = it })
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+            val checkboxColor = darkenColor(backgroundColor, 0.6f)
+            Column(verticalArrangement = Arrangement.spacedBy(-(20).dp)) {
+                items.forEach { label ->
+                    val key = "${event.label}-${label}-${event.startDate.hour}"
+                    val checked = checkedStates[key] ?: false
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = checked,
+                            onCheckedChange = { onCheckedChange(label, it) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = checkboxColor,
+                                uncheckedColor = checkboxColor,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun TaskListContentPreview() {
-    TaskListContent(hasTasks = true)
+fun getEcoActionsForLabel(category: String): List<String> {
+    val normalized = category.trim()
+    return when (normalized) {
+        "買い物" -> listOf(
+            "マイバッグを持参する",
+            "買い物リストを事前に作る",
+            "地元の野菜・商品を選ぶ",
+            "レジ袋を断る"
+        )
+        "外出" -> listOf(
+            "徒歩や自転車で移動する",
+            "公共交通機関を利用する",
+            "エコボトルを持参する",
+            "ゴミは持ち帰る"
+        )
+        "ゴミ出し" -> listOf(
+            "ゴミを分別する",
+            "生ゴミはコンポスト利用",
+            "ゴミ袋を再利用する",
+            "ゴミ出しは決められた時間に行う"
+        )
+        "通勤/通学" -> listOf(
+            "徒歩や自転車で通う",
+            "エコバッグ・水筒を持参する",
+            "公共交通機関を使う",
+            "職場・学校で省エネを意識する"
+        )
+        else -> listOf(
+            "未設定の環境行動です",
+            "ラベルを確認してください",
+        )
+    }
 }
