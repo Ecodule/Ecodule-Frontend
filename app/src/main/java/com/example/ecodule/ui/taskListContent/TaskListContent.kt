@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,6 +29,26 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.math.roundToInt
+
+// カテゴリごとの色定義
+val CategoryColorMap = mapOf(
+    "ゴミ出し" to Color(0xFFB3E6FF),
+    "通勤/通学" to Color(0xFFFFD2C5),
+    "外出" to Color(0xFFE4EFCF),
+    "買い物" to Color(0xFFC9E4D7)
+)
+
+/**
+ * 背景色を暗く変換するヘルパー関数
+ */
+fun darkenColor(color: Color, factor: Float = 0.6f): Color {
+    // factor: 0.0 = 真っ黒, 1.0 = 変化なし
+    val r = (color.red * factor).coerceIn(0f, 1f)
+    val g = (color.green * factor).coerceIn(0f, 1f)
+    val b = (color.blue * factor).coerceIn(0f, 1f)
+    return Color(r, g, b, color.alpha)
+}
 
 @Composable
 fun TaskListContent(
@@ -43,14 +68,18 @@ fun TaskListContent(
             items(todayEvents.size) { index ->
                 val event = todayEvents[index]
                 val ecoActions = getEcoActionsForLabel(event.category)
+                val bgColor = CategoryColorMap[event.category] ?: Color(0xFFE0E0E0) // デフォルトグレー
+
                 TaskSectionWithTitleAndTime(
                     event = event,
                     items = ecoActions,
                     checkedStates = checkedStates,
+                    backgroundColor = bgColor, // 色を渡す
                     onCheckedChange = { label, checked ->
                         val key = "${event.label}-${label}-${event.startDate.hour}"
                         viewModel.setChecked(key, checked)
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -87,34 +116,52 @@ private fun TaskSectionWithTitleAndTime(
     event: CalendarEvent,
     items: List<String>,
     checkedStates: Map<String, Boolean>,
+    backgroundColor: Color, // 追加
     onCheckedChange: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = event.label,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        if (event.startDate.hour != null && event.endDate.hour != null) {
+    // Cardで角丸背景
+    Card(
+        modifier = modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "${event.startDate.hour}:00 ～ ${event.endDate.hour}:00",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                text = event.label,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
-        }
-        Spacer(Modifier.height(0.dp))
+            if (event.startDate.hour != null && event.endDate.hour != null) {
+                Text(
+                    text = "${event.startDate.hour}:00 ～ ${event.endDate.hour}:00",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Spacer(Modifier.height(0.dp)) // 少し余白
 
-        Column(verticalArrangement = Arrangement.spacedBy(-(15).dp)) {
-            items.forEach { label ->
-                val key = "${event.label}-${label}-${event.startDate.hour}"
-                val checked = checkedStates[key] ?: false
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = checked, onCheckedChange = { onCheckedChange(label, it) })
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+            val checkboxColor = darkenColor(backgroundColor, 0.6f)
+            Column(verticalArrangement = Arrangement.spacedBy(-(20).dp)) {
+                items.forEach { label ->
+                    val key = "${event.label}-${label}-${event.startDate.hour}"
+                    val checked = checkedStates[key] ?: false
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = checked,
+                            onCheckedChange = { onCheckedChange(label, it) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = checkboxColor,
+                                uncheckedColor = checkboxColor,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
         }
