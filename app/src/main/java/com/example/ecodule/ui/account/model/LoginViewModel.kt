@@ -1,20 +1,24 @@
 package com.example.ecodule.ui.account.model
 
-import android.app.Application
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.ui.account.api.LoginApi
+import com.example.ecodule.ui.account.api.LoginResult
+import com.example.ecodule.ui.sharedViewModel.UserViewModel
 import com.example.ecodule.ui.util.TokenManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
-
-    // TokenManagerをViewModel内で初期化
-    private val tokenManager = TokenManager(application.applicationContext)
-
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val tokenManager: TokenManager,
+    private val userRepository: UserRepository,
+) : ViewModel() {
     // UIの状態を管理するState
     val loginError = mutableStateOf<String?>(null)
     val isLoading = mutableStateOf(false)
@@ -30,22 +34,21 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             isLoading.value = true // ローディング開始
             loginError.value = null
 
-            LoginApi.login(email, password) { success, message, id, accessToken, refreshToken, expiresIn ->
-                if (success && accessToken != null && refreshToken != null && expiresIn != null && id != null) {
-                    // 成功：トークンを保存
-                    tokenManager.saveTokens(accessToken, refreshToken, expiresIn)
-                    // ユーザー情報を保存
-//                    UserViewModel().saveUser(id = id, email = email) // ID
-                    // 成功イベントを発行
-                    viewModelScope.launch {
-                        _loginSuccessEvent.emit(Unit)
-                    }
-                } else {
-                    // 失敗：エラーメッセージを更新
-                    loginError.value = message
+            when (val result = LoginApi.login(email, password)) {
+                is LoginResult.Success -> {
+                    // 成功：トークンとユーザー情報を保存
+                    tokenManager.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
+                    // ★ これでsuspend関数をコルーチン内から安全に呼び出せる
+                    userRepository.saveUser(id = result.id, email = email)
+
+                    _loginSuccessEvent.emit(Unit)
                 }
-                isLoading.value = false // ローディング終了
+                is LoginResult.Error -> {
+                    // 失敗：エラーメッセージを更新
+                    loginError.value = result.message
+                }
             }
+
         }
     }
 }
