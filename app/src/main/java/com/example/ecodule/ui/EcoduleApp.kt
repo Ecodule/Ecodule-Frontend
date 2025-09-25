@@ -11,9 +11,11 @@ import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -26,8 +28,12 @@ import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
+import com.example.ecodule.ui.theme.BottomNavBackground
+import com.example.ecodule.ui.theme.BottomNavSelectedBackground
+import com.example.ecodule.ui.theme.BottomNavSelectedIcon
+import com.example.ecodule.ui.theme.BottomNavUnselectedIcon
 import java.time.LocalDate
-
 
 // アプリの状態を定義
 enum class AppState {
@@ -139,7 +145,8 @@ fun EcoduleAppContent(
 
     // ボトムナビゲーションバーを表示しない画面のリスト
     val hideBottomBarRoutes = listOf(
-        EcoduleRoute.SETTINGSDETAILS
+        EcoduleRoute.SETTINGSDETAILS,
+        EcoduleRoute.SETTINGSNOTIFICATIONS
         // 将来的に他の詳細画面も追加可能
     )
 
@@ -182,7 +189,9 @@ fun EcoduleAppContent(
                     modifier = Modifier.weight(1f),
                     onNavigateUserName = { /* 画面遷移: ユーザー名 */ },
                     onNavigateTimeZone = { /* 画面遷移: タイムゾーン */ },
-                    onNavigateNotifications = { /* 画面遷移: 通知 */ },
+                    onNavigateNotifications = {
+                        selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS
+                    },
                     onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
                     onNavigateDetail = {
                         selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
@@ -203,11 +212,26 @@ fun EcoduleAppContent(
                     onNavigateTerms = { /* 利用規約画面への遷移 */ }
                 )
             }
+            EcoduleRoute.SETTINGSNOTIFICATIONS -> {
+                SettingNotificationsScreen(
+                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.weight(1f)
+                    },
+                    onBackToSettings = {
+                        selectedDestination.value = EcoduleRoute.SETTINGS
+                    }
+                )
+            }
         }
 
         // ナビゲーションバー（特定の画面では非表示）
         if (!hideBottomBarRoutes.contains(selectedDestination.value)) {
-            NavigationBar(modifier = Modifier.fillMaxWidth()) {
+            NavigationBar(
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = BottomNavBackground
+            ) {
                 TOP_LEVEL_DESTINATIONS.forEach { replyDestination ->
                     NavigationBarItem(
                         selected = selectedDestination.value == replyDestination.route,
@@ -222,7 +246,12 @@ fun EcoduleAppContent(
                                 imageVector = replyDestination.selectedIcon,
                                 contentDescription = stringResource(id = replyDestination.iconTextId)
                             )
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BottomNavSelectedIcon, // 選択時のアイコン色
+                            unselectedIconColor = BottomNavUnselectedIcon, // 非選択時のアイコン色
+                            indicatorColor = BottomNavSelectedBackground // 選択時の背景色（インジケーター）
+                        )
                     )
                 }
             }
@@ -236,13 +265,14 @@ object EcoduleRoute {
     const val STATISTICS = "Statistics"
     const val TASKSLIST = "TasksList"
     const val SETTINGS = "Settings"
-    const val SETTINGSDETAILS = "SettingsDetails" // 新しく追加
+    const val SETTINGSDETAILS = "SettingsDetails"
+    const val SETTINGSNOTIFICATIONS = "SettingsNotifications" // 新しく追加
 
     // 将来的に他の詳細画面も追加可能
     // const val SETTINGSUSERNAME = "SettingsUserName"
     // const val SETTINGSTIMEZONE = "SettingsTimeZone"
-    // const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
 }
+
 data class EcoduleTopLevelDestination(
     val route: String,
     val selectedIcon: ImageVector,
