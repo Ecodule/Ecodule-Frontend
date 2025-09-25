@@ -1,15 +1,8 @@
-package com.example.ecodule.ui.sharedViewModel
+package com.example.ecodule.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.ecodule.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 /**
@@ -17,11 +10,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val repo: UserRepository
+    private val userRepo: UserRepository,
 ) : ViewModel() {
 
     // ★ UserRepositoryのuser StateFlowをそのままUIに公開する
-    val user = repo.user
+    val user = userRepo.user
 
     // 便利なゲッタープロパティ
     val currentUserId: String?

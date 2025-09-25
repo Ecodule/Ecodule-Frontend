@@ -25,7 +25,7 @@ import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
-import com.example.ecodule.ui.sharedViewModel.UserViewModel
+import com.example.ecodule.ui.UserViewModel
 import com.example.ecodule.ui.statistics.StatisticsContent
 import com.example.ecodule.ui.taskListContent.TaskListContent
 import java.time.LocalDate

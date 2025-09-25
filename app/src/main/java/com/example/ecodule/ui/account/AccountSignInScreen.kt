@@ -55,7 +55,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
 import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
-import com.example.ecodule.ui.sharedViewModel.UserViewModel
+import com.example.ecodule.ui.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

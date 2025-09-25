@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.ui.account.api.LoginApi
 import com.example.ecodule.ui.account.api.LoginResult
-import com.example.ecodule.ui.sharedViewModel.UserViewModel
-import com.example.ecodule.ui.util.TokenManager
+import com.example.ecodule.ui.UserViewModel
+import com.example.ecodule.repository.datastore.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow

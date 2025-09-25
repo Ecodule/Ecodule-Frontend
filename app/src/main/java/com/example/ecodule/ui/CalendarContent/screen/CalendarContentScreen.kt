@@ -57,7 +57,7 @@ import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.EcoduleRoute
-import com.example.ecodule.ui.sharedViewModel.UserViewModel
+import com.example.ecodule.ui.UserViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
@@ -127,7 +127,7 @@ fun CalendarContentScreen(
     val nextMonth = yearMonth.plusMonths(1)
     val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
 
-    val user = userViewModel.user.collectAsState().value
+    val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
 
     // 表示範囲の予定をフィルタリング（LocalDateTimeベース）

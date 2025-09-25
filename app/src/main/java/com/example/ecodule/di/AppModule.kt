@@ -3,7 +3,7 @@ package com.example.ecodule.di
 import android.content.Context
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.repository.datastore.DataStoreUserRepository
-import com.example.ecodule.ui.util.TokenManager
+import com.example.ecodule.repository.datastore.TokenManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

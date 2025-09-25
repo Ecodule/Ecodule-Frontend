@@ -1,5 +1,4 @@
-
-package com.example.ecodule.ui.util
+package com.example.ecodule.api
 
 import com.example.ecodule.BuildConfig
 import kotlinx.coroutines.suspendCancellableCoroutine

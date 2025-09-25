@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.ecodule.repository.UserRepository
-import com.example.ecodule.ui.sharedViewModel.UserData
+import com.example.ecodule.repository.UserData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -54,6 +54,24 @@ class DataStoreUserRepository @Inject constructor(
         context.userStore.edit { pref ->
             pref[BODY_KEY] = userJson
         }
+    }
+
+    override suspend fun saveUserWithToken(
+        id: String,
+        email: String,
+        accessToken: String,
+        refreshToken: String,
+        expiresIn: Long
+    ) {
+        val newUser = UserData(id = id, email = email)
+        val userJson = Json.encodeToString(UserData.serializer(), newUser)
+        context.userStore.edit { pref ->
+            pref[BODY_KEY] = userJson
+        }
+
+        // トークンの保存はTokenManagerに任せる
+        val tokenManager = TokenManager(context)
+        tokenManager.saveTokens(accessToken, refreshToken, expiresIn)
     }
 
     override suspend fun clearUser() {
