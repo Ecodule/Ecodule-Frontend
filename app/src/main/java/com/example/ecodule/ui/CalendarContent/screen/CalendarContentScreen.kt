@@ -1,7 +1,5 @@
 package com.example.ecodule.ui.CalendarContentui.CalendarContent.screen
 
-//import com.example.ecodule.ui.CalendarContent.AddTaskContent
-import android.app.Application
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -46,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
@@ -465,6 +464,6 @@ fun CalendarModeDialog(
 fun CalendarContentPreview() {
     val context = LocalContext.current
     val dummySelectedDestination = remember { mutableStateOf("Calendar") }
-    val dummyUserViewModel: UserViewModel = remember { UserViewModel(context.applicationContext as Application) }
+    val dummyUserViewModel: UserViewModel = hiltViewModel()
     CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
 }
