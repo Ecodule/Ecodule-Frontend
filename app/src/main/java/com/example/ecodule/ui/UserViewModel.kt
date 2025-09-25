@@ -54,9 +54,9 @@ class UserViewModel(
      * @param id ユーザーID
      * @param email メールアドレス
      */
-    fun saveUser(id: String, email: String, accessToken: String) {
+    fun saveUser(id: String, email: String) {
         viewModelScope.launch {
-            val newUser = UserData(id = id, email = email, accessToken = accessToken)
+            val newUser = UserData(id = id, email = email)
             // StateFlowを更新
             _user.value = newUser
 

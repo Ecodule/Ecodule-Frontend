@@ -1,12 +1,11 @@
 package com.example.ecodule.ui.account.model
 
-import androidx.compose.runtime.mutableStateOf
 import android.app.Application
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecodule.ui.account.api.LoginApi
 import com.example.ecodule.ui.util.TokenManager
-import com.example.ecodule.ui.account.model.UserViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -36,7 +35,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     // 成功：トークンを保存
                     tokenManager.saveTokens(accessToken, refreshToken, expiresIn)
                     // ユーザー情報を保存
-                    UserViewModel().saveUser(id = id, email = email, accessToken = accessToken) // ID
+//                    UserViewModel().saveUser(id = id, email = email) // ID
                     // 成功イベントを発行
                     viewModelScope.launch {
                         _loginSuccessEvent.emit(Unit)

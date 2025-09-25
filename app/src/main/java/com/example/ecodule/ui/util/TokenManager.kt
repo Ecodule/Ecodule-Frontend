@@ -3,8 +3,6 @@ package com.example.ecodule.ui.util
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
-import com.example.ecodule.ui.util.TokenRefresh // 以前作成したAPIクラス
-import com.example.ecodule.ui.account.model.UserViewModel
 
 /**
  * EncryptedSharedPreferencesを使用してアクセストークンを安全に管理するクラス
