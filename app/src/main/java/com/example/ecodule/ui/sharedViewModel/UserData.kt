@@ -1,4 +1,4 @@
-package com.example.ecodule.ui
+package com.example.ecodule.ui.sharedViewModel
 
 import kotlinx.serialization.Serializable
 

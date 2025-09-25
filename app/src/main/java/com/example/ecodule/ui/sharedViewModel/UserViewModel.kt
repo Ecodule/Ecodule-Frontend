@@ -1,11 +1,10 @@
-package com.example.ecodule.ui
+package com.example.ecodule.ui.sharedViewModel
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecodule.repository.UserRepository
-import com.example.ecodule.repository.datastore.DataStoreUserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -15,12 +14,11 @@ import kotlinx.serialization.json.Json
 /**
  * アプリ全体のユーザー情報を管理するViewModel
  */
+@HiltViewModel
 class UserViewModel(
-    app: Application
-) : AndroidViewModel(app) {
+    private val repo: UserRepository
+) : ViewModel() {
     // DataStoreUserRepositoryをインスタンス化
-    private val repo: UserRepository = DataStoreUserRepository(app)
-
     private val _user = MutableStateFlow<UserData?>(null)
     val user = _user.asStateFlow()
 
