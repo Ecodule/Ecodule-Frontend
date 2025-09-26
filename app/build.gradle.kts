@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
 android {
@@ -37,6 +40,30 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
+    }
+
+    flavorDimensions("env")
+
+    val baseUrl = project.findProperty("BASE_URL") as? String ?: "https://ecodule.ddns.net"
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+        }
     }
 }
 
@@ -72,4 +99,16 @@ dependencies {
     //Glance
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
+
+    // DataStore
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.datastore.preferences)
+
+    // serializer
+    implementation(libs.kotlinx.serialization.json)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 }

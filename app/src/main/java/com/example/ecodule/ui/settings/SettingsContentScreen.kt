@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 @Composable
 fun SettingsContentScreen(
     modifier: Modifier = Modifier,
+    userName: String = "User Name",
     onNavigateUserName: () -> Unit = {},
     onNavigateTimeZone: () -> Unit = {},
     onNavigateNotifications: () -> Unit = {},
@@ -80,7 +81,7 @@ fun SettingsContentScreen(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "ユーザー名",
+                text = userName,
                 fontSize = 20.sp,
                 color = Color(0xFF444444),
                 modifier = Modifier.weight(1f)

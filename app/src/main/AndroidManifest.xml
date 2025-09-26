@@ -2,7 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ネットワーク通信に必要 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 接続状態の取得に利用（必要なら） -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

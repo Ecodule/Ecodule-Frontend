@@ -1,4 +1,5 @@
-package com.example.ecodule.ui.account
+package com.example.ecodule.ui.account.util
+
 /**
  * メールアドレスのバリデーションを行うユーティリティクラス
  */

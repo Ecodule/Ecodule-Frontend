@@ -1,50 +1,69 @@
 package com.example.ecodule.ui.CalendarContentui.CalendarContent.screen
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.CalendarViewDay
-import androidx.compose.material.icons.filled.CalendarViewWeek
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.ViewAgenda
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-//import com.example.ecodule.ui.AddTaskContent
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
+import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
 import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.ScrollableDayTimeView
 import com.example.ecodule.ui.CalendarContent.ui.ScrollableThreeDayTimeView
 import com.example.ecodule.ui.CalendarContent.ui.ScrollableWeekDayTimeView
-import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
-import com.example.ecodule.ui.CalendarContent.model.CalendarMode
-import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
+import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
-import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth // <- 追加
+import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import com.example.ecodule.ui.EcoduleRoute
+import com.example.ecodule.ui.UserViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +72,8 @@ fun CalendarContentScreen(
     initialYearMonth: YearMonth = YearMonth.now(),
     selectedDestination: MutableState<String>,
     events: List<CalendarEvent> = emptyList(),
-    onEventClick: (String) -> Unit = {}
+    onEventClick: (String) -> Unit = {},
+    userViewModel: UserViewModel
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -106,6 +126,9 @@ fun CalendarContentScreen(
     val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
     val nextMonth = yearMonth.plusMonths(1)
     val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
+
+    val user by userViewModel.user.collectAsState()
+    Log.d("CalendarContentScreen", "Current user: $user")
 
     // 表示範囲の予定をフィルタリング（LocalDateTimeベース）
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
@@ -439,6 +462,8 @@ fun CalendarModeDialog(
 @Preview(showBackground = true)
 @Composable
 fun CalendarContentPreview() {
+    val context = LocalContext.current
     val dummySelectedDestination = remember { mutableStateOf("Calendar") }
-    CalendarContentScreen(selectedDestination = dummySelectedDestination)
+    val dummyUserViewModel: UserViewModel = hiltViewModel()
+    CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
 }

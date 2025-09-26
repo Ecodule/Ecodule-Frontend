@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ecodule.ui.account.EmailValidator
+import com.example.ecodule.ui.account.util.EmailValidator
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
