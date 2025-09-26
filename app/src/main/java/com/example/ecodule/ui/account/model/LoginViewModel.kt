@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.account.model
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,6 +37,7 @@ class LoginViewModel @Inject constructor(
 
             when (val result = LoginApi.login(email, password)) {
                 is LoginResult.Success -> {
+
                     // 成功：トークンとユーザー情報を保存
                     tokenManager.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
                     // ★ これでsuspend関数をコルーチン内から安全に呼び出せる
@@ -44,11 +46,12 @@ class LoginViewModel @Inject constructor(
                     _loginSuccessEvent.emit(Unit)
                 }
                 is LoginResult.Error -> {
+                    Log.d("LoginViewModel", "Login failed: ${result}")
                     // 失敗：エラーメッセージを更新
                     loginError.value = result.message
                 }
             }
-
+            isLoading.value = false // ローディング終了
         }
     }
 }

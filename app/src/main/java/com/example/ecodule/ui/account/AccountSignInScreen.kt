@@ -82,7 +82,7 @@ fun AccountSignInScreen(
     val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
 
     // ログインエラーメッセージ
-    var loginError = viewModel.loginError
+    val loginError = remember { viewModel.loginError }
 
     // ログイン成功イベントを監視し、画面遷移を実行
     LaunchedEffect(Unit) {
@@ -224,7 +224,7 @@ fun AccountSignInScreen(
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            if (viewModel.isLoading.value == false) {
+            if (!viewModel.isLoading.value) {
                 Text(
                     "ログイン",
                     color = Color.White,
