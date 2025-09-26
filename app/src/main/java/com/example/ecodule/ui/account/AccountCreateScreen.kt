@@ -89,8 +89,6 @@ fun AccountCreateScreen(
                     }
                 }
             }
-            .padding(horizontal = 0.dp)
-            .padding(vertical = 16.dp)
     ) {
         // 戻るボタン
         IconButton(
