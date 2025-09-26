@@ -70,6 +70,7 @@ object LoginApi {
                             }
                             Log.d("Ecodule", "Login failed with status code: $statusCode")
 
+                            continuation.resume(LoginResult.Error(errorMessage))
                             return
                         }
 

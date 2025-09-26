@@ -1,5 +1,6 @@
 package com.example.ecodule.ui
 
+import android.util.Log
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,7 @@ class EcoduleAuthViewModel @Inject constructor(
         viewModelScope.launch {
             // まずUserRepositoryから保存されているユーザー情報を読み込む
             val userData = userRepository.user.value
+
             if (userData == null) {
                 // ユーザー情報がなければログアウト状態
                 _authState.value = AuthState.LOGGED_OUT

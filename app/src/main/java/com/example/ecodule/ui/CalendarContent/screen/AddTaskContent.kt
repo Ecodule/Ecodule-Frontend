@@ -1,4 +1,4 @@
-package com.example.ecodule.ui.CalendarContent
+package com.example.ecodule.ui.CalendarContent.screen
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
