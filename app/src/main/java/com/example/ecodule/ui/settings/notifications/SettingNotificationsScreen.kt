@@ -84,7 +84,7 @@ fun SettingNotificationsScreen(
                 Text(
                     text = "設定",
                     color = Color(0xFF007AFF),
-                    fontSize = 18.sp
+                    fontSize = 14.sp
                 )
             }
 
