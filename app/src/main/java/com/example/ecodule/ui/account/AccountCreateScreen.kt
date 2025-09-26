@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.account
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,12 +35,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.R
+import com.example.ecodule.ui.account.model.AccountCreateViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountCreateScreen(
+    accountCreateViewModel: AccountCreateViewModel = hiltViewModel(),
     onCreateSuccess: () -> Unit,
     onBackToLogin: () -> Unit,
     onGoogleCreate: () -> Unit
@@ -47,7 +52,7 @@ fun AccountCreateScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
+//    var username by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var emailFocused by remember { mutableStateOf(false) }
@@ -69,9 +74,14 @@ fun AccountCreateScreen(
             isValidEmailAddress &&
             password.isNotBlank() &&
             confirmPassword.isNotBlank() &&
-            username.isNotBlank() &&
+//            username.isNotBlank() &&
             passwordsMatch &&
             termsAccepted
+
+    // ViewModelの状態を監視
+    val accountCreateError = accountCreateViewModel.accountCreateError
+    val accountCreateMessage = accountCreateViewModel.accountCreateMessage
+
 
     Box(
         modifier = Modifier
@@ -281,31 +291,31 @@ fun AccountCreateScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // ユーザー名入力フィールド
-            Text(
-                text = "ユーザー名",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 6.dp),
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { usernameFocused = it.isFocused },
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
-                ),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF7CB342),
-                    unfocusedBorderColor = Color.LightGray,
-                    cursorColor = Color(0xFF7CB342)
-                ),
-                shape = RoundedCornerShape(8.dp)
-            )
+//            Text(
+//                text = "ユーザー名",
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(bottom = 6.dp),
+//                fontSize = 16.sp,
+//                color = Color.Gray
+//            )
+//            OutlinedTextField(
+//                value = username,
+//                onValueChange = { username = it },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .onFocusChanged { usernameFocused = it.isFocused },
+//                keyboardOptions = KeyboardOptions(
+//                    imeAction = ImeAction.Done
+//                ),
+//                singleLine = true,
+//                colors = OutlinedTextFieldDefaults.colors(
+//                    focusedBorderColor = Color(0xFF7CB342),
+//                    unfocusedBorderColor = Color.LightGray,
+//                    cursorColor = Color(0xFF7CB342)
+//                ),
+//                shape = RoundedCornerShape(8.dp)
+//            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -344,13 +354,37 @@ fun AccountCreateScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            /* 登録エラーメッセージ */
+
+            if (accountCreateError.value?.isNotEmpty() == true) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = accountCreateError.value ?: "",
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            /* 登録完了メッセージ */
+            if (accountCreateMessage.value.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = accountCreateMessage.value ?: "",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+
             // アカウント作成ボタン
             Button(
                 onClick = {
                     if (isCreateEnabled) {
-                        // TODO: サーバーにアカウント情報を送信
-                        // saveAccountToServer(email, password, username)
-                        onCreateSuccess()
+                        Log.d("AccountCreate", "now creation")
+                        accountCreateViewModel.accountCreate(email, password)
+                        Log.d("AccountCreate", "after creation")
                     }
                 },
                 modifier = Modifier
@@ -363,12 +397,20 @@ fun AccountCreateScreen(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
-                    "アカウント作成",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (!accountCreateViewModel.isLoading.value) {
+                    Text(
+                        "ログイン",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
