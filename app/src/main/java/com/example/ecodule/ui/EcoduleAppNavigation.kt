@@ -31,6 +31,7 @@ import com.example.ecodule.ui.settings.account.SettingsAccountScreen
 import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
+import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.statistics.StatisticsContent
 import com.example.ecodule.ui.taskListContent.TaskListContent
 import com.example.ecodule.ui.theme.BottomNavBackground
@@ -60,7 +61,8 @@ fun EcoduleAppNavigation(
     // ボトムナビゲーションバーを表示しない画面のリスト
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
-        EcoduleRoute.SETTINGSNOTIFICATIONS
+        EcoduleRoute.SETTINGSNOTIFICATIONS,
+        EcoduleRoute.SETTINGSGOOGLEINTEGRATION
         // 将来的に他の詳細画面も追加可能
     )
 
@@ -110,7 +112,9 @@ fun EcoduleAppNavigation(
                     onNavigateNotifications = {
                         selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS
                     },
-                    onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
+                    onNavigateGoogleCalendar = { 
+                        selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION 
+                    },
                     onNavigateDetail = {
                         selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
                     }
@@ -161,6 +165,18 @@ fun EcoduleAppNavigation(
                     }
                 )
             }
+            EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
+                SettingsGoogleIntegrationScreen(
+                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
+                        Modifier.fillMaxSize()
+                    } else {
+                        Modifier.weight(1f)
+                    },
+                    onBackToSettings = {
+                        selectedDestination.value = EcoduleRoute.SETTINGS
+                    }
+                )
+            }
         }
 
         // ナビゲーションバー（特定の画面では非表示）
@@ -206,6 +222,7 @@ object EcoduleRoute {
     const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
+    const val SETTINGSGOOGLEINTEGRATION = "SettingsGoogleIntegration"
 
     // 将来的に他の詳細画面も追加可能
     // const val SETTINGSUSERNAME = "SettingsUserName"
