@@ -137,7 +137,6 @@ class AppWidget : GlanceAppWidget() {
                 )
             )
         )
-
     }
     @Composable
     private fun provideSchedule(){//ウィジェットに予定とタスクを表示する
@@ -159,5 +158,4 @@ class AppWidget : GlanceAppWidget() {
             }
         }
     }
-
 }
