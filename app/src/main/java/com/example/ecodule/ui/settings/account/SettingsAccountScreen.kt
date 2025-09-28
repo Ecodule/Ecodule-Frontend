@@ -207,6 +207,7 @@ fun SettingsAccountScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        /*  パスワードの変更に関するUI　実装に時間がかかる
         // セキュリティセクション
         Text(
             text = "セキュリティ",
@@ -236,7 +237,7 @@ fun SettingsAccountScreen(
                 modifier = Modifier.size(24.dp)
             )
         }
-
+         */
         Spacer(modifier = Modifier.height(28.dp))
 
         // ログアウトボタン
@@ -259,6 +260,7 @@ fun SettingsAccountScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        /*  実装に時間がかかる
         // アカウント削除ボタン
         Row(
             modifier = Modifier
@@ -276,6 +278,7 @@ fun SettingsAccountScreen(
                 fontWeight = FontWeight.Medium
             )
         }
+        */
     }
 
     // ログアウト確認ダイアログ
@@ -299,6 +302,7 @@ fun SettingsAccountScreen(
         )
     }
 
+        /*　　実装に時間がかかる
     // アカウント削除確認ダイアログ
     if (showDeleteDialog) {
         AlertDialog(
@@ -320,4 +324,5 @@ fun SettingsAccountScreen(
             }
         )
     }
+         */
 }
