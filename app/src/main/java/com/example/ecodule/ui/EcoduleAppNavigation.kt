@@ -33,6 +33,7 @@ import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
 import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
+import com.example.ecodule.ui.settings.account.DatePickerUI
 import com.example.ecodule.ui.statistics.StatisticsContent
 import com.example.ecodule.ui.taskListContent.TaskListContent
 import com.example.ecodule.ui.theme.BottomNavBackground
@@ -53,6 +54,7 @@ fun EcoduleAppNavigation(
     val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
+    var birthDate by remember { mutableStateOf("2001/01/01")}
 
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
@@ -159,8 +161,13 @@ fun EcoduleAppNavigation(
                     userName = userName,
                     onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
                     onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
+                    currentBirthDate = birthDate,
+                    onBirthDateChanged = { newbirthDate ->
+                        birthDate = newbirthDate
+                    },
                     // その他変更画面遷移やイベント処理
                 )
+
             }
             EcoduleRoute.SETTINGSUSERNAME -> {
                 SettingsUserNameScreen(

@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.settings.account
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Person
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,10 +29,10 @@ fun SettingsAccountScreen(
     modifier: Modifier = Modifier,
     userName: String = "User Name",
     email: String = "testmail@email.com",
-    birthDate: String = "2001/01/01",
+    currentBirthDate: String = "2001/01/01",
+    onBirthDateChanged: (String) -> Unit = {},
     onBackToSettings: () -> Unit = {},
     onChangeUserName: () -> Unit = {},
-    onChangeBirthDate: () -> Unit = {},
     onChangePassword: () -> Unit = {},
     onLogout: () -> Unit = {},
     onAccountDelete: () -> Unit = {}
@@ -37,6 +40,11 @@ fun SettingsAccountScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var totalDragX by remember { mutableFloatStateOf(0f) }
+
+    //wheel picker変数
+    val context = LocalContext.current
+    var showBirthDateDialog by remember { mutableStateOf(false) }
+    var selectedDateText by remember { mutableStateOf("日付を選択") }
 
     Column(
         modifier = modifier
@@ -181,7 +189,7 @@ fun SettingsAccountScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onChangeBirthDate() }
+                    .clickable { showBirthDateDialog = true }
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -192,12 +200,12 @@ fun SettingsAccountScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = birthDate,
+                    text = currentBirthDate,
                     fontSize = 16.sp,
                     color = Color(0xFF888888)
                 )
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "生年月日変更",
                     tint = Color(0xFFBBBBBB),
                     modifier = Modifier.size(24.dp)
@@ -325,4 +333,21 @@ fun SettingsAccountScreen(
         )
     }
          */
+    //生年月日変更ダイアログ
+    if (showBirthDateDialog) {
+        WheelsDatePickerDialog(
+            label = "日付を選択",
+            onSelectedDateChange = { newDate ->
+                // Toastの表示
+                Toast.makeText(context, newDate, Toast.LENGTH_SHORT).show()
+                selectedDateText = newDate//ダイアログのラベルなんでかえても意味ない...
+            },
+            currentBirthDate = currentBirthDate,
+            onBirthDateChanged = onBirthDateChanged,
+            onDismissRequest = {
+                showBirthDateDialog = false
+            }
+        )
+    }
+
 }
