@@ -47,12 +47,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
-import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
-import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.CalendarMonthView
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
-import com.example.ecodule.ui.CalendarContent.ui.ScrollableDayTimeView
-import com.example.ecodule.ui.CalendarContent.ui.ScrollableThreeDayTimeView
-import com.example.ecodule.ui.CalendarContent.ui.ScrollableWeekDayTimeView
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.ScrollableDayTimeView
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.ScrollableThreeDayTimeView
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.ScrollableWeekDayTimeView
 import com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth
 import com.example.ecodule.ui.CalendarContent.util.getStartOfWeek
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
