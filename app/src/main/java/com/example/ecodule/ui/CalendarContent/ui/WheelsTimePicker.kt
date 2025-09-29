@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
@@ -105,5 +106,19 @@ fun WheelsTimePicker(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WheelsTimePickerPreview() {
+    MaterialTheme {
+        WheelsTimePicker(
+            initialHour = 14,
+            initialMinute = 30,
+            onTimeSelected = { _, _ -> },
+            onDismiss = { },
+            title = "開始時刻を選択"
+        )
     }
 }

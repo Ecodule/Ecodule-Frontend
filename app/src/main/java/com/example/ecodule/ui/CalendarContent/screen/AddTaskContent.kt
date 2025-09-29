@@ -1,7 +1,6 @@
 package com.example.ecodule.ui.CalendarContent.screen
 
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,11 +39,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.CalendarContent.ui.WheelsTimePicker
 import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.components.CategoryTabs
 import java.text.SimpleDateFormat
@@ -131,34 +131,30 @@ fun TimePickerTextButton(
     onTimeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var showTimePicker by remember { mutableStateOf(false) }
-    val calendar = Calendar.getInstance()
 
     val displayTime: String = timeText.ifBlank {
         if (label == "開始" || label.isBlank()) "07:00" else "08:00"
     }
 
-    LaunchedEffect(showTimePicker) {
-        if (showTimePicker) {
-            val parts = displayTime.split(":")
-            val hour = parts.getOrNull(0)?.toIntOrNull() ?: 7
-            val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            val dialog = TimePickerDialog(
-                context,
-                { _, hourOfDay, minuteOfDay ->
-                    val timeStr = "%02d:%02d".format(hourOfDay, minuteOfDay)
-                    onTimeSelected(timeStr)
-                    showTimePicker = false
-                },
-                hour,
-                minute,
-                true
-            )
-            dialog.setOnCancelListener { showTimePicker = false }
-            dialog.show()
-        }
+    if (showTimePicker) {
+        val parts = displayTime.split(":")
+        val initialHour = parts.getOrNull(0)?.toIntOrNull() ?: 7
+        val initialMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        
+        WheelsTimePicker(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            onTimeSelected = { hour, minute ->
+                val timeStr = "%02d:%02d".format(hour, minute)
+                onTimeSelected(timeStr)
+                showTimePicker = false
+            },
+            onDismiss = { showTimePicker = false },
+            title = "${label}時刻を選択"
+        )
     }
+    
     TextButton(
         onClick = { showTimePicker = true },
         modifier = modifier
