@@ -1,6 +1,5 @@
-package com.example.ecodule.ui.CalendarContent.ui
+package com.example.ecodule.ui.CalendarContent.ui.datedisplay
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
