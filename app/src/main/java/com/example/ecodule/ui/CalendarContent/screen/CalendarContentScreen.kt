@@ -65,6 +65,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
+import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
+import com.example.ecodule.ui.CalendarContent.ui.WeekNumberGutterWidthDay
+import java.time.DayOfWeek
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +77,9 @@ fun CalendarContentScreen(
     selectedDestination: MutableState<String>,
     events: List<CalendarEvent> = emptyList(),
     onEventClick: (String) -> Unit = {},
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    showWeekNumbers: Boolean,
+    weekStart: DayOfWeek
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -208,7 +213,7 @@ fun CalendarContentScreen(
                     }
                 }
 
-                // 曜日ヘッダー（月のみ）
+                // 曜日ヘッダー（月表示のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     Row(
                         Modifier
@@ -216,8 +221,12 @@ fun CalendarContentScreen(
                             .background(Color(0xFFEAEAEA))
                             .padding(vertical = 4.dp)
                     ) {
+                        // 週数表示時は左にガターを追加（ヘッダーをずらす）
+                        if (showWeekNumbers) {
+                            Spacer(modifier = Modifier.width(WeekNumberColumnWidthMonth))
+                        }
                         listOf("日", "月", "火", "水", "木", "金", "土").forEach { day ->
-                            androidx.compose.foundation.layout.Box(
+                            Box(
                                 modifier = Modifier.weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -232,6 +241,7 @@ fun CalendarContentScreen(
                         }
                     }
                 }
+
 
                 // カレンダー本体（スワイプ: draggable で実装し、タップを阻害しない）
                 var dragX by remember { mutableStateOf(0f) }
@@ -303,7 +313,9 @@ fun CalendarContentScreen(
                                     calendarMode = CalendarMode.DAY
                                     cameFromMonth = true
                                 },
-                                onEventClick = onEventClick
+                                onEventClick = onEventClick,
+                                showWeekNumbers = showWeekNumbers,
+                                weekStart = weekStart
                             )
                         }
                         CalendarMode.WEEK -> {
@@ -311,7 +323,9 @@ fun CalendarContentScreen(
                                 weekStart = currentWeekStart,
                                 events = filteredEvents,
                                 onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick
+                                onEventClick = onEventClick,
+                                showWeekNumbers = showWeekNumbers,
+                                weekStartDay = weekStart
                             )
                         }
                         CalendarMode.DAY -> {
@@ -319,7 +333,9 @@ fun CalendarContentScreen(
                                 day = currentDay,
                                 events = filteredEvents,
                                 onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick
+                                onEventClick = onEventClick,
+                                showWeekNumbers = showWeekNumbers,
+                                weekStartDay = weekStart
                             )
                         }
                         CalendarMode.THREE_DAY -> {
@@ -327,7 +343,9 @@ fun CalendarContentScreen(
                                 startDay = currentThreeDayStart,
                                 events = filteredEvents,
                                 onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick
+                                onEventClick = onEventClick,
+                                showWeekNumbers = showWeekNumbers,
+                                weekStartDay = weekStart
                             )
                         }
                         CalendarMode.SCHEDULE -> {
@@ -339,7 +357,9 @@ fun CalendarContentScreen(
                             )
                         }
                     }
-                    if (calendarMode == CalendarMode.MONTH) {
+
+                    // 月表示の補助グリッド線は、週数カラム表示時は CalendarMonthView 内で対応するため、ここでは非表示
+                    if (calendarMode == CalendarMode.MONTH && !showWeekNumbers) {
                         DrawCalendarGridLines(
                             rowCount = ((yearMonth.atDay(1).dayOfWeek.value % 7 + yearMonth.lengthOfMonth() + 6) / 7),
                             colCount = 7
@@ -426,6 +446,7 @@ fun CalendarModeDialog(
     )
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun CalendarContentPreview() {
@@ -434,3 +455,4 @@ fun CalendarContentPreview() {
     val dummyUserViewModel: UserViewModel = hiltViewModel()
     CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
 }
+ */
