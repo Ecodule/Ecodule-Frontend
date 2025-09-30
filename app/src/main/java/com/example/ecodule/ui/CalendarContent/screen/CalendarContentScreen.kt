@@ -3,7 +3,9 @@ package com.example.ecodule.ui.CalendarContentui.CalendarContent.screen
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -78,88 +79,67 @@ fun CalendarContentScreen(
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
     var showModeDialog by remember { mutableStateOf(false) }
-    var selectedDay by remember { mutableStateOf<Int?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val swipeRefreshState = rememberSwipeRefreshState(refreshing)
 
-    // 表示中の基準日を保持（yearMonthと連動）
-    var baseDate by remember { mutableStateOf(yearMonth.atDay(LocalDate.now().dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))) }
+    // 月→日で遷移してきたことを示すフラグ（戻る「＜」の表示制御）
+    var cameFromMonth by remember { mutableStateOf(false) }
 
-    // 各モードでの表示日を計算（remember + derivedStateOf）
-    val currentDay by remember {
-        derivedStateOf {
-            when (calendarMode) {
-                CalendarMode.DAY -> baseDate
-                else -> baseDate
-            }
-        }
+    // 表示基準日（yearMonth と連動）
+    var baseDate by remember {
+        mutableStateOf(
+            yearMonth.atDay(LocalDate.now().dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
+        )
     }
 
-    val currentWeekStart by remember {
-        derivedStateOf {
-            when (calendarMode) {
-                CalendarMode.WEEK -> getStartOfWeek(baseDate)
-                else -> getStartOfWeek(baseDate)
-            }
-        }
-    }
+    // 表示日に関する算出
+    val currentDay by remember { derivedStateOf { baseDate } }
+    val currentWeekStart by remember { derivedStateOf { getStartOfWeek(baseDate) } }
+    val currentThreeDayStart by remember { derivedStateOf { baseDate.minusDays(1) } }
 
-    val currentThreeDayStart by remember {
-        derivedStateOf {
-            when (calendarMode) {
-                CalendarMode.THREE_DAY -> baseDate.minusDays(1)
-                else -> baseDate.minusDays(1)
-            }
-        }
-    }
-
-    // yearMonthが変更された時にbaseDateを更新
+    // yearMonth 更新時に baseDate を補正
     LaunchedEffect(yearMonth) {
-        val newBaseDate = yearMonth.atDay(baseDate.dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
-        baseDate = newBaseDate
+        baseDate = yearMonth.atDay(baseDate.dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
     }
 
-    // 年号付き月表示
+    // タイトル表示（月ラベル）
     val currentYear = LocalDate.now().year
     val showYear = yearMonth.year != currentYear
-    val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
+    val monthLabel =
+        if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
     val nextMonth = yearMonth.plusMonths(1)
-    val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
+    val nextMonthLabel =
+        if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
 
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
 
-    // 表示範囲の予定をフィルタリング（LocalDateTimeベース）
+    // 表示範囲の予定抽出
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
         when (calendarMode) {
-            CalendarMode.MONTH -> {
-                // 変更点：繰り返し含む表示用イベントリスト
-                getDisplayEventsForMonth(events, yearMonth)
-            }
-            CalendarMode.DAY -> {
-                events.filter {
-                    it.startDate.monthValue == currentDay.monthValue &&
-                            it.startDate.dayOfMonth == currentDay.dayOfMonth &&
-                            it.startDate.year == currentDay.year
-                }
+            CalendarMode.MONTH -> getDisplayEventsForMonth(events, yearMonth)
+            CalendarMode.DAY -> events.filter {
+                it.startDate.year == currentDay.year &&
+                        it.startDate.monthValue == currentDay.monthValue &&
+                        it.startDate.dayOfMonth == currentDay.dayOfMonth
             }
             CalendarMode.WEEK -> {
                 val weekEnd = currentWeekStart.plusDays(6)
                 events.filter { event ->
-                    val eventDate = event.startDate.toLocalDate()
-                    !eventDate.isBefore(currentWeekStart) && !eventDate.isAfter(weekEnd)
+                    val d = event.startDate.toLocalDate()
+                    !d.isBefore(currentWeekStart) && !d.isAfter(weekEnd)
                 }
             }
             CalendarMode.THREE_DAY -> {
                 val threeDayEnd = currentThreeDayStart.plusDays(2)
                 events.filter { event ->
-                    val eventDate = event.startDate.toLocalDate()
-                    !eventDate.isBefore(currentThreeDayStart) && !eventDate.isAfter(threeDayEnd)
+                    val d = event.startDate.toLocalDate()
+                    !d.isBefore(currentThreeDayStart) && !d.isAfter(threeDayEnd)
                 }
             }
             CalendarMode.SCHEDULE -> {
-                events.filter { it.startDate.monthValue == yearMonth.monthValue && it.startDate.year == yearMonth.year }
+                events.filter { it.startDate.year == yearMonth.year && it.startDate.monthValue == yearMonth.monthValue }
             }
         }
     }
@@ -188,13 +168,29 @@ fun CalendarContentScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Menu,
-                        contentDescription = "メニュー",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .noRippleClickable { showModeDialog = true }
-                    )
+                    if (calendarMode == CalendarMode.DAY && cameFromMonth) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = "戻る",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .noRippleClickable {
+                                    calendarMode = CalendarMode.MONTH
+                                    yearMonth = YearMonth.of(baseDate.year, baseDate.month)
+                                    cameFromMonth = false
+                                    showModeDialog = false
+                                }
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "メニュー",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .noRippleClickable { showModeDialog = true }
+                        )
+                    }
+
                     Spacer(Modifier.width(10.dp))
                     Text(
                         monthLabel,
@@ -212,7 +208,7 @@ fun CalendarContentScreen(
                     }
                 }
 
-                // 曜日ヘッダー
+                // 曜日ヘッダー（月のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     Row(
                         Modifier
@@ -221,7 +217,7 @@ fun CalendarContentScreen(
                             .padding(vertical = 4.dp)
                     ) {
                         listOf("日", "月", "火", "水", "木", "金", "土").forEach { day ->
-                            Box(
+                            androidx.compose.foundation.layout.Box(
                                 modifier = Modifier.weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -237,53 +233,53 @@ fun CalendarContentScreen(
                     }
                 }
 
-                // カレンダー本体
+                // カレンダー本体（スワイプ: draggable で実装し、タップを阻害しない）
+                var dragX by remember { mutableStateOf(0f) }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .pointerInput(calendarMode, yearMonth, baseDate) {
-                            detectHorizontalDragGestures { _, dragAmount ->
+                        .draggable(
+                            orientation = Orientation.Horizontal,
+                            state = rememberDraggableState { delta ->
+                                dragX += delta
+                            },
+                            onDragStopped = {
+                                val threshold = 40f
                                 when (calendarMode) {
                                     CalendarMode.MONTH -> {
-                                        if (dragAmount > 40) {
-                                            yearMonth = yearMonth.minusMonths(1)
-                                        }
-                                        if (dragAmount < -40) {
-                                            yearMonth = yearMonth.plusMonths(1)
-                                        }
+                                        if (dragX > threshold) yearMonth = yearMonth.minusMonths(1)
+                                        else if (dragX < -threshold) yearMonth = yearMonth.plusMonths(1)
                                     }
                                     CalendarMode.DAY -> {
-                                        if (dragAmount > 40) {
+                                        if (dragX > threshold) {
                                             val newDate = baseDate.minusDays(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
-                                        if (dragAmount < -40) {
+                                        } else if (dragX < -threshold) {
                                             val newDate = baseDate.plusDays(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
                                         }
                                     }
                                     CalendarMode.WEEK -> {
-                                        if (dragAmount > 40) {
+                                        if (dragX > threshold) {
                                             val newDate = baseDate.minusWeeks(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
-                                        if (dragAmount < -40) {
+                                        } else if (dragX < -threshold) {
                                             val newDate = baseDate.plusWeeks(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
                                         }
                                     }
                                     CalendarMode.THREE_DAY -> {
-                                        if (dragAmount > 40) {
+                                        if (dragX > threshold) {
                                             val newDate = baseDate.minusDays(3)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
-                                        if (dragAmount < -40) {
+                                        } else if (dragX < -threshold) {
                                             val newDate = baseDate.plusDays(3)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
@@ -291,15 +287,22 @@ fun CalendarContentScreen(
                                     }
                                     else -> {}
                                 }
+                                dragX = 0f
                             }
-                        }
+                        )
                 ) {
                     when (calendarMode) {
                         CalendarMode.MONTH -> {
                             CalendarMonthView(
                                 yearMonth = yearMonth,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day },
+                                onDayClick = { day ->
+                                    val newDate = yearMonth.atDay(day)
+                                    baseDate = newDate
+                                    yearMonth = YearMonth.of(newDate.year, newDate.month)
+                                    calendarMode = CalendarMode.DAY
+                                    cameFromMonth = true
+                                },
                                 onEventClick = onEventClick
                             )
                         }
@@ -307,7 +310,7 @@ fun CalendarContentScreen(
                             ScrollableWeekDayTimeView(
                                 weekStart = currentWeekStart,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day },
+                                onDayClick = { /* no-op */ },
                                 onEventClick = onEventClick
                             )
                         }
@@ -315,7 +318,7 @@ fun CalendarContentScreen(
                             ScrollableDayTimeView(
                                 day = currentDay,
                                 events = filteredEvents,
-                                onDayClick = { date -> selectedDay = date.dayOfMonth },
+                                onDayClick = { /* no-op */ },
                                 onEventClick = onEventClick
                             )
                         }
@@ -323,7 +326,7 @@ fun CalendarContentScreen(
                             ScrollableThreeDayTimeView(
                                 startDay = currentThreeDayStart,
                                 events = filteredEvents,
-                                onDayClick = { day -> selectedDay = day },
+                                onDayClick = { /* no-op */ },
                                 onEventClick = onEventClick
                             )
                         }
@@ -331,7 +334,7 @@ fun CalendarContentScreen(
                             CalendarScheduleView(
                                 yearMonth = yearMonth,
                                 events = filteredEvents.sortedBy { it.startDate },
-                                onDayClick = { day -> selectedDay = day },
+                                onDayClick = { /* no-op */ },
                                 onEventClick = onEventClick
                             )
                         }
@@ -369,45 +372,9 @@ fun CalendarContentScreen(
                 onModeSelected = { mode ->
                     calendarMode = mode
                     showModeDialog = false
+                    if (mode != CalendarMode.DAY) cameFromMonth = false
                 },
                 onDismiss = { showModeDialog = false }
-            )
-        }
-
-        // 日付クリック時の予定一覧ダイアログ（月表示のみで反応）
-        if (selectedDay != null && calendarMode == CalendarMode.MONTH) {
-            AlertDialog(
-                onDismissRequest = { selectedDay = null },
-                confirmButton = {
-                    TextButton(onClick = { selectedDay = null }) {
-                        Text("閉じる")
-                    }
-                },
-                title = { Text("${monthLabel}${selectedDay}日の予定") },
-                text = {
-                    val plans = filteredEvents.filter { it.startDate.dayOfMonth == selectedDay }
-                    if (plans.isEmpty()) {
-                        Text("予定はありません")
-                    } else {
-                        LazyColumn {
-                            items(plans.size) { index ->
-                                val event = plans[index]
-                                TextButton(
-                                    onClick = {
-                                        selectedDay = null
-                                        onEventClick(event.id)
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        "・${event.label} ${event.timeRangeText}",
-                                        color = event.color
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             )
         }
     }
