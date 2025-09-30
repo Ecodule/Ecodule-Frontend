@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,7 +31,9 @@ import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.account.SettingsAccountScreen
 import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
+import com.example.ecodule.ui.settings.account.DatePickerUI
 import com.example.ecodule.ui.statistics.StatisticsContent
 import com.example.ecodule.ui.taskListContent.TaskListContent
 import com.example.ecodule.ui.theme.BottomNavBackground
@@ -51,16 +54,24 @@ fun EcoduleAppNavigation(
     val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
+    var birthDate by remember { mutableStateOf("2001/01/01")}
 
     val today = LocalDate.now()
     val todayMonth: Int = today.monthValue
     val todayDay: Int = today.dayOfMonth
     val todayEvents = taskViewModel.events.filter { it.startDate.dayOfMonth == todayDay && it.startDate.monthValue == todayMonth }
 
+    //Google連携変数
+    var isGoogleLinked by rememberSaveable { mutableStateOf(false) }
+    var googleUserName by rememberSaveable { mutableStateOf("") }
+    var googleEmail by rememberSaveable { mutableStateOf("") }
+    var isCalendarLinked by rememberSaveable { mutableStateOf(false) }
+
     // ボトムナビゲーションバーを表示しない画面のリスト
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
-        EcoduleRoute.SETTINGSNOTIFICATIONS
+        EcoduleRoute.SETTINGSNOTIFICATIONS,
+        EcoduleRoute.SETTINGSGOOGLEINTEGRATION
         // 将来的に他の詳細画面も追加可能
     )
 
@@ -110,7 +121,9 @@ fun EcoduleAppNavigation(
                     onNavigateNotifications = {
                         selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS
                     },
-                    onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
+                    onNavigateGoogleCalendar = {
+                        selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION
+                    },
                     onNavigateDetail = {
                         selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
                     }
@@ -148,8 +161,13 @@ fun EcoduleAppNavigation(
                     userName = userName,
                     onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
                     onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
+                    currentBirthDate = birthDate,
+                    onBirthDateChanged = { newbirthDate ->
+                        birthDate = newbirthDate
+                    },
                     // その他変更画面遷移やイベント処理
                 )
+
             }
             EcoduleRoute.SETTINGSUSERNAME -> {
                 SettingsUserNameScreen(
@@ -159,6 +177,35 @@ fun EcoduleAppNavigation(
                         userName = newName
                         selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
                     }
+                )
+            }
+            EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
+                SettingsGoogleIntegrationScreen(
+                    initialGoogleLinked = isGoogleLinked,
+                    initialGoogleUserName = googleUserName,
+                    initialGoogleEmail = googleEmail,
+                    initialCalendarLinked = isCalendarLinked,
+                    onGoogleAccountLink = {
+                        // 連携処理
+                        isGoogleLinked = true
+                        googleUserName = "Test User"
+                        googleEmail = "testuser@gmail.com"
+                        isCalendarLinked = false // 連携時カレンダーは未連携
+                        "Test User" to "testuser@gmail.com"
+                    },
+                    onGoogleAccountUnlink = {
+                        isGoogleLinked = false
+                        googleUserName = ""
+                        googleEmail = ""
+                        isCalendarLinked = false
+                    },
+                    onCalendarLink = {
+                        isCalendarLinked = true
+                    },
+                    onCalendarUnlink = {
+                        isCalendarLinked = false
+                    },
+                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
                 )
             }
         }
@@ -206,6 +253,7 @@ object EcoduleRoute {
     const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
+    const val SETTINGSGOOGLEINTEGRATION = "SettingsGoogleIntegration"
 
     // 将来的に他の詳細画面も追加可能
     // const val SETTINGSUSERNAME = "SettingsUserName"
