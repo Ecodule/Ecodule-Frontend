@@ -3,36 +3,41 @@ package com.example.ecodule.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun SettingsContentScreen(
     modifier: Modifier = Modifier,
     userName: String = "User Name",
+    // 週の開始日・週数表示を親から受け取り、親へ更新を通知
+    selectedWeekStart: String,
+    onSelectedWeekStartChange: (String) -> Unit,
+    showWeekNumbers: Boolean,
+    onShowWeekNumbersChange: (Boolean) -> Unit,
     onNavigateUserName: () -> Unit = {},
     onNavigateTimeZone: () -> Unit = {},
     onNavigateNotifications: () -> Unit = {},
     onNavigateGoogleCalendar: () -> Unit = {},
     onNavigateDetail: () -> Unit = {}
 ) {
-    var useDeviceTimeZone by remember { mutableStateOf(true) }
-    var showWeekNumbers by remember { mutableStateOf(true) }
-    var selectedWeekStart by remember { mutableStateOf("日曜日") }
     var expandedWeekStart by remember { mutableStateOf(false) }
     val weekStartOptions = listOf("土曜日", "日曜日", "月曜日")
 
@@ -40,9 +45,6 @@ fun SettingsContentScreen(
     var expandedTaskDuration by remember { mutableStateOf(false) }
     val taskDurationOptions = listOf("15 分", "30 分", "45 分", "60 分", "90 分", "120 分")
 
-    var selectedTimeZone by remember { mutableStateOf("日本標準時") }
-
-    val horizontalItemPadding = PaddingValues(start = 20.dp, end = 16.dp)
     val rightEndIconPadding = 8.dp
     val switchRightPadding = 8.dp
 
@@ -167,7 +169,7 @@ fun SettingsContentScreen(
                                     }
                                 },
                                 onClick = {
-                                    selectedWeekStart = option
+                                    onSelectedWeekStartChange(option)
                                     expandedWeekStart = false
                                 }
                             )
@@ -178,74 +180,6 @@ fun SettingsContentScreen(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
-
-        /*
-        // デバイスタイムゾーンとタイムゾーンを1枠にし、線で区切る
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .background(Color.White, RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "デバイスのタイムゾーンを使用",
-                    fontSize = 18.sp,
-                    color = Color(0xFF444444),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 10.dp)
-                )
-                Switch(
-                    checked = useDeviceTimeZone,
-                    onCheckedChange = { useDeviceTimeZone = it },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color(0xFFFFFFFF),
-                        checkedTrackColor = Color(0xFF8CC447)
-                    ),
-                    modifier = Modifier.padding(end = switchRightPadding)
-                )
-            }
-            Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = !useDeviceTimeZone) { onNavigateTimeZone() }
-                    .padding(vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "タイムゾーン",
-                    fontSize = 18.sp,
-                    color = if (useDeviceTimeZone) Color(0xFFBBBBBB) else Color(0xFF444444),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 10.dp)
-                )
-                Text(
-                    text = selectedTimeZone,
-                    fontSize = 16.sp,
-                    color = if (useDeviceTimeZone) Color(0xFFBBBBBB) else Color(0xFF888888)
-                )
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
-                    contentDescription = "タイムゾーン詳細へ",
-                    tint = if (useDeviceTimeZone) Color(0xFFBBBBBB) else Color(0xFF888888),
-                    modifier = Modifier
-                        .padding(end = rightEndIconPadding)
-                        .size(24.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-         */
 
         // 週数を表示する
         Row(
@@ -267,7 +201,7 @@ fun SettingsContentScreen(
             )
             Switch(
                 checked = showWeekNumbers,
-                onCheckedChange = { showWeekNumbers = it },
+                onCheckedChange = { onShowWeekNumbersChange(it) },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color(0xFFFFFFFF),
                     checkedTrackColor = Color(0xFF8CC447)
@@ -299,6 +233,10 @@ fun SettingsContentScreen(
                         .weight(1f)
                         .padding(start = 10.dp)
                 )
+                var expandedTaskDuration by remember { mutableStateOf(false) }
+                val taskDurationOptions = listOf("15 分", "30 分", "45 分", "60 分", "90 分", "120 分")
+                var selectedTaskDuration by remember { mutableStateOf("60 分") }
+
                 Box {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -325,20 +263,7 @@ fun SettingsContentScreen(
                     ) {
                         taskDurationOptions.forEach { option ->
                             DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        if (option == selectedTaskDuration) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = null,
-                                                tint = Color(0xFF4CAF50),
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(Modifier.width(8.dp))
-                                        }
-                                        Text(option)
-                                    }
-                                },
+                                text = { Text(option) },
                                 onClick = {
                                     selectedTaskDuration = option
                                     expandedTaskDuration = false
@@ -352,7 +277,7 @@ fun SettingsContentScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // アプリセクション
+        // アプリ
         Text(
             text = "アプリ",
             fontSize = 14.sp,
