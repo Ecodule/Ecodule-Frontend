@@ -179,6 +179,7 @@ fun SettingsContentScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        /*
         // デバイスタイムゾーンとタイムゾーンを1枠にし、線で区切る
         Column(
             modifier = Modifier
@@ -244,6 +245,7 @@ fun SettingsContentScreen(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
+         */
 
         // 週数を表示する
         Row(
