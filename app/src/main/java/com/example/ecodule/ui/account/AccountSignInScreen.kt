@@ -195,15 +195,18 @@ fun AccountSignInScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // パスワードをお忘れですか？
-        Text(
-            text = "パスワードをお忘れですか？",
-            color = Color(0xFF2196F3),
-            fontSize = 14.sp,
-            modifier = Modifier
-                .align(Alignment.End)
-                .clickable { onForgotPassword() },
-            textDecoration = TextDecoration.Underline
-        )
+        /*
+            パスワードをお忘れですか？は一旦非表示
+         */
+//        Text(
+//            text = "パスワードをお忘れですか？",
+//            color = Color(0xFF2196F3),
+//            fontSize = 14.sp,
+//            modifier = Modifier
+//                .align(Alignment.End)
+//                .clickable { onForgotPassword() },
+//            textDecoration = TextDecoration.Underline
+//        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
