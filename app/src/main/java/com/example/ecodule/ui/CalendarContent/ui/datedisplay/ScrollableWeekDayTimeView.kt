@@ -1,15 +1,7 @@
 package com.example.ecodule.ui.CalendarContent.ui.datedisplay
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,11 +18,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ecodule.ui.CalendarContent.ui.HourBar
-import com.example.ecodule.ui.CalendarContent.ui.TimeGridLines
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
-import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
+import com.example.ecodule.ui.CalendarContent.ui.HOUR_HEIGHT_DP
+import com.example.ecodule.ui.CalendarContent.ui.HOURS
+import com.example.ecodule.ui.CalendarContent.ui.HourBar
+import com.example.ecodule.ui.CalendarContent.ui.HourBarWidth
+import com.example.ecodule.ui.CalendarContent.ui.TimeGridLines
 import java.time.LocalDate
+
+private val HeaderHeight = 56.dp
 
 @Composable
 fun ScrollableWeekDayTimeView(
@@ -43,125 +39,110 @@ fun ScrollableWeekDayTimeView(
     val days = (0..6).map { weekStart.plusDays(it.toLong()) }
     val scrollState = rememberScrollState()
 
-    Box(Modifier.fillMaxSize()) {
-        Row {
-            HourBar(scrollState)
+    Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(HeaderHeight)
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Spacer(Modifier.width(HourBarWidth))
+            days.forEach { date ->
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable { onDayClick(date.dayOfMonth) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (date == today) {
+                        Surface(shape = CircleShape, color = Color(0xFF88C057), modifier = Modifier.size(28.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("${date.dayOfMonth}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            }
+                        }
+                    } else {
+                        Text("${date.dayOfMonth}", fontSize = 18.sp, color = Color(0xFF444444))
+                    }
+                }
+            }
+        }
+
+        Row(Modifier.fillMaxSize()) {
+            HourBar(
+                scrollState = scrollState,
+                labelNudgeY = (-5).dp, // 必要に応じて調整
+                labelNudgeX = 5.dp
+            )
+
             Box(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-                // 区切り線・グリッド
-                TimeGridLines(verticalLines = 7)
-
-                // スクロール可能なコンテンツエリア
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState)
                 ) {
-                    Row(Modifier.fillMaxHeight()) {
-                        days.forEachIndexed { col, date ->
-                            Box(
-                                Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .noRippleClickable { onDayClick(date.dayOfMonth) }
-                            ) {
-                                Column {
-                                    // 日付表示エリア
-                                    Box(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .height(60.dp)
-                                            .padding(top = 8.dp),
-                                        contentAlignment = Alignment.TopCenter
-                                    ) {
-                                        if (date == today) {
-                                            Surface(
-                                                shape = CircleShape,
-                                                color = Color(0xFF88C057),
-                                                modifier = Modifier.size(28.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Text(
-                                                        "${date.dayOfMonth}",
-                                                        color = Color.White,
-                                                        fontWeight = FontWeight.Bold,
-                                                        fontSize = 18.sp
-                                                    )
-                                                }
-                                            }
-                                        } else {
-                                            Text(
-                                                "${date.dayOfMonth}",
-                                                fontSize = 18.sp,
-                                                color = Color(0xFF444444),
-                                                fontWeight = FontWeight.Normal
-                                            )
-                                        }
-                                    }
+                    val contentHeight = HOUR_HEIGHT_DP * HOURS
+                    Box(
+                        modifier = Modifier
+                            .height(contentHeight)
+                            .fillMaxWidth()
+                    ) {
+                        TimeGridLines(verticalLines = 7, hours = HOURS)
 
-                                    // 24時間分の予定表示エリア
-                                    repeat(24) { hour ->
-                                        Box(
+                        Row(Modifier.fillMaxSize()) {
+                            days.forEach { date ->
+                                Box(
+                                    Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .padding(horizontal = 4.dp)
+                                        .clickable { onDayClick(date.dayOfMonth) }
+                                ) {
+                                    val dayEvents = events.filter {
+                                        it.startDate.dayOfMonth == date.dayOfMonth && it.startDate.monthValue == date.monthValue
+                                    }
+                                    dayEvents.forEach { event ->
+                                        val startHour = event.startDate.hour ?: 0
+                                        val endHour = event.endDate.hour ?: (startHour + 1)
+                                        val durationHours = (endHour - startHour).coerceAtLeast(1)
+                                        val topOffset = HOUR_HEIGHT_DP * startHour.toFloat()
+                                        val eventHeight = HOUR_HEIGHT_DP * durationHours.toFloat()
+
+                                        Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(60.dp) // 1時間 = 60dp
+                                                .offset(y = topOffset)
+                                                .height(eventHeight)
+                                                .clickable { onEventClick(event.id) },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = event.color.copy(alpha = 0.8f),
+                                                contentColor = Color.White
+                                            ),
+                                            shape = RoundedCornerShape(4.dp)
                                         ) {
-                                            // その日・その時間の予定をフィルタ
-                                            val dayEvents = events.filter {
-                                                it.startDate.dayOfMonth == date.dayOfMonth && it.startDate.monthValue == date.monthValue
-                                            }
-
-                                            val hourEvents = dayEvents.filter { event ->
-                                                event.startDate.hour == hour ||
-                                                        (event.startDate.hour != null && event.endDate.hour != null &&
-                                                                hour >= event.startDate.hour && hour < event.endDate.hour)
-                                            }
-
-                                            // 予定を表示
-                                            hourEvents.forEach { event ->
-                                                if (event.startDate.hour == hour) { // 開始時間のみ表示
-                                                    val eventHeight = if (event.startDate.hour != null && event.endDate.hour != null) {
-                                                        ((event.endDate.hour - event.startDate.hour) * 60).dp
-                                                    } else {
-                                                        50.dp
-                                                    }
-
-                                                    Card(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(eventHeight.coerceAtMost(200.dp)) // 最大高さ制限
-                                                            .padding(horizontal = 1.dp, vertical = 1.dp)
-                                                            .clickable { onEventClick(event.id) },
-                                                        colors = CardDefaults.cardColors(
-                                                            containerColor = event.color.copy(alpha = 0.8f),
-                                                            contentColor = Color.White
-                                                        ),
-                                                        shape = RoundedCornerShape(2.dp)
-                                                    ) {
-                                                        Column(
-                                                            modifier = Modifier
-                                                                .fillMaxSize()
-                                                                .padding(2.dp)
-                                                        ) {
-                                                            Text(
-                                                                text = event.label,
-                                                                fontWeight = FontWeight.Bold,
-                                                                fontSize = 10.sp,
-                                                                maxLines = 1,
-                                                                overflow = TextOverflow.Ellipsis
-                                                            )
-                                                            if (event.startDate.hour != null) {
-                                                                Text(
-                                                                    text = "${event.startDate.hour}:00",
-                                                                    fontSize = 8.sp,
-                                                                    color = Color.White.copy(alpha = 0.9f)
-                                                                )
-                                                            }
-                                                        }
-                                                    }
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = event.label,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 10.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                if (event.startDate.hour != null && event.endDate.hour != null) {
+                                                    Text(
+                                                        text = "${event.startDate.hour}:00-${event.endDate.hour}:00",
+                                                        fontSize = 9.sp,
+                                                        color = Color.White.copy(alpha = 0.9f)
+                                                    )
                                                 }
                                             }
                                         }

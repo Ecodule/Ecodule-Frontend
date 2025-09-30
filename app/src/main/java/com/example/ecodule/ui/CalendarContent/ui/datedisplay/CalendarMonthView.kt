@@ -30,13 +30,11 @@ fun CalendarMonthView(
     onEventClick: (String) -> Unit = {}
 ) {
     val today = LocalDate.now()
-    val firstDayOfWeekIndex = yearMonth.atDay(1).dayOfWeek.value % 7
+    val firstDayOfWeekIndex = yearMonth.atDay(1).dayOfWeek.value % 7 // 0=日
     val daysInMonth = yearMonth.lengthOfMonth()
     val prevMonth = yearMonth.minusMonths(1)
     val prevMonthDays = prevMonth.lengthOfMonth()
     val rows = ((firstDayOfWeekIndex + daysInMonth + 6) / 7)
-    var dayCounter = 1
-    var nextMonthDay = 1
 
     Column(modifier = Modifier.fillMaxSize()) {
         for (row in 0 until rows) {
@@ -48,21 +46,37 @@ fun CalendarMonthView(
             ) {
                 for (col in 0..6) {
                     val cellIndex = row * 7 + col
-                    Box(
-                        modifier = Modifier
+                    val isCurrentMonthCell =
+                        cellIndex >= firstDayOfWeekIndex && cellIndex < firstDayOfWeekIndex + daysInMonth
+
+                    // このセルに表示する日付（不変）
+                    val dayNumber = when {
+                        isCurrentMonthCell -> cellIndex - firstDayOfWeekIndex + 1
+                        cellIndex < firstDayOfWeekIndex -> prevMonthDays - (firstDayOfWeekIndex - cellIndex - 1)
+                        else -> cellIndex - (firstDayOfWeekIndex + daysInMonth) + 1
+                    }
+
+                    val cellModifier =
+                        Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .noRippleClickable {
-                                if (cellIndex >= firstDayOfWeekIndex && dayCounter <= daysInMonth) {
-                                    onDayClick(dayCounter)
+                            .let { base ->
+                                if (isCurrentMonthCell) {
+                                    base.noRippleClickable { onDayClick(dayNumber) }
+                                } else {
+                                    base
                                 }
-                            },
+                            }
+
+                    Box(
+                        modifier = cellModifier,
                         contentAlignment = Alignment.TopCenter
                     ) {
                         when {
-                            cellIndex < firstDayOfWeekIndex -> {
+                            !isCurrentMonthCell && cellIndex < firstDayOfWeekIndex -> {
+                                // 前月
                                 Text(
-                                    "${prevMonthDays - (firstDayOfWeekIndex - cellIndex - 1)}",
+                                    "$dayNumber",
                                     Modifier
                                         .fillMaxSize()
                                         .padding(top = 8.dp),
@@ -71,18 +85,20 @@ fun CalendarMonthView(
                                     fontSize = 16.sp
                                 )
                             }
-                            dayCounter <= daysInMonth -> {
+                            isCurrentMonthCell -> {
                                 DayCellGrid(
-                                    day = dayCounter,
-                                    isToday = (today.year == yearMonth.year && today.monthValue == yearMonth.monthValue && today.dayOfMonth == dayCounter),
-                                    events = events.filter { it.startDate.dayOfMonth == dayCounter },
+                                    day = dayNumber,
+                                    isToday = (today.year == yearMonth.year &&
+                                            today.monthValue == yearMonth.monthValue &&
+                                            today.dayOfMonth == dayNumber),
+                                    events = events.filter { it.startDate.dayOfMonth == dayNumber },
                                     onEventClick = onEventClick
                                 )
-                                dayCounter++
                             }
                             else -> {
+                                // 次月
                                 Text(
-                                    "${nextMonthDay++}",
+                                    "$dayNumber",
                                     Modifier
                                         .fillMaxSize()
                                         .padding(top = 8.dp),
