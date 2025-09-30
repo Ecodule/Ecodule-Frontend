@@ -557,9 +557,4 @@ fun AddTaskContent(
 @Composable
 fun AddTaskContentPreview() {
     val dummySelectedDestination = remember { mutableStateOf("Tasks") }
-    val dummyTaskViewModel = remember { TaskViewModel() }
-    AddTaskContent(
-        selectedDestination = dummySelectedDestination,
-        taskViewModel = dummyTaskViewModel
-    )
 }

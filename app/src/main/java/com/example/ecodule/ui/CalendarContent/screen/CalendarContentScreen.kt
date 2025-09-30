@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -45,8 +46,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
+import com.example.ecodule.ui.CalendarContent.model.TaskViewModel // 追加
 import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
 import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
@@ -65,15 +66,25 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
+fun getCategoryColor(category: String): Color {
+    return when (category) {
+        "ゴミ出し" -> Color(0xFFB3E6FF)
+        "通勤/通学" -> Color(0xFFFFD2C5)
+        "外出" -> Color(0xFFE4EFCF)
+        "買い物" -> Color(0xFFC9E4D7)
+        else -> Color(0xFFFF0000)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarContentScreen(
     modifier: Modifier = Modifier,
     initialYearMonth: YearMonth = YearMonth.now(),
     selectedDestination: MutableState<String>,
-    events: List<CalendarEvent> = emptyList(),
     onEventClick: (String) -> Unit = {},
-    userViewModel: UserViewModel
+    userViewModel: UserViewModel,
+    taskViewModel: TaskViewModel // ← TaskViewModelを追加
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -129,6 +140,17 @@ fun CalendarContentScreen(
 
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
+
+    // 追加: ユーザーIDが変わったらTaskViewModelにセット
+    DisposableEffect(user?.id) {
+        user?.id?.let { uid ->
+            taskViewModel.setUserId(uid)
+        }
+        onDispose { }
+    }
+
+    // 追加: TaskViewModelの予定情報を購読
+    val events by taskViewModel.events.collectAsState()
 
     // 表示範囲の予定をフィルタリング（LocalDateTimeベース）
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate) {
@@ -392,17 +414,24 @@ fun CalendarContentScreen(
                         LazyColumn {
                             items(plans.size) { index ->
                                 val event = plans[index]
-                                TextButton(
-                                    onClick = {
-                                        selectedDay = null
-                                        onEventClick(event.id)
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(event.color) // ← event.colorを使う
+                                        .padding(vertical = 4.dp, horizontal = 2.dp)
                                 ) {
-                                    Text(
-                                        "・${event.label} ${event.timeRangeText}",
-                                        color = event.color
-                                    )
+                                    TextButton(
+                                        onClick = {
+                                            selectedDay = null
+                                            onEventClick(event.id)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            "・${event.label} ${event.timeRangeText}",
+                                            color = Color.Black // 文字色は固定でOK
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -465,5 +494,10 @@ fun CalendarContentPreview() {
     val context = LocalContext.current
     val dummySelectedDestination = remember { mutableStateOf("Calendar") }
     val dummyUserViewModel: UserViewModel = hiltViewModel()
-    CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
+    val dummyTaskViewModel: TaskViewModel = hiltViewModel() // ← 追加
+    CalendarContentScreen(
+        selectedDestination = dummySelectedDestination,
+        userViewModel = dummyUserViewModel,
+        taskViewModel = dummyTaskViewModel // ← 追加
+    )
 }
