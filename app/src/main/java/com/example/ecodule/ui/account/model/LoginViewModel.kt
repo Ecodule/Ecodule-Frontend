@@ -1,18 +1,35 @@
 package com.example.ecodule.ui.account.model
 
+import android.content.Context
+import android.credentials.GetCredentialException
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialCustomException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.ui.account.api.LoginApi
 import com.example.ecodule.ui.account.api.LoginResult
 import com.example.ecodule.ui.UserViewModel
 import com.example.ecodule.repository.datastore.TokenManager
+import com.example.ecodule.ui.account.api.googleAuthApi
+import com.example.ecodule.ui.account.util.generateSecureRandomNonce
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.security.SecureRandom
+import java.util.Base64
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,8 +71,5 @@ class LoginViewModel @Inject constructor(
             isLoading.value = false // ローディング終了
         }
     }
-
-    fun googleLogin() {
-
-    }
 }
+
