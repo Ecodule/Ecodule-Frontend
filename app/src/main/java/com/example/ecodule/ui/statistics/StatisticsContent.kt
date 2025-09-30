@@ -15,16 +15,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+val bodyStyle = TextStyle(
+    fontSize = 28.sp,
+    color = Color.Black
+)
+
+val boldBodyStyle = TextStyle(
+    fontWeight = FontWeight.Bold,
+    fontSize = 36.sp,
+    color = Color.Black
+)
+
 
 @Composable
 fun StatisticsContent(
     modifier: Modifier = Modifier
 ) {
     val co2Value = 1.23
+    val allCo2Value = 123456.78
     val savingValue = 12345
     val savingDiff = -5500
     val appleCount = 26
@@ -38,8 +52,7 @@ fun StatisticsContent(
     ) {
         Text(
             text = "統計",
-            fontSize = 50.sp,
-            style = MaterialTheme.typography.headlineMedium,
+            style = boldBodyStyle,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 32.dp)
         )
@@ -59,10 +72,16 @@ fun StatisticsContent(
         )
 
         StatItemWithIcon(
-            icon = "🍎",
-            label = "集めたりんごの数",
-            value = "${appleCount} 個"
+            icon = "🌱",
+            label = "全ユーザーのCO₂削減量",
+            value = "${allCo2Value} Kg"
         )
+
+//        StatItemWithIcon(
+//            icon = "🍎",
+//            label = "集めたりんごの数",
+//            value = "${appleCount} 個"
+//        )
     }
 }
 
@@ -92,19 +111,17 @@ fun StatItemWithIcon(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = icon,
-                fontSize = 40.sp,
+                style = bodyStyle,
                 modifier = Modifier.padding(end = 8.dp)
             )
             Text(
                 text = label,
-                fontSize = 38.sp,
-                style = MaterialTheme.typography.bodyLarge
+                style = bodyStyle,
             )
         }
         Text(
             text = value,
-            fontSize = 40.sp,
-            fontWeight = FontWeight.Bold
+            style = boldBodyStyle,
         )
         ThinDivider()
     }
@@ -125,13 +142,12 @@ fun StatItemWithIconAndDifference(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = icon,
-                fontSize = 40.sp,
+                style = bodyStyle,
                 modifier = Modifier.padding(end = 8.dp)
             )
             Text(
                 text = label,
-                fontSize = 38.sp,
-                style = MaterialTheme.typography.bodyLarge
+                style = bodyStyle,
             )
         }
         Row(
@@ -140,8 +156,7 @@ fun StatItemWithIconAndDifference(
         ) {
             Text(
                 text = value,
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Bold
+                style = boldBodyStyle,
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
