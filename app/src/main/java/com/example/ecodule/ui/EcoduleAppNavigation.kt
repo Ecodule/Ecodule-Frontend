@@ -52,6 +52,7 @@ fun EcoduleAppNavigation(
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
     val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
+    val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
     var birthDate by remember { mutableStateOf("2001/01/01")}
@@ -166,6 +167,11 @@ fun EcoduleAppNavigation(
                         birthDate = newbirthDate
                     },
                     // その他変更画面遷移やイベント処理
+                    onLogout = {
+                        if (!isGuestMode) {
+                            authViewModel.onLogout()
+                        }
+                    },
                 )
 
             }
@@ -176,7 +182,7 @@ fun EcoduleAppNavigation(
                     onUserNameChanged = { newName ->
                         userName = newName
                         selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
-                    }
+                    },
                 )
             }
             EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {

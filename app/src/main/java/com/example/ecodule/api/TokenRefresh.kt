@@ -1,5 +1,6 @@
 package com.example.ecodule.api
 
+import android.util.Log
 import com.example.ecodule.BuildConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.Serializable
@@ -59,6 +60,9 @@ object TokenRefresh {
                     response.use {
                         if (!it.isSuccessful) {
                             continuation.resume(null)
+
+                            Log.d("TokenRefresh", "Failed to refresh token: ${it.code}")
+
                             return
                         }
 
@@ -71,6 +75,7 @@ object TokenRefresh {
                                     refreshToken = json.getString("refresh_token"), // 新しいリフレッシュトークンが返される場合
                                     expiresIn = json.getLong("expires_in")
                                 )
+                                Log.d("TokenRefresh", "Token refreshed successfully $result")
                                 // 成功時に結果を返す
                                 continuation.resume(result)
                             } catch (e: Exception) {
