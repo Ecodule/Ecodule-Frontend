@@ -56,6 +56,7 @@ import com.example.ecodule.R
 import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
 import com.example.ecodule.ui.UserViewModel
+import com.example.ecodule.ui.account.component.GoogleAuthButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +66,6 @@ fun AccountSignInScreen(
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
-    onGoogleSignIn: () -> Unit,
     onGuestMode: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
@@ -84,7 +84,7 @@ fun AccountSignInScreen(
     // ログインエラーメッセージ
     val loginError = remember { viewModel.loginError }
 
-    // ログイン成功イベントを監視し、画面遷移を実行
+    // ログイン成功イベントを監視
     LaunchedEffect(Unit) {
         viewModel.loginSuccessEvent.collect {
             onLoginSuccess()
@@ -292,43 +292,10 @@ fun AccountSignInScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Googleで続行ボタン
-        OutlinedButton(
-            onClick = { onGoogleSignIn() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // Google アイコン（簡略化）
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .background(
-                            Color(0xFF4285F4),
-                            RoundedCornerShape(10.dp)
-                        )
-                ) {
-                    Text(
-                        "G",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    "Google で続行",
-                    color = Color.Black,
-                    fontSize = 16.sp
-                )
-            }
-        }
+        GoogleAuthButton(
+            text = "Google で作成",
+            onClick = { viewModel.googleLogin() }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 

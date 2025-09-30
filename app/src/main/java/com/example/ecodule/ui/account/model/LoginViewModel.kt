@@ -54,4 +54,8 @@ class LoginViewModel @Inject constructor(
             isLoading.value = false // ローディング終了
         }
     }
+
+    fun googleLogin() {
+
+    }
 }

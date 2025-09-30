@@ -67,13 +67,10 @@ fun EcoduleAuthNavigation(
                         onLoginSuccess = { authViewModel.onLoginSuccess() },
                         onForgotPassword = { screenState.value = AuthScreenState.FORGOT_PASSWORD },
                         onSignUp = { screenState.value = AuthScreenState.SIGNUP },
-                        onGoogleSignIn = { authViewModel.onLoginSuccess() },
                         onGuestMode = { authViewModel.onGuestMode() }
                     )
                     AuthScreenState.SIGNUP -> AccountCreateScreen(
-                        onCreateSuccess = { authViewModel.onLoginSuccess() },
                         onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
-                        onGoogleCreate = { authViewModel.onLoginSuccess() }
                     )
                     AuthScreenState.FORGOT_PASSWORD -> AccountForgotPasswordScreen(
                         onBackToLogin = { screenState.value = AuthScreenState.LOGIN },

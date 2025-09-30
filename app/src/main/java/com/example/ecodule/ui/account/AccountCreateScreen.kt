@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.R
+import com.example.ecodule.ui.account.component.GoogleAuthButton
 import com.example.ecodule.ui.account.model.AccountCreateViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
 
@@ -45,9 +46,7 @@ import com.example.ecodule.ui.account.util.EmailValidator
 @Composable
 fun AccountCreateScreen(
     accountCreateViewModel: AccountCreateViewModel = hiltViewModel(),
-    onCreateSuccess: () -> Unit,
     onBackToLogin: () -> Unit,
-    onGoogleCreate: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -439,43 +438,10 @@ fun AccountCreateScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Googleで作成ボタン
-            OutlinedButton(
-                onClick = { onGoogleCreate() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    // Google アイコン（簡略化）
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .background(
-                                Color(0xFF4285F4),
-                                RoundedCornerShape(10.dp)
-                            )
-                    ) {
-                        Text(
-                            "G",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        "Google で作成",
-                        color = Color.Black,
-                        fontSize = 16.sp
-                    )
-                }
-            }
+            GoogleAuthButton(
+                text = "Google で作成",
+                onClick = { accountCreateViewModel.googleAccountCreate() }
+            )
 
             Spacer(modifier = Modifier.height(40.dp))
         }
@@ -491,5 +457,5 @@ private fun saveAccountToServer(email: String, password: String, username: Strin
 @Preview
 @Composable
 fun PreviewScr(){
-    AccountCreateScreen(onCreateSuccess = {}, onBackToLogin = {}, onGoogleCreate = {})
+    AccountCreateScreen(onBackToLogin = {})
 }

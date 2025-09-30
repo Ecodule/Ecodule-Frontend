@@ -55,4 +55,8 @@ class AccountCreateViewModel @Inject constructor(
             isLoading.value = false // ローディング終了
         }
     }
+
+    fun googleAccountCreate() {
+
+    }
 }
