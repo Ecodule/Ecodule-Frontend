@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.ecodule.BuildConfig
 import com.example.ecodule.R
 import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
@@ -293,8 +294,9 @@ fun AccountSignInScreen(
 
         // Googleで続行ボタン
         GoogleAuthButton(
-            text = "Google で作成",
-            onClick = { viewModel.googleLogin() }
+            text = "Google で続行",
+            webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
+            loginViewModel = viewModel,
         )
 
         Spacer(modifier = Modifier.height(16.dp))

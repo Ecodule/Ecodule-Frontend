@@ -438,10 +438,10 @@ fun AccountCreateScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Googleで作成ボタン
-            GoogleAuthButton(
-                text = "Google で作成",
-                onClick = { accountCreateViewModel.googleAccountCreate() }
-            )
+//            GoogleAuthButton(
+//                text = "Google で作成",
+//
+//            )
 
             Spacer(modifier = Modifier.height(40.dp))
         }
