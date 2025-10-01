@@ -39,7 +39,6 @@ import kotlinx.coroutines.launch
 fun GoogleAuthButton(
     text: String, // ★ ボタンのテキストを引数で受け取る
     isOtherAuthProgressed: Boolean, // 他の認証が進行中かどうか
-    isLogin: Boolean, // ログイン用か登録用か
     googleAuthButtonViewModel: GoogleAuthButtonViewModel = hiltViewModel(),
     modifier: Modifier = Modifier // ★ Modifierを引数で受け取る
 ) {
