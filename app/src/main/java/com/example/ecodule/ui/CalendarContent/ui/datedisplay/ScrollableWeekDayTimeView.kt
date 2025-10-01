@@ -24,6 +24,9 @@ import com.example.ecodule.ui.CalendarContent.ui.HOURS
 import com.example.ecodule.ui.CalendarContent.ui.HourBar
 import com.example.ecodule.ui.CalendarContent.ui.HourBarWidth
 import com.example.ecodule.ui.CalendarContent.ui.TimeGridLines
+import com.example.ecodule.ui.CalendarContent.ui.WeekNumberPillLarge
+import com.example.ecodule.ui.CalendarContent.ui.calcWeekNumber
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 private val HeaderHeight = 56.dp
@@ -33,13 +36,16 @@ fun ScrollableWeekDayTimeView(
     weekStart: LocalDate,
     events: List<CalendarEvent>,
     onDayClick: (Int) -> Unit = {},
-    onEventClick: (String) -> Unit = {}
+    onEventClick: (String) -> Unit = {},
+    showWeekNumbers: Boolean = false,
+    weekStartDay: DayOfWeek = DayOfWeek.MONDAY
 ) {
     val today = LocalDate.now()
     val days = (0..6).map { weekStart.plusDays(it.toLong()) }
     val scrollState = rememberScrollState()
 
     Column(Modifier.fillMaxSize()) {
+        // ヘッダー（週数は時間バーの列に表示）
         Row(
             Modifier
                 .fillMaxWidth()
@@ -47,7 +53,20 @@ fun ScrollableWeekDayTimeView(
                 .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(HourBarWidth))
+            Box(
+                modifier = Modifier
+                    .width(HourBarWidth)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (showWeekNumbers) {
+                    val weekNum = calcWeekNumber(weekStart, weekStartDay)
+                    WeekNumberPillLarge(
+                        weekNumber = weekNum,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
             days.forEach { date ->
                 Box(
                     Modifier
@@ -57,22 +76,37 @@ fun ScrollableWeekDayTimeView(
                     contentAlignment = Alignment.Center
                 ) {
                     if (date == today) {
-                        Surface(shape = CircleShape, color = Color(0xFF88C057), modifier = Modifier.size(28.dp)) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFF88C057),
+                            modifier = Modifier.size(28.dp)
+                        ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text("${date.dayOfMonth}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                Text(
+                                    "${date.dayOfMonth}",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
                             }
                         }
                     } else {
-                        Text("${date.dayOfMonth}", fontSize = 18.sp, color = Color(0xFF444444))
+                        Text(
+                            "${date.dayOfMonth}",
+                            fontSize = 18.sp,
+                            color = Color(0xFF444444),
+                            fontWeight = FontWeight.Normal
+                        )
                     }
                 }
             }
         }
 
+        // 本体
         Row(Modifier.fillMaxSize()) {
             HourBar(
                 scrollState = scrollState,
-                labelNudgeY = (-5).dp, // 必要に応じて調整
+                labelNudgeY = (-5).dp,
                 labelNudgeX = 5.dp
             )
 
