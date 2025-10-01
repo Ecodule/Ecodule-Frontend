@@ -68,10 +68,10 @@ import java.time.YearMonth
 
 fun getCategoryColor(category: String): Color {
     return when (category) {
-        "ゴミ出し" -> Color(0xFFB3E6FF)
-        "通勤/通学" -> Color(0xFFFFD2C5)
-        "外出" -> Color(0xFFE4EFCF)
-        "買い物" -> Color(0xFFC9E4D7)
+        "ゴミ出し" -> Color(0xFF2C8FC0)
+        "通勤/通学" -> Color(0xFFBD5233)
+        "外出" -> Color(0xFF7FAB2A)
+        "買い物" -> Color(0xFF1C965B)
         else -> Color(0xFFFF0000)
     }
 }

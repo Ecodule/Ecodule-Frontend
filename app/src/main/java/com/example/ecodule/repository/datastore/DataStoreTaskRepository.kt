@@ -27,19 +27,19 @@ fun taskKey(userId: String) = stringPreferencesKey("tasks_${userId}")
 // カテゴリ名からカラーIntを返す関数
 fun getCategoryColorInt(category: String): Int {
     return when (category) {
-        "ゴミ出し" -> 0xFFB3E6FF.toInt()
-        "通勤/通学" -> 0xFFFFD2C5.toInt()
-        "外出" -> 0xFFE4EFCF.toInt()
-        "買い物" -> 0xFFC9E4D7.toInt()
+        "ゴミ出し" -> 0xFF1E688D.toInt()
+        "通勤/通学" -> 0xFFAF4C30.toInt()
+        "外出" -> 0xFF7CA62C.toInt()
+        "買い物" -> 0xFF19A261.toInt()
         else -> 0xFFFF0000.toInt()
     }
 }
 fun getCategoryColor(category: String): Color {
     return when (category) {
-        "ゴミ出し" -> Color(0xFFB3E6FF)
-        "通勤/通学" -> Color(0xFFFFD2C5)
-        "外出" -> Color(0xFFE4EFCF)
-        "買い物" -> Color(0xFFC9E4D7)
+        "ゴミ出し" -> Color(0xFF1E688D)
+        "通勤/通学" -> Color(0xFFAF4C30)
+        "外出" -> Color(0xFF7CA62C)
+        "買い物" -> Color(0xFF19A261)
         else -> Color(0xFFFF0000)
     }
 }
