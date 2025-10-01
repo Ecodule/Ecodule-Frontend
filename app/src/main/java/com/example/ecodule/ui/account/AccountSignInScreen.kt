@@ -58,12 +58,14 @@ import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
 import com.example.ecodule.ui.UserViewModel
 import com.example.ecodule.ui.account.component.GoogleAuthButton
+import com.example.ecodule.ui.account.model.GoogleAuthButtonViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSignInScreen(
     // ViewModelを引数として受け取る
     viewModel: LoginViewModel = hiltViewModel(),
+    googleLoginViewModel: GoogleAuthButtonViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
@@ -88,6 +90,13 @@ fun AccountSignInScreen(
     // ログイン成功イベントを監視
     LaunchedEffect(Unit) {
         viewModel.loginSuccessEvent.collect {
+            onLoginSuccess()
+        }
+    }
+
+    // Googleログイン成功イベントを監視
+    LaunchedEffect(Unit) {
+        googleLoginViewModel.googleLoginSuccessEvent.collect {
             onLoginSuccess()
         }
     }
@@ -294,8 +303,7 @@ fun AccountSignInScreen(
 
         // Googleで続行ボタン
         GoogleAuthButton(
-            text = "Google で続行",
-            loginViewModel = viewModel,
+            text = "Google で続行"
         )
 
         Spacer(modifier = Modifier.height(16.dp))

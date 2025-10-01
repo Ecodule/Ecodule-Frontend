@@ -29,10 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecodule.BuildConfig
 import com.example.ecodule.ui.account.api.googleAuthApi
 import com.example.ecodule.ui.account.api.googleAuthApiResult
+import com.example.ecodule.ui.account.model.GoogleAuthButtonViewModel
 import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.generateSecureRandomNonce
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -45,7 +47,7 @@ import java.util.Base64
 @Composable
 fun GoogleAuthButton(
     text: String, // ★ ボタンのテキストを引数で受け取る
-    loginViewModel: LoginViewModel,
+    googleAuthButtonViewModel: GoogleAuthButtonViewModel = hiltViewModel(),
     modifier: Modifier = Modifier // ★ Modifierを引数で受け取る
 ) {
     val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
@@ -89,7 +91,10 @@ fun GoogleAuthButton(
             when (result) {
                 is googleAuthApiResult.Success -> {
                     Toast.makeText(context, "Sign in successful!", Toast.LENGTH_SHORT).show()
+
                     Log.i(TAG, "ID token (prefix): ${result.idToken.take(16)}…")
+
+                    googleAuthButtonViewModel.googleLogin(result.idToken)
                 }
                 is googleAuthApiResult.NetworkError -> {
                     Toast.makeText(context, "ネットワークエラー", Toast.LENGTH_SHORT).show()
