@@ -45,7 +45,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.CalendarContent.ui.WheelsTimePicker
 import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.components.CategoryTabs
 import java.text.SimpleDateFormat
@@ -132,34 +134,13 @@ fun TimePickerTextButton(
     onTimeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var showTimePicker by remember { mutableStateOf(false) }
-    val calendar = Calendar.getInstance()
 
     val displayTime: String = timeText.ifBlank {
         if (label == "開始" || label.isBlank()) "07:00" else "08:00"
     }
 
-    LaunchedEffect(showTimePicker) {
-        if (showTimePicker) {
-            val parts = displayTime.split(":")
-            val hour = parts.getOrNull(0)?.toIntOrNull() ?: 7
-            val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            val dialog = TimePickerDialog(
-                context,
-                { _, hourOfDay, minuteOfDay ->
-                    val timeStr = "%02d:%02d".format(hourOfDay, minuteOfDay)
-                    onTimeSelected(timeStr)
-                    showTimePicker = false
-                },
-                hour,
-                minute,
-                true
-            )
-            dialog.setOnCancelListener { showTimePicker = false }
-            dialog.show()
-        }
-    }
+    // ボタンは1つだけ表示する
     TextButton(
         onClick = { showTimePicker = true },
         modifier = modifier
@@ -169,6 +150,20 @@ fun TimePickerTextButton(
             displayTime,
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodyLarge
+        )
+    }
+
+    if (showTimePicker) {
+        WheelsTimePicker(
+            label = "${label}時刻を選択",
+            currentTime = displayTime,
+            onTimeChanged = { selectedTime ->
+                onTimeSelected(selectedTime)
+            },
+            onDismissRequest = { showTimePicker = false },
+            labelTextStyle = MaterialTheme.typography.headlineLarge.copy(fontSize = 24.sp),
+            hourCenterBiasDp = 6.dp,
+            minuteCenterBiasDp = 6.dp
         )
     }
 }

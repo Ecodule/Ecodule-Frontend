@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +34,7 @@ import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.account.SettingsAccountScreen
 import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
 import com.example.ecodule.ui.statistics.StatisticsContent
 import com.example.ecodule.ui.taskListContent.TaskListContent
@@ -43,6 +46,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Composable
@@ -55,17 +59,31 @@ fun EcoduleAppNavigation(
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel: TaskViewModel = hiltViewModel()
     val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
+    val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
+    var birthDate by remember { mutableStateOf("2001/01/01")}
+
+    // 週表示設定（画面間で保持）
+    var showWeekNumbers by rememberSaveable { mutableStateOf(false) }
+    var selectedWeekStartLabel by rememberSaveable { mutableStateOf("日曜日") } // 「土曜日 / 日曜日 / 月曜日」
+
+    fun toDayOfWeek(label: String): DayOfWeek = when (label) {
+        "土曜日" -> DayOfWeek.SATURDAY
+        "月曜日" -> DayOfWeek.MONDAY
+        else -> DayOfWeek.SUNDAY
+    }
+    val weekStart: DayOfWeek = remember(selectedWeekStartLabel) { toDayOfWeek(selectedWeekStartLabel) }
 
     // ここではcollectAsState()のみ
     val todayEvents by taskViewModel.todayEvents.collectAsState()
+    val today = LocalDate.now()
+    
 
-    // ボトムナビゲーションバーを表示しない画面のリスト
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
-        EcoduleRoute.SETTINGSNOTIFICATIONS
-        // 将来的に他の詳細画面も追加可能
+        EcoduleRoute.SETTINGSNOTIFICATIONS,
+        EcoduleRoute.SETTINGSGOOGLEINTEGRATION
     )
 
     val events by taskViewModel.events.collectAsState()
@@ -73,7 +91,6 @@ fun EcoduleAppNavigation(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // メインコンテンツ
         when (selectedDestination.value) {
             EcoduleRoute.CALENDAR -> {
                 CalendarContentScreen(
@@ -85,6 +102,8 @@ fun EcoduleAppNavigation(
                     },
                     userViewModel = userViewModel,
                     taskViewModel = taskViewModel,
+                    showWeekNumbers = showWeekNumbers,
+                    weekStart = weekStart
                 )
             }
             EcoduleRoute.TASKS -> {
@@ -107,19 +126,17 @@ fun EcoduleAppNavigation(
             }
             EcoduleRoute.SETTINGS -> {
                 SettingsContentScreen(
-                    userName = userName,
                     modifier = Modifier.weight(1f),
-                    onNavigateUserName = {
-                        selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
-                    },
-                    onNavigateTimeZone = { /* 画面遷移: タイムゾーン */ },
-                    onNavigateNotifications = {
-                        selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS
-                    },
-                    onNavigateGoogleCalendar = { /* 画面遷移: Googleカレンダー連携 */ },
-                    onNavigateDetail = {
-                        selectedDestination.value = EcoduleRoute.SETTINGSDETAILS
-                    }
+                    userName = userName,
+                    // バインド: 週の開始日 / 週数表示
+                    selectedWeekStart = selectedWeekStartLabel,
+                    onSelectedWeekStartChange = { selectedWeekStartLabel = it },
+                    showWeekNumbers = showWeekNumbers,
+                    onShowWeekNumbersChange = { showWeekNumbers = it },
+                    onNavigateUserName = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
+                    onNavigateNotifications = { selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS },
+                    onNavigateGoogleCalendar = { selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION },
+                    onNavigateDetail = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS }
                 )
             }
             EcoduleRoute.SETTINGSDETAILS -> {
@@ -129,11 +146,9 @@ fun EcoduleAppNavigation(
                     } else {
                         Modifier.weight(1f)
                     },
-                    onBackToSettings = {
-                        selectedDestination.value = EcoduleRoute.SETTINGS
-                    },
-                    onNavigateLicense = { /* ライセンス画面への遷移 */ },
-                    onNavigateTerms = { /* 利用規約画面への遷移 */ }
+                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
+                    onNavigateLicense = { },
+                    onNavigateTerms = { }
                 )
             }
             EcoduleRoute.SETTINGSNOTIFICATIONS -> {
@@ -143,18 +158,24 @@ fun EcoduleAppNavigation(
                     } else {
                         Modifier.weight(1f)
                     },
-                    onBackToSettings = {
-                        selectedDestination.value = EcoduleRoute.SETTINGS
-                    }
+                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
                 )
             }
             EcoduleRoute.SETTINGSACCOUNT -> {
                 SettingsAccountScreen(
-                    // 適宜ユーザー情報等を渡す
                     userName = userName,
                     onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
                     onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
+                    currentBirthDate = birthDate,
+                    onBirthDateChanged = { newbirthDate ->
+                        birthDate = newbirthDate
+                    },
                     // その他変更画面遷移やイベント処理
+                    onLogout = {
+                        if (!isGuestMode) {
+                            authViewModel.onLogout()
+                        }
+                    },
                 )
             }
             EcoduleRoute.SETTINGSUSERNAME -> {
@@ -164,12 +185,24 @@ fun EcoduleAppNavigation(
                     onUserNameChanged = { newName ->
                         userName = newName
                         selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
-                    }
+                    },
+                )
+            }
+            EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
+                SettingsGoogleIntegrationScreen(
+                    initialGoogleLinked = false,
+                    initialGoogleUserName = "",
+                    initialGoogleEmail = "",
+                    initialCalendarLinked = false,
+                    onGoogleAccountLink = { true; "Test User" to "testuser@gmail.com" },
+                    onGoogleAccountUnlink = { },
+                    onCalendarLink = { },
+                    onCalendarUnlink = { },
+                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
                 )
             }
         }
 
-        // ナビゲーションバー（特定の画面では非表示）
         if (!hideBottomBarRoutes.contains(selectedDestination.value)) {
             NavigationBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -191,9 +224,9 @@ fun EcoduleAppNavigation(
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BottomNavSelectedIcon, // 選択時のアイコン色
-                            unselectedIconColor = BottomNavUnselectedIcon, // 非選択時のアイコン色
-                            indicatorColor = BottomNavSelectedBackground // 選択時の背景色（インジケーター）
+                            selectedIconColor = BottomNavSelectedIcon,
+                            unselectedIconColor = BottomNavUnselectedIcon,
+                            indicatorColor = BottomNavSelectedBackground
                         )
                     )
                 }
@@ -212,6 +245,7 @@ object EcoduleRoute {
     const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
+    const val SETTINGSGOOGLEINTEGRATION = "SettingsGoogleIntegration"
 
     // 将来的に他の詳細画面も追加可能
     // const val SETTINGSUSERNAME = "SettingsUserName"
