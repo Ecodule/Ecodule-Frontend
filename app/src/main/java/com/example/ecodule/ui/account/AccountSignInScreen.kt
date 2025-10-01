@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,20 +53,23 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.ecodule.BuildConfig
 import com.example.ecodule.R
 import com.example.ecodule.ui.account.model.LoginViewModel
 import com.example.ecodule.ui.account.util.EmailValidator
 import com.example.ecodule.ui.UserViewModel
+import com.example.ecodule.ui.account.component.GoogleAuthButton
+import com.example.ecodule.ui.account.model.GoogleAuthButtonViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSignInScreen(
     // ViewModelを引数として受け取る
     viewModel: LoginViewModel = hiltViewModel(),
+    googleLoginViewModel: GoogleAuthButtonViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
-    onGoogleSignIn: () -> Unit,
     onGuestMode: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
@@ -78,15 +82,33 @@ fun AccountSignInScreen(
     val isValidEmail = EmailValidator.isValidEmailForSignup(email)
     val showEmailError = email.isNotBlank() && !isValidEmail
 
+    val isLoading by remember {
+        derivedStateOf { viewModel.isLoading.value || googleLoginViewModel.isLoading.value }
+    }
+
     // ログインボタンの有効性をチェック
-    val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
+    val isLoginEnabled = isValidEmail && password.isNotBlank() && !isLoading
 
     // ログインエラーメッセージ
     val loginError = remember { viewModel.loginError }
+    val googleLoginError = remember { googleLoginViewModel.googleLoginError }
 
-    // ログイン成功イベントを監視し、画面遷移を実行
+    // ログイン成功イベントを監視
     LaunchedEffect(Unit) {
         viewModel.loginSuccessEvent.collect {
+            loginError.value = null
+            googleLoginError.value = null
+
+            onLoginSuccess()
+        }
+    }
+
+    // Googleログイン成功イベントを監視
+    LaunchedEffect(Unit) {
+        googleLoginViewModel.googleLoginSuccessEvent.collect {
+            loginError.value = null
+            googleLoginError.value = null
+
             onLoginSuccess()
         }
     }
@@ -135,7 +157,8 @@ fun AccountSignInScreen(
                 cursorColor = Color(0xFF7CB342)
             ),
             shape = RoundedCornerShape(8.dp),
-            isError = showEmailError
+            isError = showEmailError,
+            enabled = (!viewModel.isLoading.value && !googleLoginViewModel.isLoading.value)
         )
 
         // メールアドレスエラーメッセージ
@@ -189,7 +212,8 @@ fun AccountSignInScreen(
                 unfocusedBorderColor = Color.LightGray,
                 cursorColor = Color(0xFF7CB342)
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = (!viewModel.isLoading.value && !googleLoginViewModel.isLoading.value)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -292,50 +316,33 @@ fun AccountSignInScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Googleで続行ボタン
-        OutlinedButton(
-            onClick = { onGoogleSignIn() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // Google アイコン（簡略化）
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .background(
-                            Color(0xFF4285F4),
-                            RoundedCornerShape(10.dp)
-                        )
-                ) {
-                    Text(
-                        "G",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    "Google で続行",
-                    color = Color.Black,
-                    fontSize = 16.sp
-                )
-            }
+        GoogleAuthButton(
+            text = "Google で続行",
+            isOtherAuthProgressed = viewModel.isLoading.value,
+        )
+
+        if (googleLoginError.value?.isNotEmpty() == true) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = googleLoginError.value ?: "",
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // ゲストモードで続行
         TextButton(
-            onClick = { onGuestMode() },
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                viewModel.login(
+                    email = "ecodule@gmail.com",
+                    password = "abcd1234"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
             Text(
                 "ゲストモードで続行",

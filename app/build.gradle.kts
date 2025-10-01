@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,13 +9,19 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
+val properties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.example.ecodule"
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.ecodule"
-        minSdk = 35
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -53,16 +61,31 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+            buildConfigField(
+                "String",
+                "GOOGLE_WEB_CLIENT_ID",
+                "${properties.getProperty("GOOGLE_WEB_CLIENT_ID")}"
+            )
         }
         create("staging") {
             dimension = "env"
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
             buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+            buildConfigField(
+                "String",
+                "GOOGLE_WEB_CLIENT_ID",
+                "${properties.getProperty("GOOGLE_WEB_CLIENT_ID")}"
+            )
         }
         create("prod") {
             dimension = "env"
             buildConfigField("String","BASE_URL", "\"$baseUrl\"")
+            buildConfigField(
+                "String",
+                "GOOGLE_WEB_CLIENT_ID",
+                "${properties.getProperty("GOOGLE_WEB_CLIENT_ID")}"
+            )
         }
     }
 }
@@ -83,6 +106,10 @@ dependencies {
 
     // Material3 を使用している場合
     implementation(libs.androidx.material3.android)
+
+    // google oauth
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

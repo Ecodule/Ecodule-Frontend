@@ -35,39 +35,39 @@ import java.util.Base64
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
+class GoogleAuthButtonViewModel @Inject constructor(
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
 ) : ViewModel() {
     // UIの状態を管理するState
-    val loginError = mutableStateOf<String?>(null)
+    val googleLoginError = mutableStateOf<String?>(null)
     val isLoading = mutableStateOf(false)
 
     // ログイン成功をUIに通知するためのイベントフロー
-    private val _loginSuccessEvent = MutableSharedFlow<Unit>()
-    val loginSuccessEvent = _loginSuccessEvent.asSharedFlow()
+    private val _googleLoginSuccessEvent = MutableSharedFlow<Unit>()
+    val googleLoginSuccessEvent = _googleLoginSuccessEvent.asSharedFlow()
 
     // ログイン処理を実行するメソッド
-    fun login(email: String, password: String) {
+    fun googleLogin(token: String) {
         // viewModelScopeでコルーチンを起動
         viewModelScope.launch {
             isLoading.value = true // ローディング開始
-            loginError.value = null
+            googleLoginError.value = null
 
-            when (val result = LoginApi.login(email, password)) {
-                is LoginResult.Success -> {
+            when (val result = GoogleLoginApi.login(token)) {
+                is GoogleLoginResult.Success -> {
 
                     // 成功：トークンとユーザー情報を保存
                     tokenManager.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
                     // ★ これでsuspend関数をコルーチン内から安全に呼び出せる
-                    userRepository.saveUser(id = result.id, email = email)
+                    userRepository.saveUser(id = result.id, email = result.email)
 
-                    _loginSuccessEvent.emit(Unit)
+                    _googleLoginSuccessEvent.emit(Unit)
                 }
-                is LoginResult.Error -> {
+                is GoogleLoginResult.Error -> {
                     Log.d("LoginViewModel", "Login failed: ${result}")
                     // 失敗：エラーメッセージを更新
-                    loginError.value = result.message
+                    googleLoginError.value = result.message
                 }
             }
             isLoading.value = false // ローディング終了
