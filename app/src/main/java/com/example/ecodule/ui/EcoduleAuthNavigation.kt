@@ -71,6 +71,7 @@ fun EcoduleAuthNavigation(
                     )
                     AuthScreenState.SIGNUP -> AccountCreateScreen(
                         onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
+                        onLoginSuccess = { authViewModel.onLoginSuccess() },
                     )
                     AuthScreenState.FORGOT_PASSWORD -> AccountForgotPasswordScreen(
                         onBackToLogin = { screenState.value = AuthScreenState.LOGIN },

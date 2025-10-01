@@ -96,6 +96,9 @@ fun AccountSignInScreen(
     // ログイン成功イベントを監視
     LaunchedEffect(Unit) {
         viewModel.loginSuccessEvent.collect {
+            loginError.value = null
+            googleLoginError.value = null
+
             onLoginSuccess()
         }
     }
@@ -103,6 +106,9 @@ fun AccountSignInScreen(
     // Googleログイン成功イベントを監視
     LaunchedEffect(Unit) {
         googleLoginViewModel.googleLoginSuccessEvent.collect {
+            loginError.value = null
+            googleLoginError.value = null
+
             onLoginSuccess()
         }
     }

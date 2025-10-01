@@ -51,9 +51,6 @@ fun GoogleAuthButton(
     var isRunning by remember { mutableStateOf(false) } // 再コンポーズでの多重起動防止
     var isLoading by remember { googleAuthButtonViewModel.isLoading }
 
-
-    var isOtherAuthLoading by remember { mutableStateOf(isOtherAuthProgressed) }
-
     Log.d("ButtonUI", "generated nonce for this session: ${generateSecureRandomNonce()}")
     val onClick: () -> Unit = {
         Log.d("ButtonUI", "Button clicked $context, $activity")
