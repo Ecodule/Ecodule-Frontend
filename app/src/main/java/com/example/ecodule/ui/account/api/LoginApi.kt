@@ -46,7 +46,7 @@ object LoginApi {
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resume(LoginResult.Error("ネットワークエラー: ${e.message}"))
+                    continuation.resume(LoginResult.Error("ネットワークエラーが発生しました。"))
                 }
 
                 override fun onResponse(call: Call, response: Response) {

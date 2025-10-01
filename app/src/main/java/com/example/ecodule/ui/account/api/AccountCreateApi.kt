@@ -63,7 +63,7 @@ object AccountCreateApi {
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resume(AccountCreateResult.Error("ネットワークエラー: ${e.message}"))
+                    continuation.resume(AccountCreateResult.Error("ネットワークエラーが発生しました。"))
                 }
 
                 override fun onResponse(call: Call, response: Response) {

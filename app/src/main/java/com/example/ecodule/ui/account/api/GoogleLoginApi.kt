@@ -59,7 +59,7 @@ object GoogleLoginApi {
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resume(GoogleLoginResult.Error("ネットワークエラー: ${e.message}"))
+                    continuation.resume(GoogleLoginResult.Error("ネットワークエラーが発生しました。"))
                 }
 
                 override fun onResponse(call: Call, response: Response) {

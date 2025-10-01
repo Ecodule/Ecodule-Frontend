@@ -25,7 +25,7 @@ suspend fun googleAuthApi(
     val cm = CredentialManager.create(activity)
 
     // 初回フレーム直後の誤検知を避ける軽い待ち
-    delay(150)
+    delay(10)
 
     return try {
         Log.d("GoogleAuthApi", "Credential obtained: $activity, $request")

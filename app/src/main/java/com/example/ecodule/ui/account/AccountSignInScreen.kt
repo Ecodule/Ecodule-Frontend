@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,11 +82,16 @@ fun AccountSignInScreen(
     val isValidEmail = EmailValidator.isValidEmailForSignup(email)
     val showEmailError = email.isNotBlank() && !isValidEmail
 
+    val isLoading by remember {
+        derivedStateOf { viewModel.isLoading.value || googleLoginViewModel.isLoading.value }
+    }
+
     // ログインボタンの有効性をチェック
-    val isLoginEnabled = email.isNotBlank() && password.isNotBlank()
+    val isLoginEnabled = isValidEmail && password.isNotBlank() && !isLoading
 
     // ログインエラーメッセージ
     val loginError = remember { viewModel.loginError }
+    val googleLoginError = remember { googleLoginViewModel.googleLoginError }
 
     // ログイン成功イベントを監視
     LaunchedEffect(Unit) {
@@ -145,7 +151,8 @@ fun AccountSignInScreen(
                 cursorColor = Color(0xFF7CB342)
             ),
             shape = RoundedCornerShape(8.dp),
-            isError = showEmailError
+            isError = showEmailError,
+            enabled = (!viewModel.isLoading.value && !googleLoginViewModel.isLoading.value)
         )
 
         // メールアドレスエラーメッセージ
@@ -199,7 +206,8 @@ fun AccountSignInScreen(
                 unfocusedBorderColor = Color.LightGray,
                 cursorColor = Color(0xFF7CB342)
             ),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = (!viewModel.isLoading.value && !googleLoginViewModel.isLoading.value)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -303,15 +311,32 @@ fun AccountSignInScreen(
 
         // Googleで続行ボタン
         GoogleAuthButton(
-            text = "Google で続行"
+            text = "Google で続行",
+            isOtherAuthProgressed = viewModel.isLoading.value,
         )
+
+        if (googleLoginError.value?.isNotEmpty() == true) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = googleLoginError.value ?: "",
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // ゲストモードで続行
         TextButton(
-            onClick = { onGuestMode() },
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                viewModel.login(
+                    email = "ecodule@gmail.com",
+                    password = "abcd1234"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
             Text(
                 "ゲストモードで続行",

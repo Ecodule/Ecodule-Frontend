@@ -18,6 +18,8 @@ import com.example.ecodule.ui.account.api.LoginApi
 import com.example.ecodule.ui.account.api.LoginResult
 import com.example.ecodule.ui.UserViewModel
 import com.example.ecodule.repository.datastore.TokenManager
+import com.example.ecodule.ui.account.api.GoogleLoginApi
+import com.example.ecodule.ui.account.api.GoogleLoginResult
 import com.example.ecodule.ui.account.api.googleAuthApi
 import com.example.ecodule.ui.account.util.generateSecureRandomNonce
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
