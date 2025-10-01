@@ -1,56 +1,64 @@
 package com.example.ecodule.ui.CalendarContent.model
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.graphics.Color
+import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.ecodule.repository.datastore.DataStoreTaskRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
+import javax.inject.Inject
 
-class TaskViewModel {
-    private val _events = mutableStateListOf<CalendarEvent>()
-    val events: List<CalendarEvent> = _events
+@HiltViewModel
+class TaskViewModel @Inject constructor(
+    private val repository: DataStoreTaskRepository
+) : ViewModel() {
+    // ユーザーIDはStateFlow等で外部からセット/購読する形にする（例：UserRepositoryから取得）
+    private val _userId = MutableStateFlow<String?>(null)
+    val userId: StateFlow<String?> = _userId
 
-    init {
-        // 現在の日時情報を取得
-        val now = LocalDateTime.now()
+    private val _events = MutableStateFlow<List<CalendarEvent>>(emptyList())
+    val events : StateFlow<List<CalendarEvent>> = _events
 
-        _events.addAll(listOf(
-            CalendarEvent(
-                id = "1",
-//                day = 25,
-                label = "企画進捗",
-                color = Color(0xFF81C784),
-//                month = 9,
-                // startDateとendDateを追加
-                startDate = LocalDateTime.of(now.year, 9, 25, 14, 0), //日付から開始時刻まで管理
-                endDate = LocalDateTime.of(now.year, 9, 25, 16, 0), //日付から終了時刻まで管理
-//                startHour = 14,
-//                endHour = 16
-            ),
-            CalendarEvent(
-                id = "2",
-//                day = 29,
-                label = "買い物",
-                color = Color(0xFFE57373),
-//                month = 9,
-                // startDateとendDateを追加
-                startDate = LocalDateTime.of(now.year, 9, 29, 10, 0),
-                endDate = LocalDateTime.of(now.year, 9, 29, 11, 0),
-//                startHour = 10,
-//                endHour = 11
-            ),
-            CalendarEvent(
-                id = "3",
-//                day = 14,
-                label = "ミーティング",
-                color = Color(0xFFE57373),
-//                month = 9,
-                // startDateとendDateを追加
-                startDate = LocalDateTime.of(now.year, 9, 14, 10, 0),
-                endDate = LocalDateTime.of(now.year, 9, 14, 11, 0),
-//                startHour = 10,
-//                endHour = 11
-            )
-        ))
+    // 追加: 今日のイベントだけ絞り込むFlow
+    val todayEvents: StateFlow<List<CalendarEvent>> = events
+        .map { list ->
+            val today = LocalDate.now()
+            list.filter { it.startDate.dayOfMonth == today.dayOfMonth && it.startDate.monthValue == today.monthValue }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+
+    // ユーザーIDをセットしたら購読開始
+    fun setUserId(userId: String) {
+        _userId.value = userId
+        viewModelScope.launch {
+            repository.observeTasks(userId).collect {
+                _events.value = it
+            }
+            // ダミー予定を常に追加（初回のみ追加したい場合はこのままでOK）
+            val now = LocalDateTime.now()
+            val currentEvents = repository.observeTasks(userId).value
+        }
+    }
+
+    // DataStoreに予定を追加
+    fun addEvent(event: CalendarEvent) {
+        val uid = _userId.value ?: return
+        viewModelScope.launch {
+            repository.addTask(uid, event)
+        }
     }
 
     fun addEvent(
@@ -71,12 +79,7 @@ class TaskViewModel {
 
         val event = CalendarEvent(
             id = UUID.randomUUID().toString(),
-//            day = startDateTime?.dayOfMonth ?: 1,
             label = title,
-            color = categoryColor,
-//            month = startDateTime?.monthValue ?: 1,
-//            startHour = if (!allDay) startDateTime?.hour else null,
-//            endHour = if (!allDay) endDateTime?.hour else null,
             startDate = startDateTime,
             endDate = endDateTime,
             category = category,
@@ -84,10 +87,11 @@ class TaskViewModel {
             repeatOption = repeatOption,
             memo = memo,
             notificationMinutes = notificationMinutes,
-            repeatGroupId = repeatGroupId
+            repeatGroupId = repeatGroupId,
+            color = categoryColor // ← ここを追加!
         )
 
-        _events.add(event)
+        addEvent(event)
     }
 
     fun updateEvent(
@@ -102,34 +106,33 @@ class TaskViewModel {
         memo: String,
         notificationMinutes: Int
     ) {
-        val index = _events.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val categoryColor = getCategoryColor(category)
-            val startDateTime = LocalDateTime.ofInstant(startDate.toInstant(), java.time.ZoneId.systemDefault())
+        val categoryColor = getCategoryColor(category)
+        val startDateTime = LocalDateTime.ofInstant(startDate.toInstant(), java.time.ZoneId.systemDefault())
+        val endDateTime = LocalDateTime.ofInstant(endDate.toInstant(), java.time.ZoneId.systemDefault())
 
-            val endDateTime = LocalDateTime.ofInstant(endDate.toInstant(), java.time.ZoneId.systemDefault())
+        val updatedEvent = CalendarEvent(
+            id = id,
+            label = title,
+            color = categoryColor, // ← ここを追加!
+            startDate = startDateTime,
+            endDate = endDateTime,
+            category = category,
+            allDay = allDay,
+            repeatOption = repeatOption,
+            memo = memo,
+            notificationMinutes = notificationMinutes
+        )
+        val uid = _userId.value ?: return
+        viewModelScope.launch {
+            repository.deleteTask(uid, id)
+            repository.addTask(uid, updatedEvent)
 
-
-            val updatedEvent = _events[index].copy(
-                label = title,
-                color = categoryColor,
-//                day = startDateTime?.dayOfMonth ?: _events[index].day,
-//                month = startDateTime?.monthValue ?: _events[index].month,
-//                startHour = if (!allDay && startDateTime != null) startDateTime.hour else null,
-//                endHour = if (!allDay && endDateTime != null) endDateTime.hour else null,
-                startDate = startDateTime,
-                endDate = endDateTime,
-                category = category,
-                allDay = allDay,
-                repeatOption = repeatOption,
-                memo = memo,
-                notificationMinutes = notificationMinutes
-            )
-
-            _events[index] = updatedEvent
+            val updatedEvents = repository.observeTasks(uid)
+            Log.d("FromTaskViewModel", "data is $updatedEvents")
         }
     }
 
+    // 繰り返しグループ全体編集
     fun updateEventsByRepeatGroup(
         repeatGroupId: String,
         title: String,
@@ -142,7 +145,7 @@ class TaskViewModel {
         memo: String,
         notificationMinutes: Int
     ) {
-        val eventsToUpdate = _events.filter { it.repeatGroupId == repeatGroupId }
+        val eventsToUpdate = _events.value.filter { it.repeatGroupId == repeatGroupId }
         eventsToUpdate.forEach { event ->
             updateEvent(
                 event.id, title, category, description, allDay,
@@ -151,21 +154,26 @@ class TaskViewModel {
         }
     }
 
+    // 予定削除
     fun deleteEvent(id: String) {
-        _events.removeAll { it.id == id }
+        val uid = _userId.value ?: return
+        viewModelScope.launch {
+            repository.deleteTask(uid, id)
+        }
     }
 
+    // IDで1件取得
     fun getEventById(id: String): CalendarEvent? {
-        return _events.find { it.id == id }
+        return _events.value.find { it.id == id }
     }
 
-    private fun getCategoryColor(category: String): Color {
+    private fun getCategoryColor(category: String): androidx.compose.ui.graphics.Color {
         return when (category) {
-            "ゴミ出し" -> Color(0xFFB3E6FF)
-            "通勤/通学" -> Color(0xFFFFD2C5)
-            "外出" -> Color(0xFFE4EFCF)
-            "買い物" -> Color(0xFFC9E4D7)
-            else -> Color(0xFF81C784)
+            "ゴミ出し" -> androidx.compose.ui.graphics.Color(0xFFB3E6FF)
+            "通勤/通学" -> androidx.compose.ui.graphics.Color(0xFFFFD2C5)
+            "外出" -> androidx.compose.ui.graphics.Color(0xFFE4EFCF)
+            "買い物" -> androidx.compose.ui.graphics.Color(0xFFC9E4D7)
+            else -> androidx.compose.ui.graphics.Color(0xFF81C784)
         }
     }
 }

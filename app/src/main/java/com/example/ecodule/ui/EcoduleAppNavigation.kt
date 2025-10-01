@@ -12,6 +12,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -20,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
+import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
@@ -35,6 +42,10 @@ import com.example.ecodule.ui.theme.BottomNavBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedIcon
 import com.example.ecodule.ui.theme.BottomNavUnselectedIcon
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -46,7 +57,7 @@ fun EcoduleAppNavigation(
 ) {
     val context = LocalContext.current
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
-    val taskViewModel = remember { TaskViewModel() }
+    val taskViewModel: TaskViewModel = hiltViewModel()
     val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
@@ -64,16 +75,18 @@ fun EcoduleAppNavigation(
     }
     val weekStart: DayOfWeek = remember(selectedWeekStartLabel) { toDayOfWeek(selectedWeekStartLabel) }
 
+    // ここではcollectAsState()のみ
+    val todayEvents by taskViewModel.todayEvents.collectAsState()
     val today = LocalDate.now()
-    val todayEvents = taskViewModel.events.filter {
-        it.startDate.dayOfMonth == today.dayOfMonth && it.startDate.monthValue == today.monthValue
-    }
+    
 
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
         EcoduleRoute.SETTINGSNOTIFICATIONS,
         EcoduleRoute.SETTINGSGOOGLEINTEGRATION
     )
+
+    val events by taskViewModel.events.collectAsState()
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -83,12 +96,12 @@ fun EcoduleAppNavigation(
                 CalendarContentScreen(
                     modifier = Modifier.weight(1f),
                     selectedDestination = selectedDestination,
-                    events = taskViewModel.events,
                     onEventClick = { eventId ->
                         editingEventId.value = eventId
                         selectedDestination.value = EcoduleRoute.TASKS
                     },
                     userViewModel = userViewModel,
+                    taskViewModel = taskViewModel,
                     showWeekNumbers = showWeekNumbers,
                     weekStart = weekStart
                 )

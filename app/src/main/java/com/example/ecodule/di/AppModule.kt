@@ -1,7 +1,10 @@
 package com.example.ecodule.di
 
 import android.content.Context
+import androidx.core.content.contentValuesOf
+import com.example.ecodule.repository.TaskRepository
 import com.example.ecodule.repository.UserRepository
+import com.example.ecodule.repository.datastore.DataStoreTaskRepository
 import com.example.ecodule.repository.datastore.DataStoreUserRepository
 import com.example.ecodule.repository.datastore.TokenManager
 import dagger.Module
@@ -21,6 +24,14 @@ object AppModule {
         @ApplicationContext context: Context
     ): UserRepository {
         return DataStoreUserRepository(context)
+    }
+
+    @Provides
+    @Singleton // アプリ内で常に同じインスタンスを使用する
+    fun provideTaskRepository(
+        @ApplicationContext context: Context
+    ): TaskRepository {
+        return DataStoreTaskRepository(context)
     }
 
     // 以下を追加

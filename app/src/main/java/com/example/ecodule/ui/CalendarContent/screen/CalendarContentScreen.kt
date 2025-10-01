@@ -18,6 +18,17 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +42,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
+import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
+import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
@@ -49,18 +62,27 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
+fun getCategoryColor(category: String): Color {
+    return when (category) {
+        "ゴミ出し" -> Color(0xFF2C8FC0)
+        "通勤/通学" -> Color(0xFFBD5233)
+        "外出" -> Color(0xFF7FAB2A)
+        "買い物" -> Color(0xFF1C965B)
+        else -> Color(0xFFFF0000)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarContentScreen(
     modifier: Modifier = Modifier,
     initialYearMonth: YearMonth = YearMonth.now(),
     selectedDestination: MutableState<String>,
-    events: List<CalendarEvent> = emptyList(),
     onEventClick: (String) -> Unit = {},
     userViewModel: UserViewModel,
-    // 追加: 設定から受け取る週設定
+    taskViewModel: TaskViewModel // ← TaskViewModelを追加
     showWeekNumbers: Boolean = false,
-    weekStart: DayOfWeek = DayOfWeek.SUNDAY
+    weekStart: DayOfWeek = DayOfWeek.SUNDAY // 追加: 設定から受け取る週設定
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -99,6 +121,17 @@ fun CalendarContentScreen(
 
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
+
+    // 追加: ユーザーIDが変わったらTaskViewModelにセット
+    DisposableEffect(user?.id) {
+        user?.id?.let { uid ->
+            taskViewModel.setUserId(uid)
+        }
+        onDispose { }
+    }
+
+    // 追加: TaskViewModelの予定情報を購読
+    val events by taskViewModel.events.collectAsState()
 
     // 表示範囲の予定をフィルタリング
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate, weekStart) {
@@ -364,6 +397,38 @@ fun CalendarContentScreen(
                         cameFromMonth = false
                     }
                 },
+                title = { Text("${monthLabel}${selectedDay}日の予定") },
+                text = {
+                    val plans = filteredEvents.filter { it.startDate.dayOfMonth == selectedDay }
+                    if (plans.isEmpty()) {
+                        Text("予定はありません")
+                    } else {
+                        LazyColumn {
+                            items(plans.size) { index ->
+                                val event = plans[index]
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(event.color) // ← event.colorを使う
+                                        .padding(vertical = 4.dp, horizontal = 2.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            selectedDay = null
+                                            onEventClick(event.id)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            "・${event.label} ${event.timeRangeText}",
+                                            color = Color.Black // 文字色は固定でOK
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 onDismiss = { showModeDialog = false }
             )
         }
@@ -423,6 +488,13 @@ fun CalendarContentPreview() {
     val context = LocalContext.current
     val dummySelectedDestination = remember { mutableStateOf("Calendar") }
     val dummyUserViewModel: UserViewModel = hiltViewModel()
+    val dummyTaskViewModel: TaskViewModel = hiltViewModel() // ← 追加
+    CalendarContentScreen(
+        selectedDestination = dummySelectedDestination,
+        userViewModel = dummyUserViewModel,
+        taskViewModel = dummyTaskViewModel // ← 追加
+    )
+}
     CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
 }
  */
