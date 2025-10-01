@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 fun SettingsContentScreen(
     modifier: Modifier = Modifier,
     userName: String = "User Name",
-    // 週の開始日・週数表示を親から受け取り、親へ更新を通知
+    // 週開始日・週数表示を親から受け取る（永続化は親側で rememberSaveable）
     selectedWeekStart: String,
     onSelectedWeekStartChange: (String) -> Unit,
     showWeekNumbers: Boolean,
@@ -41,10 +41,6 @@ fun SettingsContentScreen(
     var expandedWeekStart by remember { mutableStateOf(false) }
     val weekStartOptions = listOf("土曜日", "日曜日", "月曜日")
 
-    var selectedTaskDuration by remember { mutableStateOf("60 分") }
-    var expandedTaskDuration by remember { mutableStateOf(false) }
-    val taskDurationOptions = listOf("15 分", "30 分", "45 分", "60 分", "90 分", "120 分")
-
     val rightEndIconPadding = 8.dp
     val switchRightPadding = 8.dp
 
@@ -54,7 +50,6 @@ fun SettingsContentScreen(
             .background(Color(0xFFF8F8F8))
             .padding(top = 32.dp)
     ) {
-        // タイトル
         Text(
             text = "設定",
             fontSize = 32.sp,

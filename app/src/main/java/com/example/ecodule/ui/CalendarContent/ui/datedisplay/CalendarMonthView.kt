@@ -22,11 +22,11 @@ import com.example.ecodule.ui.CalendarContent.ui.DayCellGrid
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberPill
 import com.example.ecodule.ui.CalendarContent.ui.calcWeekNumber
+import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-
 
 @Composable
 fun CalendarMonthView(
@@ -35,10 +35,10 @@ fun CalendarMonthView(
     onDayClick: (Int) -> Unit = {},
     onEventClick: (String) -> Unit = {},
     showWeekNumbers: Boolean = false,
-    weekStart: DayOfWeek = DayOfWeek.MONDAY
+    weekStart: DayOfWeek = DayOfWeek.SUNDAY
 ) {
     val today = LocalDate.now()
-    val firstDayOfWeekIndex = yearMonth.atDay(1).dayOfWeek.value % 7 // 0=日
+    val firstDayOfWeekIndex = WeekConfig.firstDayCellIndex(yearMonth, weekStart)
     val daysInMonth = yearMonth.lengthOfMonth()
     val prevMonth = yearMonth.minusMonths(1)
     val prevMonthDays = prevMonth.lengthOfMonth()
@@ -52,11 +52,13 @@ fun CalendarMonthView(
                     .weight(1f),
                 horizontalArrangement = Arrangement.Start
             ) {
-                // 週数カラム
+                // 週数カラム（行ごとに表示）
                 if (showWeekNumbers) {
-                    val rowStartOffset = row * 7 - firstDayOfWeekIndex
-                    val rowStartDate = yearMonth.atDay(1).plusDays(rowStartOffset.toLong())
+                    // 行の最初のセルに相当する日付を 1日からの相対で求める
+                    val rowStartDate = yearMonth.atDay(1)
+                        .plusDays((row * 7 - firstDayOfWeekIndex).toLong())
                     val weekNum = calcWeekNumber(rowStartDate, weekStart)
+
                     Box(
                         modifier = Modifier
                             .width(WeekNumberColumnWidthMonth)
@@ -74,15 +76,12 @@ fun CalendarMonthView(
                         .weight(1f),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    var dayCounter = 1
-                    var nextMonthDay = 1
-
-                    // 注意: dayCounter をラムダでキャプチャしないように、そのセルの dayNumber を必ずローカルで算出する
                     for (col in 0..6) {
                         val cellIndex = row * 7 + col
                         val isCurrentMonthCell =
                             cellIndex >= firstDayOfWeekIndex && cellIndex < firstDayOfWeekIndex + daysInMonth
 
+                        // セルに表示する日付
                         val dayNumber = when {
                             isCurrentMonthCell -> cellIndex - firstDayOfWeekIndex + 1
                             cellIndex < firstDayOfWeekIndex -> prevMonthDays - (firstDayOfWeekIndex - cellIndex - 1)
@@ -99,6 +98,7 @@ fun CalendarMonthView(
                             contentAlignment = Alignment.TopCenter
                         ) {
                             when {
+                                // 前月
                                 !isCurrentMonthCell && cellIndex < firstDayOfWeekIndex -> {
                                     Text(
                                         "$dayNumber",
@@ -110,6 +110,7 @@ fun CalendarMonthView(
                                         fontSize = 16.sp
                                     )
                                 }
+                                // 当月
                                 isCurrentMonthCell -> {
                                     DayCellGrid(
                                         day = dayNumber,
@@ -120,6 +121,7 @@ fun CalendarMonthView(
                                         onEventClick = onEventClick
                                     )
                                 }
+                                // 次月
                                 else -> {
                                     Text(
                                         "$dayNumber",

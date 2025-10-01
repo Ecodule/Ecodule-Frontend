@@ -54,15 +54,14 @@ fun EcoduleAppNavigation(
 
     // 週表示設定（画面間で保持）
     var showWeekNumbers by rememberSaveable { mutableStateOf(false) }
-    var selectedWeekStart by rememberSaveable { mutableStateOf("日曜日") } // 「土曜日 / 日曜日 / 月曜日」
+    var selectedWeekStartLabel by rememberSaveable { mutableStateOf("日曜日") } // 「土曜日 / 日曜日 / 月曜日」
 
     fun toDayOfWeek(label: String): DayOfWeek = when (label) {
         "土曜日" -> DayOfWeek.SATURDAY
         "月曜日" -> DayOfWeek.MONDAY
         else -> DayOfWeek.SUNDAY
     }
-
-    val weekStartDayOfWeek = remember(selectedWeekStart) { toDayOfWeek(selectedWeekStart) }
+    val weekStart: DayOfWeek = remember(selectedWeekStartLabel) { toDayOfWeek(selectedWeekStartLabel) }
 
     val today = LocalDate.now()
     val todayEvents = taskViewModel.events.filter {
@@ -89,9 +88,8 @@ fun EcoduleAppNavigation(
                         selectedDestination.value = EcoduleRoute.TASKS
                     },
                     userViewModel = userViewModel,
-                    // 週数表示設定をカレンダーへ渡す
                     showWeekNumbers = showWeekNumbers,
-                    weekStart = weekStartDayOfWeek
+                    weekStart = weekStart
                 )
             }
             EcoduleRoute.TASKS -> {
@@ -116,13 +114,12 @@ fun EcoduleAppNavigation(
                 SettingsContentScreen(
                     modifier = Modifier.weight(1f),
                     userName = userName,
-                    // 週表示設定のバインド
-                    selectedWeekStart = selectedWeekStart,
-                    onSelectedWeekStartChange = { selectedWeekStart = it },
+                    // バインド: 週の開始日 / 週数表示
+                    selectedWeekStart = selectedWeekStartLabel,
+                    onSelectedWeekStartChange = { selectedWeekStartLabel = it },
                     showWeekNumbers = showWeekNumbers,
                     onShowWeekNumbersChange = { showWeekNumbers = it },
                     onNavigateUserName = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
-                    onNavigateTimeZone = { /* 未実装 */ },
                     onNavigateNotifications = { selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS },
                     onNavigateGoogleCalendar = { selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION },
                     onNavigateDetail = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS }
@@ -175,10 +172,7 @@ fun EcoduleAppNavigation(
                     initialGoogleUserName = "",
                     initialGoogleEmail = "",
                     initialCalendarLinked = false,
-                    onGoogleAccountLink = {
-                        true
-                        "Test User" to "testuser@gmail.com"
-                    },
+                    onGoogleAccountLink = { true; "Test User" to "testuser@gmail.com" },
                     onGoogleAccountUnlink = { },
                     onCalendarLink = { },
                     onCalendarUnlink = { },
