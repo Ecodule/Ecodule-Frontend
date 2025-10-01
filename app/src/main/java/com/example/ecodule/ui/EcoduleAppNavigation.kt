@@ -48,6 +48,7 @@ fun EcoduleAppNavigation(
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
     val userViewModel: UserViewModel = hiltViewModel()
+    val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
     var birthDate by remember { mutableStateOf("2001/01/01")}
@@ -153,7 +154,15 @@ fun EcoduleAppNavigation(
                     onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
                     onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
                     currentBirthDate = birthDate,
-                    onBirthDateChanged = { newbirthDate -> birthDate = newbirthDate },
+                    onBirthDateChanged = { newbirthDate ->
+                        birthDate = newbirthDate
+                    },
+                    // その他変更画面遷移やイベント処理
+                    onLogout = {
+                        if (!isGuestMode) {
+                            authViewModel.onLogout()
+                        }
+                    },
                 )
             }
             EcoduleRoute.SETTINGSUSERNAME -> {
