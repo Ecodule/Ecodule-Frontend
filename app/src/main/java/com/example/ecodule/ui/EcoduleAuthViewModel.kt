@@ -73,6 +73,8 @@ class EcoduleAuthViewModel @Inject constructor(
     // ログアウト時に呼び出される
     fun onLogout() {
         viewModelScope.launch {
+            // Logoutデバッグ
+            Log.d("EcoduleAuthViewModel", "Logging out ${userRepository.user.value?.toString()} ${tokenManager.getAccessToken(userRepository.user.value?.email ?: "")}")
             // DataStoreとSharedPreferencesから情報を削除
             userRepository.clearUser()
             tokenManager.deleteTokens()

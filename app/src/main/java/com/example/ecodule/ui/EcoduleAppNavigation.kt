@@ -47,7 +47,7 @@ fun EcoduleAppNavigation(
     val context = LocalContext.current
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel = remember { TaskViewModel() }
-    val userViewModel: UserViewModel = hiltViewModel()
+    val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
@@ -172,7 +172,7 @@ fun EcoduleAppNavigation(
                     onUserNameChanged = { newName ->
                         userName = newName
                         selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
-                    }
+                    },
                 )
             }
             EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
