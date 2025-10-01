@@ -1,10 +1,7 @@
 package com.example.ecodule.ui.account.api
 
 import android.app.Activity
-import android.content.ContentValues.TAG
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
