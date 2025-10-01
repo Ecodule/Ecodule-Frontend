@@ -56,7 +56,7 @@ fun DayCellGrid(
             ) {
                 Text(
                     text = event.label,
-                    fontSize = 8.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -69,7 +69,7 @@ fun DayCellGrid(
         if (events.size > 3) {
             Text(
                 text = "+${events.size - 3}",
-                fontSize = 8.sp,
+                fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 1.dp)
             )

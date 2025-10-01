@@ -23,6 +23,9 @@ import com.example.ecodule.ui.CalendarContent.ui.HOURS
 import com.example.ecodule.ui.CalendarContent.ui.HourBar
 import com.example.ecodule.ui.CalendarContent.ui.HourBarWidth
 import com.example.ecodule.ui.CalendarContent.ui.TimeGridLines
+import com.example.ecodule.ui.CalendarContent.ui.WeekNumberPillLarge
+import com.example.ecodule.ui.CalendarContent.ui.calcWeekNumber
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 private val HeaderHeight = 56.dp
@@ -32,7 +35,9 @@ fun ScrollableDayTimeView(
     day: LocalDate,
     events: List<CalendarEvent>,
     onDayClick: (LocalDate) -> Unit = {},
-    onEventClick: (String) -> Unit = {}
+    onEventClick: (String) -> Unit = {},
+    showWeekNumbers: Boolean = false,
+    weekStartDay: DayOfWeek = DayOfWeek.MONDAY
 ) {
     val today = LocalDate.now()
     val scrollState = rememberScrollState()
@@ -42,14 +47,27 @@ fun ScrollableDayTimeView(
     }
 
     Column(Modifier.fillMaxSize()) {
-        // ヘッダー（日付）: 左寄せ（時間バーの右隣）
+        // ヘッダー（週数は時間バーの列に表示）
         Row(
             Modifier
                 .fillMaxWidth()
                 .height(HeaderHeight),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(HourBarWidth))
+            Box(
+                modifier = Modifier
+                    .width(HourBarWidth)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (showWeekNumbers) {
+                    val weekNum = calcWeekNumber(day, weekStartDay)
+                    WeekNumberPillLarge(
+                        weekNumber = weekNum,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -73,11 +91,11 @@ fun ScrollableDayTimeView(
 
         // 本体
         Row(Modifier.fillMaxSize()) {
-            // 左: 時間バー（ここで微調整量をセット）
+            // 左: 時間バー（この列に時間ラベルを表示）
             HourBar(
                 scrollState = scrollState,
-                labelNudgeY = (-5).dp, // ← ここを微調整
-                labelNudgeX = 5.dp     // ← 右/左に動かしたいときに調整（例: 1.dp）
+                labelNudgeY = (-5).dp, // 端末によって微調整
+                labelNudgeX = 5.dp
             )
 
             // 右: グリッド + 予定（同じ scrollState で同期）
