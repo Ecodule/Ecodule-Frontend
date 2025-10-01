@@ -295,7 +295,6 @@ fun AccountSignInScreen(
         // Googleで続行ボタン
         GoogleAuthButton(
             text = "Google で続行",
-            webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
             loginViewModel = viewModel,
         )
 

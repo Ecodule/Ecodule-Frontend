@@ -1,0 +1,224 @@
+kotlin version: 2.0.21
+error message: org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering
+File being compiled: C:/Users/81906/StudioProjects/Ecodule-Frontend/app/src/main/java/com/example/ecodule/ui/account/api/GoogleAuthApi.kt
+The root cause java.lang.RuntimeException was thrown at: org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:47)
+	at org.jetbrains.kotlin.backend.common.CodegenUtil.reportBackendException(CodegenUtil.kt:253)
+	at org.jetbrains.kotlin.backend.common.CodegenUtil.reportBackendException$default(CodegenUtil.kt:236)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invokeSequential(performByIrFile.kt:65)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:52)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:38)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:27)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:14)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:62)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:371)
+	at org.jetbrains.kotlin.codegen.CodegenFactory.generateModule(CodegenFactory.kt:47)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.generateModuleInFrontendIRMode(JvmIrCodegenFactory.kt:433)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.generateCodeFromIr(jvmCompilerPipeline.kt:246)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.compileModulesUsingFrontendIrAndLightTree(jvmCompilerPipeline.kt:142)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:148)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:103)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:49)
+	at org.jetbrains.kotlin.cli.common.CLITool.exec(CLITool.kt:101)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:464)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:73)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:506)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:423)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally$lambda$9$compile(IncrementalCompilerRunner.kt:249)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:267)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:120)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:675)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:92)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1660)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: java.lang.RuntimeException: Exception while generating code for:
+FUN name:googleAuthApi visibility:public modality:FINAL <> (activity:android.app.Activity, request:androidx.credentials.GetCredentialRequest, $completion:kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult>) returnType:kotlin.Any? [suspend]
+  annotations:
+    RequiresApi(value = 34, api = <null>)
+  VALUE_PARAMETER name:activity index:0 type:android.app.Activity
+  VALUE_PARAMETER name:request index:1 type:androidx.credentials.GetCredentialRequest
+  VALUE_PARAMETER CONTINUATION_CLASS name:$completion index:2 type:kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult>
+  BLOCK_BODY
+    CLASS CONTINUATION_CLASS CLASS name:<Continuation> modality:FINAL visibility:public/*package*/ superTypes:[kotlin.coroutines.jvm.internal.ContinuationImpl]
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>
+      FIELD CONTINUATION_CLASS_RESULT_FIELD name:result type:kotlin.Result<kotlin.Any?> visibility:public/*package*/
+      FIELD name:label type:kotlin.Int visibility:public/*package*/
+      CONSTRUCTOR visibility:public/*package*/ <> ($completion:kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>>?) returnType:com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> [primary]
+        VALUE_PARAMETER name:$completion index:0 type:kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>>?
+        BLOCK_BODY
+          DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> ($completion: kotlin.coroutines.Continuation<kotlin.Any?>?) declared in kotlin.coroutines.jvm.internal.ContinuationImpl'
+            $completion: GET_VAR '$completion: kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>>? declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.<init>' type=kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>>? origin=null
+      FUN name:invokeSuspend visibility:public modality:FINAL <> ($this:com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>, $result:kotlin.Result<kotlin.Any?>) returnType:kotlin.Any?
+        overridden:
+          public abstract fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in kotlin.coroutines.jvm.internal.ContinuationImpl
+        $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>
+        VALUE_PARAMETER name:$result index:0 type:kotlin.Result<kotlin.Any?>
+        BLOCK_BODY
+          SET_FIELD 'FIELD CONTINUATION_CLASS_RESULT_FIELD name:result type:kotlin.Result<kotlin.Any?> visibility:public/*package*/ declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>' type=kotlin.Unit origin=null
+            receiver: GET_VAR '<this>: com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.invokeSuspend' type=com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> origin=null
+            value: GET_VAR '$result: kotlin.Result<kotlin.Any?> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.invokeSuspend' type=kotlin.Result<kotlin.Any?> origin=null
+          SET_FIELD 'FIELD name:label type:kotlin.Int visibility:public/*package*/ declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>' type=kotlin.Unit origin=null
+            receiver: GET_VAR '<this>: com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.invokeSuspend' type=com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> origin=null
+            value: CALL 'public final fun or (other: kotlin.Int): kotlin.Int [infix] declared in kotlin.Int' type=kotlin.Int origin=null
+              $this: GET_FIELD 'FIELD name:label type:kotlin.Int visibility:public/*package*/ declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>' type=kotlin.Int origin=null
+                receiver: GET_VAR '<this>: com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.invokeSuspend' type=com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> origin=null
+              other: CONST Int type=kotlin.Int value=-2147483648
+          RETURN type=kotlin.Nothing from='public final fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>'
+            CALL 'public final fun googleAuthApi (activity: android.app.Activity, request: androidx.credentials.GetCredentialRequest, $completion: kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult>): kotlin.Any? [suspend] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt' type=kotlin.Any? origin=null
+              activity: CONST Null type=android.app.Activity? value=null
+              request: CONST Null type=androidx.credentials.GetCredentialRequest? value=null
+              $completion: GET_VAR '<this>: com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation>.invokeSuspend' type=com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi.<Continuation> origin=null
+    SET_FIELD 'FIELD IR_EXTERNAL_JAVA_DECLARATION_STUB name:TAG type:kotlin.String visibility:public [final,static] declared in android.content.ContentValues' type=kotlin.Unit superQualifierSymbol=android.content.ContentValues origin=EQ
+      value: CONST String type=kotlin.String value="GoogleAuthApi"
+    VAR name:cm type:androidx.credentials.CredentialManager [val]
+      CALL 'public final fun create (context: android.content.Context): androidx.credentials.CredentialManager declared in androidx.credentials.CredentialManager.Companion' type=androidx.credentials.CredentialManager origin=null
+        $this: GET_FIELD 'FIELD FIELD_FOR_OBJECT_INSTANCE name:Companion type:androidx.credentials.CredentialManager.Companion visibility:public [final,static] declared in androidx.credentials.CredentialManager' type=androidx.credentials.CredentialManager.Companion origin=null
+        context: GET_VAR 'activity: android.app.Activity declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=android.app.Activity origin=null
+    CALL 'public final fun delay (timeMillis: kotlin.Long, $completion: kotlin.coroutines.Continuation<kotlin.Unit>): kotlin.Any? [suspend] declared in kotlinx.coroutines.DelayKt' type=kotlin.Unit origin=null
+      timeMillis: CONST Long type=kotlin.Long value=150
+      $completion: GET_VAR '$completion: kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult> origin=null
+    RETURN type=kotlin.Nothing from='public final fun googleAuthApi (activity: android.app.Activity, request: androidx.credentials.GetCredentialRequest, $completion: kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult>): kotlin.Any? [suspend] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt'
+      TRY type=com.example.ecodule.ui.account.api.googleAuthApiResult
+        try: BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult origin=null
+          VAR name:res type:androidx.credentials.GetCredentialResponse [val]
+            CALL 'public open fun getCredential (context: android.content.Context, request: androidx.credentials.GetCredentialRequest, $completion: kotlin.coroutines.Continuation<androidx.credentials.GetCredentialResponse>): kotlin.Any? [suspend] declared in androidx.credentials.CredentialManager' type=androidx.credentials.GetCredentialResponse origin=null
+              $this: GET_VAR 'val cm: androidx.credentials.CredentialManager [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.CredentialManager origin=null
+              context: GET_VAR 'activity: android.app.Activity declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=android.app.Activity origin=null
+              request: GET_VAR 'request: androidx.credentials.GetCredentialRequest declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.GetCredentialRequest origin=null
+              $completion: GET_VAR '$completion: kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult> declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=kotlin.coroutines.Continuation<com.example.ecodule.ui.account.api.googleAuthApiResult> origin=null
+          VAR name:cred type:androidx.credentials.Credential [val]
+            CALL 'public final fun <get-credential> (): androidx.credentials.Credential declared in androidx.credentials.GetCredentialResponse' type=androidx.credentials.Credential origin=GET_PROPERTY
+              $this: GET_VAR 'val res: androidx.credentials.GetCredentialResponse [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.GetCredentialResponse origin=null
+          WHEN type=com.example.ecodule.ui.account.api.googleAuthApiResult origin=IF
+            BRANCH
+              if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                arg0: CALL 'public final fun <get-type> (): kotlin.String declared in androidx.credentials.Credential' type=kotlin.String origin=GET_PROPERTY
+                  $this: GET_VAR 'val cred: androidx.credentials.Credential [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.Credential origin=null
+                arg1: CONST String type=kotlin.String value="com.google.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL"
+              then: BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Success origin=null
+                VAR name:google type:com.google.android.libraries.identity.googleid.GoogleIdTokenCredential [val]
+                  CALL 'public final fun createFrom (data: android.os.Bundle): com.google.android.libraries.identity.googleid.GoogleIdTokenCredential declared in com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion' type=com.google.android.libraries.identity.googleid.GoogleIdTokenCredential origin=null
+                    $this: GET_FIELD 'FIELD FIELD_FOR_OBJECT_INSTANCE name:Companion type:com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion visibility:public [final,static] declared in com.google.android.libraries.identity.googleid.GoogleIdTokenCredential' type=com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.Companion origin=null
+                    data: CALL 'public final fun <get-data> (): android.os.Bundle declared in androidx.credentials.Credential' type=android.os.Bundle origin=GET_PROPERTY
+                      $this: GET_VAR 'val cred: androidx.credentials.Credential [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.Credential origin=null
+                CONSTRUCTOR_CALL 'public constructor <init> (idToken: kotlin.String) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Success' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Success origin=null
+                  idToken: CALL 'public final fun <get-idToken> (): kotlin.String declared in com.google.android.libraries.identity.googleid.GoogleIdTokenCredential' type=kotlin.String origin=GET_PROPERTY
+                    $this: GET_VAR 'val google: com.google.android.libraries.identity.googleid.GoogleIdTokenCredential [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=com.google.android.libraries.identity.googleid.GoogleIdTokenCredential origin=null
+            BRANCH
+              if: CONST Boolean type=kotlin.Boolean value=true
+              then: BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+                CONSTRUCTOR_CALL 'public constructor <init> (throwable: kotlin.Throwable) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Error' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+                  throwable: CONSTRUCTOR_CALL 'public constructor <init> (p0: @[FlexibleNullability] kotlin.String?) declared in java.lang.IllegalStateException' type=java.lang.IllegalStateException origin=null
+                    p0: STRING_CONCATENATION type=kotlin.String
+                      CONST String type=kotlin.String value="Unexpected credential type: "
+                      CALL 'public final fun <get-type> (): kotlin.String declared in androidx.credentials.Credential' type=kotlin.String origin=GET_PROPERTY
+                        $this: GET_VAR 'val cred: androidx.credentials.Credential [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.Credential origin=null
+        CATCH parameter=val e: androidx.credentials.exceptions.NoCredentialException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi
+          VAR CATCH_PARAMETER name:e type:androidx.credentials.exceptions.NoCredentialException [val]
+          BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.NoCredentials origin=null
+            COMPOSITE type=kotlin.Unit origin=null
+              CALL 'public open fun w (p0: @[EnhancedNullability] kotlin.String?, p1: @[EnhancedNullability] kotlin.String): kotlin.Int declared in android.util.Log' type=kotlin.Int origin=null
+                p0: CONST String type=kotlin.String value="ContentValues"
+                p1: STRING_CONCATENATION type=kotlin.String
+                  CONST String type=kotlin.String value="NoCredentialException: "
+                  CALL 'public open fun <get-message> (): kotlin.String? [fake_override] declared in androidx.credentials.exceptions.NoCredentialException' type=kotlin.String? origin=GET_PROPERTY
+                    $this: GET_VAR 'val e: androidx.credentials.exceptions.NoCredentialException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.exceptions.NoCredentialException origin=null
+              COMPOSITE type=kotlin.Unit origin=null
+            GET_FIELD 'FIELD FIELD_FOR_OBJECT_INSTANCE name:INSTANCE type:com.example.ecodule.ui.account.api.googleAuthApiResult.NoCredentials visibility:public [final,static] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.NoCredentials' type=com.example.ecodule.ui.account.api.googleAuthApiResult.NoCredentials origin=null
+        CATCH parameter=val e: androidx.credentials.exceptions.GetCredentialCancellationException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi
+          VAR CATCH_PARAMETER name:e type:androidx.credentials.exceptions.GetCredentialCancellationException [val]
+          BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Cancelled origin=null
+            COMPOSITE type=kotlin.Unit origin=null
+              CALL 'public open fun w (p0: @[EnhancedNullability] kotlin.String?, p1: @[EnhancedNullability] kotlin.String): kotlin.Int declared in android.util.Log' type=kotlin.Int origin=null
+                p0: CONST String type=kotlin.String value="ContentValues"
+                p1: STRING_CONCATENATION type=kotlin.String
+                  CONST String type=kotlin.String value="GetCredentialCancellationException: "
+                  CALL 'public open fun <get-message> (): kotlin.String? [fake_override] declared in androidx.credentials.exceptions.GetCredentialCancellationException' type=kotlin.String? origin=GET_PROPERTY
+                    $this: GET_VAR 'val e: androidx.credentials.exceptions.GetCredentialCancellationException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.exceptions.GetCredentialCancellationException origin=null
+              COMPOSITE type=kotlin.Unit origin=null
+            CONSTRUCTOR_CALL 'public constructor <init> (reason: kotlin.String?) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Cancelled' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Cancelled origin=null
+              reason: CALL 'public open fun <get-message> (): kotlin.String? [fake_override] declared in androidx.credentials.exceptions.GetCredentialCancellationException' type=kotlin.String? origin=GET_PROPERTY
+                $this: GET_VAR 'val e: androidx.credentials.exceptions.GetCredentialCancellationException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.exceptions.GetCredentialCancellationException origin=null
+        CATCH parameter=val e: com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi
+          VAR CATCH_PARAMETER name:e type:com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException [val]
+          BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+            COMPOSITE type=kotlin.Unit origin=null
+              CALL 'public open fun e (p0: @[EnhancedNullability] kotlin.String?, p1: @[EnhancedNullability] kotlin.String?, p2: @[EnhancedNullability] kotlin.Throwable?): kotlin.Int declared in android.util.Log' type=kotlin.Int origin=null
+                p0: CONST String type=kotlin.String value="ContentValues"
+                p1: CONST String type=kotlin.String value="GoogleIdTokenParsingException"
+                p2: GET_VAR 'val e: com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException origin=null
+              COMPOSITE type=kotlin.Unit origin=null
+            CONSTRUCTOR_CALL 'public constructor <init> (throwable: kotlin.Throwable) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Error' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+              throwable: GET_VAR 'val e: com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException origin=null
+        CATCH parameter=val e: androidx.credentials.exceptions.GetCredentialException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi
+          VAR CATCH_PARAMETER name:e type:androidx.credentials.exceptions.GetCredentialException [val]
+          BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+            COMPOSITE type=kotlin.Unit origin=null
+              CALL 'public open fun e (p0: @[EnhancedNullability] kotlin.String?, p1: @[EnhancedNullability] kotlin.String?, p2: @[EnhancedNullability] kotlin.Throwable?): kotlin.Int declared in android.util.Log' type=kotlin.Int origin=null
+                p0: CONST String type=kotlin.String value="ContentValues"
+                p1: CONST String type=kotlin.String value="GetCredentialException"
+                p2: GET_VAR 'val e: androidx.credentials.exceptions.GetCredentialException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.exceptions.GetCredentialException origin=null
+              COMPOSITE type=kotlin.Unit origin=null
+            CONSTRUCTOR_CALL 'public constructor <init> (throwable: kotlin.Throwable) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Error' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+              throwable: GET_VAR 'val e: androidx.credentials.exceptions.GetCredentialException [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=androidx.credentials.exceptions.GetCredentialException origin=null
+        CATCH parameter=val e: java.lang.Exception [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi
+          VAR CATCH_PARAMETER name:e type:java.lang.Exception [val]
+          BLOCK type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+            COMPOSITE type=kotlin.Unit origin=null
+              CALL 'public open fun e (p0: @[EnhancedNullability] kotlin.String?, p1: @[EnhancedNullability] kotlin.String?, p2: @[EnhancedNullability] kotlin.Throwable?): kotlin.Int declared in android.util.Log' type=kotlin.Int origin=null
+                p0: CONST String type=kotlin.String value="ContentValues"
+                p1: CONST String type=kotlin.String value="Unknown exception"
+                p2: GET_VAR 'val e: java.lang.Exception [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=java.lang.Exception origin=null
+              COMPOSITE type=kotlin.Unit origin=null
+            CONSTRUCTOR_CALL 'public constructor <init> (throwable: kotlin.Throwable) [primary] declared in com.example.ecodule.ui.account.api.googleAuthApiResult.Error' type=com.example.ecodule.ui.account.api.googleAuthApiResult.Error origin=null
+              throwable: GET_VAR 'val e: java.lang.Exception [val] declared in com.example.ecodule.ui.account.api.GoogleAuthApiKt.googleAuthApi' type=java.lang.Exception origin=null
+
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:47)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate$default(FunctionCodegen.kt:40)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethodNode(ClassCodegen.kt:406)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:423)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:168)
+	at org.jetbrains.kotlin.backend.jvm.FileCodegen.lower(JvmPhases.kt:39)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseFactoriesKt.createFilePhase$lambda$4(PhaseFactories.kt:71)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt$createSimpleNamedCompilerPhase$1.phaseBody(PhaseBuilders.kt:69)
+	at org.jetbrains.kotlin.backend.common.phaser.SimpleNamedCompilerPhase.phaseBody(CompilerPhase.kt:226)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invokeSequential(performByIrFile.kt:62)
+	... 44 more
+Caused by: java.lang.AssertionError: access of const val: SET_FIELD 'FIELD IR_EXTERNAL_JAVA_DECLARATION_STUB name:TAG type:kotlin.String visibility:public [final,static] declared in android.content.ContentValues' type=kotlin.Unit superQualifierSymbol=android.content.ContentValues origin=EQ
+  value: CONST String type=kotlin.String value="GoogleAuthApi"
+
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitFieldAccess(ExpressionCodegen.kt:861)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitFieldAccess(ExpressionCodegen.kt:138)
+	at org.jetbrains.kotlin.ir.visitors.IrElementVisitor$DefaultImpls.visitSetField(IrElementVisitor.kt:206)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitSetField(ExpressionCodegen.kt:908)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitSetField(ExpressionCodegen.kt:138)
+	at org.jetbrains.kotlin.ir.expressions.IrSetField.accept(IrSetField.kt:21)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:579)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:584)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:138)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.generate(ExpressionCodegen.kt:240)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.doGenerate(FunctionCodegen.kt:123)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:44)
+	... 54 more
+
+

@@ -1,59 +1,60 @@
 package com.example.ecodule.ui.account.api
 
+import android.app.Activity
 import android.content.ContentValues.TAG
-import android.content.Context
-import android.credentials.GetCredentialException
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.GetCredentialCustomException
 import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.delay
 
-@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-suspend fun googleAuthApi(request: GetCredentialRequest, context: Context): Exception? {
-    val credentialManager = CredentialManager.create(context)
-    val failureMessage = "Sign in failed!"
-    val e: Exception? = null
-    //using delay() here helps prevent NoCredentialException when the BottomSheet Flow is triggered
-    //on the initial running of our app
-    delay(250)
-    try {
-        // The getCredential is called to request a credential from Credential Manager.
-        val result = credentialManager.getCredential(
-            request = request,
-            context = context,
-        )
-        Log.i(TAG, result.toString())
+sealed class googleAuthApiResult {
+    data class Success(val idToken: String) : googleAuthApiResult()
+    data class Cancelled(val reason: String?) : googleAuthApiResult()
+    data class NetworkError(val message: String?) : googleAuthApiResult()
+    object NoCredentials : googleAuthApiResult()
+    data class Error(val throwable: Throwable) : googleAuthApiResult()
+}
 
-        Toast.makeText(context, "Sign in successful!", Toast.LENGTH_SHORT).show()
-        Log.i(TAG, "(☞ﾟヮﾟ)☞  Sign in Successful!  ☜(ﾟヮﾟ☜)")
+suspend fun googleAuthApi(
+    activity: Activity,
+    request: GetCredentialRequest
+): googleAuthApiResult {
+    val cm = CredentialManager.create(activity)
 
-    } catch (e: GetCredentialException) {
-        Toast.makeText(context, failureMessage, Toast.LENGTH_SHORT).show()
-        Log.e(TAG, failureMessage + ": Failure getting credentials", e)
+    // 初回フレーム直後の誤検知を避ける軽い待ち
+    delay(150)
 
-    } catch (e: GoogleIdTokenParsingException) {
-        Toast.makeText(context, failureMessage, Toast.LENGTH_SHORT).show()
-        Log.e(TAG, failureMessage + ": Issue with parsing received GoogleIdToken", e)
+    return try {
+        Log.d("GoogleAuthApi", "Credential obtained: $activity, $request")
+        Log.d("GoogleAuthApi", "$cm")
+        val res = cm.getCredential(context = activity, request = request)
 
+        val cred = res.credential
+        if (cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+            val google = GoogleIdTokenCredential.createFrom(cred.data)
+            googleAuthApiResult.Success(google.idToken)
+        } else {
+            googleAuthApiResult.Error(IllegalStateException("Unexpected credential type: ${cred.type}"))
+        }
     } catch (e: NoCredentialException) {
-        Toast.makeText(context, failureMessage, Toast.LENGTH_SHORT).show()
-        Log.e(TAG, failureMessage + ": No credentials found", e)
-        return e
-
-    } catch (e: GetCredentialCustomException) {
-        Toast.makeText(context, failureMessage, Toast.LENGTH_SHORT).show()
-        Log.e(TAG, failureMessage + ": Issue with custom credential request", e)
-
+        googleAuthApiResult.NoCredentials
     } catch (e: GetCredentialCancellationException) {
-        Toast.makeText(context, ": Sign-in cancelled", Toast.LENGTH_SHORT).show()
-        Log.e(TAG, failureMessage + ": Sign-in was cancelled", e)
+        if (e.localizedMessage == "[16] Account reauth failed.") {
+            googleAuthApiResult.NetworkError(e.localizedMessage)
+        } else {
+            googleAuthApiResult.Cancelled(e.message)
+        }
+    } catch (e: GoogleIdTokenParsingException) {
+        googleAuthApiResult.Error(e)
+    } catch (e: androidx.credentials.exceptions.GetCredentialException) {
+        googleAuthApiResult.Error(e)
+    } catch (e: Exception) {
+        googleAuthApiResult.Error(e)
     }
-    return e
 }
