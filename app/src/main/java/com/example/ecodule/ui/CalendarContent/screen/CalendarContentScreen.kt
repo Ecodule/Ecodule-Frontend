@@ -44,8 +44,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
-import com.example.ecodule.ui.CalendarContent.ui.CalendarMonthView
-import com.example.ecodule.ui.CalendarContent.ui.CalendarScheduleView
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
@@ -80,7 +78,7 @@ fun CalendarContentScreen(
     selectedDestination: MutableState<String>,
     onEventClick: (String) -> Unit = {},
     userViewModel: UserViewModel,
-    taskViewModel: TaskViewModel // ← TaskViewModelを追加
+    taskViewModel: TaskViewModel, // ← TaskViewModelを追加
     showWeekNumbers: Boolean = false,
     weekStart: DayOfWeek = DayOfWeek.SUNDAY // 追加: 設定から受け取る週設定
 ) {
@@ -397,38 +395,6 @@ fun CalendarContentScreen(
                         cameFromMonth = false
                     }
                 },
-                title = { Text("${monthLabel}${selectedDay}日の予定") },
-                text = {
-                    val plans = filteredEvents.filter { it.startDate.dayOfMonth == selectedDay }
-                    if (plans.isEmpty()) {
-                        Text("予定はありません")
-                    } else {
-                        LazyColumn {
-                            items(plans.size) { index ->
-                                val event = plans[index]
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(event.color) // ← event.colorを使う
-                                        .padding(vertical = 4.dp, horizontal = 2.dp)
-                                ) {
-                                    TextButton(
-                                        onClick = {
-                                            selectedDay = null
-                                            onEventClick(event.id)
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            "・${event.label} ${event.timeRangeText}",
-                                            color = Color.Black // 文字色は固定でOK
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 onDismiss = { showModeDialog = false }
             )
         }
