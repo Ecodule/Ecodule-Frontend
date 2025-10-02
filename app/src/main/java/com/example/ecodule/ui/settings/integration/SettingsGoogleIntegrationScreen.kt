@@ -26,7 +26,6 @@ import com.example.ecodule.R
 fun SettingsGoogleIntegrationScreen(
     modifier: Modifier = Modifier,
     initialGoogleLinked: Boolean = false,
-    initialGoogleUserName: String = "",
     initialGoogleEmail: String = "",
     initialCalendarLinked: Boolean = false,
     onBackToSettings: () -> Unit = {},
@@ -37,7 +36,6 @@ fun SettingsGoogleIntegrationScreen(
 ) {
     var totalDragX by remember { mutableFloatStateOf(0f) }
     var isGoogleLinked by remember { mutableStateOf(initialGoogleLinked) }
-    var googleUserName by remember { mutableStateOf(initialGoogleUserName) }
     var googleEmail by remember { mutableStateOf(initialGoogleEmail) }
     var isCalendarLinked by remember { mutableStateOf(initialCalendarLinked) }
 
@@ -122,20 +120,14 @@ fun SettingsGoogleIntegrationScreen(
             Column(modifier = Modifier.weight(1f)) {
                 if (isGoogleLinked) {
                     Text(
-                        text = googleUserName,
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Text(
                         text = googleEmail,
                         fontSize = 16.sp,
                         color = Color(0xFF888888)
                     )
                 } else {
                     Text(
-                        text = "紐づけされていません",
-                        fontSize = 18.sp,
+                        text = "Googleアカウントを認証",
+                        fontSize = 14.sp,
                         color = Color(0xFF888888)
                     )
                 }
@@ -145,12 +137,10 @@ fun SettingsGoogleIntegrationScreen(
                 onClick = {
                     if (!isGoogleLinked) {
                         val userInfo = onGoogleAccountLink?.invoke() ?: ("User Name" to "testuser@gmail.com")
-                        googleUserName = userInfo.first
                         googleEmail = userInfo.second
                         isGoogleLinked = true
                     } else {
                         onGoogleAccountUnlink?.invoke()
-                        googleUserName = ""
                         googleEmail = ""
                         isGoogleLinked = false
                         isCalendarLinked = false // Googleアカウント解除時はカレンダーも解除
@@ -175,7 +165,7 @@ fun SettingsGoogleIntegrationScreen(
 
         // 補足説明
         Text(
-            text = "Google カレンダーと連携するにはGoogleアカウントを紐づける必要があります",
+            text = "Google カレンダーと連携するにはGoogleアカウントの認証が必要です",
             fontSize = 14.sp,
             color = Color(0xFF888888),
             modifier = Modifier.padding(start = 32.dp, top = 8.dp, end = 32.dp)
@@ -235,7 +225,7 @@ fun SettingsGoogleIntegrationScreen(
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp)
             ) {
                 Text(
-                    text = if (isCalendarLinked) "解除" else "連携",
+                    text = "取得",
                     fontSize = 16.sp,
                     color = when {
                         !isGoogleLinked -> Color(0xFFBBBBBB)

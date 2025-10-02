@@ -191,7 +191,6 @@ fun EcoduleAppNavigation(
             EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
                 SettingsGoogleIntegrationScreen(
                     initialGoogleLinked = false,
-                    initialGoogleUserName = "",
                     initialGoogleEmail = "",
                     initialCalendarLinked = false,
                     onGoogleAccountLink = { true; "Test User" to "testuser@gmail.com" },
