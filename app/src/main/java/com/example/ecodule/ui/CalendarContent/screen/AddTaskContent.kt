@@ -2,42 +2,14 @@ package com.example.ecodule.ui.CalendarContent.screen
 
 import android.util.Log
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,8 +24,6 @@ import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.components.CategoryTabs
 import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
@@ -140,7 +110,6 @@ fun TimePickerTextButton(
         if (label == "開始" || label.isBlank()) "07:00" else "08:00"
     }
 
-    // ボタンは1つだけ表示する
     TextButton(
         onClick = { showTimePicker = true },
         modifier = modifier
@@ -157,15 +126,39 @@ fun TimePickerTextButton(
         WheelsTimePicker(
             label = "${label}時刻を選択",
             currentTime = displayTime,
-            onTimeChanged = { selectedTime ->
-                onTimeSelected(selectedTime)
-            },
+            onTimeChanged = { selectedTime -> onTimeSelected(selectedTime) },
             onDismissRequest = { showTimePicker = false },
             labelTextStyle = MaterialTheme.typography.headlineLarge.copy(fontSize = 24.sp),
             hourCenterBiasDp = 6.dp,
             minuteCenterBiasDp = 6.dp
         )
     }
+}
+
+private fun addMinutesToTime(hhmm: String, minutes: Int): String {
+    val parts = hhmm.split(":")
+    val h = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val m = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    val total = (h * 60 + m + minutes).mod(24 * 60)
+    val nh = total / 60
+    val nm = total % 60
+    return "%02d:%02d".format(nh, nm)
+}
+
+private fun computeEndDateAndTime(startDate: String, startTime: String, durationMin: Int): Pair<String, String> {
+    val parts = startTime.split(":")
+    val h = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val m = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    val startTotal = h * 60 + m
+    val endTotal = startTotal + durationMin
+    val endTime = addMinutesToTime(startTime, durationMin)
+    // 日跨ぎなら翌日に
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+    var date = LocalDate.parse(startDate, dateFormatter)
+    if (endTotal >= 24 * 60) {
+        date = date.plusDays(1)
+    }
+    return date.format(dateFormatter) to endTime
 }
 
 @Composable
@@ -176,7 +169,9 @@ fun AddTaskContent(
     selectedDestination: MutableState<String>,
     taskViewModel: TaskViewModel,
     editingEventId: String? = null,
-    onEditComplete: () -> Unit = {}
+    onEditComplete: () -> Unit = {},
+    // 追加: 設定から受け取る既定のタスク長（分）
+    defaultTaskDurationMinutes: Int = 60
 ) {
     val todayLocalDate = LocalDate.now()
     val todayString = todayLocalDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
@@ -198,7 +193,7 @@ fun AddTaskContent(
     val sdfDateTime = remember { SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault()) }
     val sdfDate = remember { SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()) }
 
-    var showDeleteDialog by remember { mutableStateOf(false) } // 削除確認ダイアログの状態
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val isEditing = editingEventId != null
     val titleText = if (isEditing) "タスクを編集" else "タスクを追加"
     val buttonText = if (isEditing) "更新" else "追加"
@@ -221,38 +216,30 @@ fun AddTaskContent(
                 category = it.category
                 allDay = it.allDay
                 it.startDate?.let { date ->
-                    val actualDate = when (date) {
-                        is LocalDateTime -> Date.from(date.atZone(ZoneId.systemDefault()).toInstant())
-                        is Date -> date
-                        else -> null
+                    val cal = Calendar.getInstance()
+                    when (date) {
+                        is java.time.LocalDateTime -> {
+                            cal.time = Date.from(date.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                        }
+                        is Date -> cal.time = date
                     }
-                    if (actualDate != null) {
-                        val cal = Calendar.getInstance()
-                        cal.time = actualDate
-                        startDateText = "%04d/%02d/%02d".format(
-                            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
-                        )
-                        startTimeText = "%02d:%02d".format(
-                            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)
-                        )
-                    }
+                    startDateText = "%04d/%02d/%02d".format(
+                        cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+                    )
+                    startTimeText = "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
                 }
                 it.endDate?.let { date ->
-                    val actualDate = when (date) {
-                        is LocalDateTime -> Date.from(date.atZone(ZoneId.systemDefault()).toInstant())
-                        is Date -> date
-                        else -> null
+                    val cal = Calendar.getInstance()
+                    when (date) {
+                        is java.time.LocalDateTime -> {
+                            cal.time = Date.from(date.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                        }
+                        is Date -> cal.time = date
                     }
-                    if (actualDate != null) {
-                        val cal = Calendar.getInstance()
-                        cal.time = actualDate
-                        endDateText = "%04d/%02d/%02d".format(
-                            cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
-                        )
-                        endTimeText = "%02d:%02d".format(
-                            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)
-                        )
-                    }
+                    endDateText = "%04d/%02d/%02d".format(
+                        cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
+                    )
+                    endTimeText = "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
                 }
                 repeatOption = it.repeatOption
                 memo = it.memo
@@ -261,23 +248,29 @@ fun AddTaskContent(
         }
     }
 
+    // 既定値の決定（終了は開始＋既定の長さ。日跨ぎは翌日扱い）
     val actualStartDate = startDateText.ifBlank { todayString }
     val actualStartTime = startTimeText.ifBlank { "07:00" }
-    val actualEndDate = endDateText.ifBlank { todayString }
-    val actualEndTime = endTimeText.ifBlank { "08:00" }
+    val derivedEnd = remember(actualStartDate, actualStartTime, defaultTaskDurationMinutes) {
+        computeEndDateAndTime(actualStartDate, actualStartTime, defaultTaskDurationMinutes)
+    }
+    val actualEndDate = endDateText.ifBlank { derivedEnd.first }
+    val actualEndTime = endTimeText.ifBlank { derivedEnd.second }
 
     val startDate: Date? = try {
         if (allDay) sdfDate.parse(actualStartDate)
         else if (actualStartDate.isNotBlank() && actualStartTime.isNotBlank())
-            sdfDateTime.parse("${actualStartDate} ${actualStartTime}")
+            sdfDateTime.parse("$actualStartDate $actualStartTime")
         else null
-    } catch (e: Exception) { null }
+    } catch (_: Exception) { null }
+
     val endDate: Date? = try {
         if (allDay) sdfDate.parse(actualEndDate)
         else if (actualEndDate.isNotBlank() && actualEndTime.isNotBlank())
-            sdfDateTime.parse("${actualEndDate} ${actualEndTime}")
+            sdfDateTime.parse("$actualEndDate $actualEndTime")
         else null
-    } catch (e: Exception) { null }
+    } catch (_: Exception) { null }
+
     val canSave = title.isNotBlank()
             && actualStartDate.isNotBlank()
             && actualEndDate.isNotBlank()
@@ -305,9 +298,7 @@ fun AddTaskContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                IconButton(onClick = {
-                    showDeleteDialog = true // ダイアログを表示
-                }) {
+                IconButton(onClick = { showDeleteDialog = true }) {
                     Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red)
                 }
             }
@@ -368,8 +359,11 @@ fun AddTaskContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     TimePickerTextButton(
                         label = "開始",
-                        timeText = actualStartTime,
-                        onTimeSelected = { startTimeText = it },
+                        timeText = startTimeText, // 入力中はユーザー入力を優先表示
+                        onTimeSelected = { selected ->
+                            startTimeText = selected
+                            // endTimeText が未入力なら自動追従（表示は actualEndTime に反映）
+                        },
                         modifier = Modifier.width(80.dp)
                     )
                 }
@@ -396,8 +390,8 @@ fun AddTaskContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     TimePickerTextButton(
                         label = "終了",
-                        timeText = actualEndTime,
-                        onTimeSelected = { endTimeText = it },
+                        timeText = endTimeText.ifBlank { actualEndTime }, // 未入力なら自動値を見せる
+                        onTimeSelected = { selected -> endTimeText = selected },
                         modifier = Modifier.width(80.dp)
                     )
                 }
@@ -489,14 +483,12 @@ fun AddTaskContent(
                     if (isEditing && editingEventId != null) {
                         val event = taskViewModel.getEventById(editingEventId)
                         if (event?.repeatGroupId != null) {
-                            // 繰り返しグループ全体編集
                             taskViewModel.updateEventsByRepeatGroup(
                                 event.repeatGroupId,
                                 title, category, description, allDay,
                                 startDate, endDate, repeatOption, memo, notificationMinutes
                             )
                         } else {
-                            // 単体編集
                             taskViewModel.updateEvent(
                                 editingEventId,
                                 title, category, description, allDay,
@@ -504,7 +496,6 @@ fun AddTaskContent(
                             )
                         }
                     } else {
-                        // 追加時（1件だけ追加）
                         taskViewModel.addEvent(
                             title, category, description, allDay,
                             startDate, endDate, repeatOption, memo, notificationMinutes,
@@ -522,7 +513,6 @@ fun AddTaskContent(
         }
     }
 
-    // 削除確認ダイアログ
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -541,9 +531,7 @@ fun AddTaskContent(
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
+                TextButton(onClick = { showDeleteDialog = false }) {
                     Text("キャンセル")
                 }
             }
@@ -555,4 +543,10 @@ fun AddTaskContent(
 @Composable
 fun AddTaskContentPreview() {
     val dummySelectedDestination = remember { mutableStateOf("Tasks") }
+    val dummyTaskViewModel = remember { TaskViewModel() }
+    AddTaskContent(
+        selectedDestination = dummySelectedDestination,
+        taskViewModel = dummyTaskViewModel,
+        defaultTaskDurationMinutes = 60
+    )
 }
