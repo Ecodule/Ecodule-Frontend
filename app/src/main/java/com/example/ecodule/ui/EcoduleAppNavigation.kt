@@ -56,7 +56,7 @@ fun EcoduleAppNavigation(
     onLogout: () -> Unit = {}
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
-    val taskViewModel = remember { TaskViewModel() }
+    val taskViewModel: TaskViewModel = hiltViewModel()
     val userViewModel: UserViewModel = hiltViewModel()
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
@@ -67,6 +67,8 @@ fun EcoduleAppNavigation(
     var showWeekNumbers by rememberSaveable { mutableStateOf(false) }
     var selectedWeekStartLabel by rememberSaveable { mutableStateOf("日曜日") }
     var selectedTaskDuration by rememberSaveable { mutableStateOf("60 分") } // 追加
+
+    val todayEvents by taskViewModel.todayEvents.collectAsState()
 
     fun toDayOfWeek(label: String): DayOfWeek = when (label) {
         "土曜日" -> DayOfWeek.SATURDAY

@@ -539,14 +539,14 @@ fun AddTaskContent(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddTaskContentPreview() {
-    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
-    val dummyTaskViewModel = remember { TaskViewModel() }
-    AddTaskContent(
-        selectedDestination = dummySelectedDestination,
-        taskViewModel = dummyTaskViewModel,
-        defaultTaskDurationMinutes = 60
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AddTaskContentPreview() {
+//    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
+//    val dummyTaskViewModel = remember { TaskViewModel() }
+//    AddTaskContent(
+//        selectedDestination = dummySelectedDestination,
+//        taskViewModel = dummyTaskViewModel,
+//        defaultTaskDurationMinutes = 60
+//    )
+//}
