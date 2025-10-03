@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.CalendarContent.screen
 
+import android.util.Log
 import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -203,6 +204,8 @@ fun AddTaskContent(
         "外出" to Color(0xFFE4EFCF),
         "買い物" to Color(0xFFC9E4D7)
     )
+
+    Log.d("addTaskContent", categories.toString())
 
     // 編集時のデータ読み込み
     LaunchedEffect(editingEventId) {

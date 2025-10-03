@@ -3,50 +3,63 @@ package com.example.ecodule.ui.account.api
 import android.util.Log
 import com.example.ecodule.BuildConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.FormBody
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+import kotlin.coroutines.resume
 
 // 戻り値を表現するsealed classを定義
-sealed class LoginResult {
+sealed class GoogleLoginResult {
     data class Success(
         val id: String,
+        val email: String,
         val accessToken: String,
         val refreshToken: String,
         val expiresIn: Long
-    ) : LoginResult()
-    data class Error(val message: String) : LoginResult()
+    ) : GoogleLoginResult()
+    data class Error(val message: String) : GoogleLoginResult()
 }
 
-object LoginApi {
+@Serializable
+data class GoogleLoginRequest(
+    val token: String
+)
+
+object GoogleLoginApi {
     private val client = OkHttpClient()
 
     suspend fun login(
-        email: String,
-        password: String,
-    ): LoginResult {
+        token: String,
+    ): GoogleLoginResult {
         return suspendCancellableCoroutine { continuation ->
-            val url = BuildConfig.BASE_URL + "/auth/login"
+            val url = BuildConfig.BASE_URL + "/auth/google"
 
-            val formBody = FormBody.Builder()
-                .add("username", email)
-                .add("password", password)
-                .build()
+            val googleTokenData = GoogleLoginRequest(
+                token = token
+            )
+
+            val jsonString = Json.encodeToString(googleTokenData)
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val requestBody = jsonString.toRequestBody(mediaType)
 
             val request = Request.Builder()
                 .url(url)
-                .post(formBody)
+                .post(requestBody)
                 .build()
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resume(LoginResult.Error("ネットワークエラーが発生しました。"))
+                    continuation.resume(GoogleLoginResult.Error("ネットワークエラーが発生しました。"))
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -57,7 +70,7 @@ object LoginApi {
                             val errorMessage = when (statusCode) {
                                 in 400..499 -> {
                                     // 400番台はクライアント側のエラー (例: ID/パスワード間違い、リクエスト不正)
-                                    "メールアドレスかパスワードが間違っています。\n間違いがないかご確認ください"
+                                    "Googleアカウントの認証に失敗しました。もう一度お試しください"
                                 }
                                 in 500..599 -> {
                                     // 500番台はサーバー側のエラー
@@ -70,7 +83,7 @@ object LoginApi {
                             }
                             Log.d("Ecodule", "Login failed with status code: $statusCode")
 
-                            continuation.resume(LoginResult.Error(errorMessage))
+                            continuation.resume(GoogleLoginResult.Error(errorMessage))
                             return
                         }
 
@@ -79,18 +92,19 @@ object LoginApi {
                         if (responseBody != null) {
                             try {
                                 val json = JSONObject(responseBody)
-                                val result = LoginResult.Success(
+                                val result = GoogleLoginResult.Success(
                                     id = json.getString("id"),
+                                    email = json.getString("email"),
                                     accessToken = json.getString("access_token"),
                                     refreshToken = json.getString("refresh_token"),
                                     expiresIn = json.getLong("expires_in")
                                 )
                                 continuation.resume(result)
                             } catch (e: Exception) {
-                                continuation.resume(LoginResult.Error("レスポンスの解析に失敗しました。"))
+                                continuation.resume(GoogleLoginResult.Error("レスポンスの解析に失敗しました。"))
                             }
                         } else {
-                            continuation.resume(LoginResult.Error("レスポンスボディが空です。"))
+                            continuation.resume(GoogleLoginResult.Error("レスポンスボディが空です。"))
                         }
                     }
                 }
