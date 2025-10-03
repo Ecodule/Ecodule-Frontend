@@ -4,10 +4,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization) // Version Catalog の alias を使用
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
-    // id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"  ← 削除
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
 val properties = Properties()
@@ -92,6 +91,7 @@ android {
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -100,7 +100,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Material Iconsの拡張ライブラリを追加
     implementation(libs.androidx.material.icons.extended.android)
+
+    // Material3 を使用している場合
     implementation(libs.androidx.material3.android)
 
     // google oauth
@@ -114,21 +118,22 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
     implementation(libs.accompanist.swiperefresh)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.okhttp)
-    // Glance（catalogの 1.1.1）
-    // implementation("androidx.glance:glance:1.1.0")  ← 使わないなら削除可
-    // implementation("androidx.glance:glance-appwidget:1.1.0") ← 使わないなら削除可
-    // implementation("androidx.glance:glance-material3:1.1.0") ← 使わないなら削除可
-    implementation(libs.androidx.glance)
+
+    //Glance
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
+
     // DataStore
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.datastore.preferences)
+
     // serializer
     implementation(libs.kotlinx.serialization.json)
+
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)

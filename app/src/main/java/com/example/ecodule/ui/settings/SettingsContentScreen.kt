@@ -27,14 +27,11 @@ import androidx.compose.ui.unit.sp
 fun SettingsContentScreen(
     modifier: Modifier = Modifier,
     userName: String = "User Name",
-    // 親で保持する設定（rememberSaveable）を受け取る
+    // 週開始日・週数表示を親から受け取る（永続化は親側で rememberSaveable）
     selectedWeekStart: String,
     onSelectedWeekStartChange: (String) -> Unit,
     showWeekNumbers: Boolean,
     onShowWeekNumbersChange: (Boolean) -> Unit,
-    // 追加: 既定のタスク長
-    selectedTaskDuration: String,
-    onSelectedTaskDurationChange: (String) -> Unit,
     onNavigateUserName: () -> Unit = {},
     onNavigateTimeZone: () -> Unit = {},
     onNavigateNotifications: () -> Unit = {},
@@ -43,9 +40,6 @@ fun SettingsContentScreen(
 ) {
     var expandedWeekStart by remember { mutableStateOf(false) }
     val weekStartOptions = listOf("土曜日", "日曜日", "月曜日")
-
-    var expandedTaskDuration by remember { mutableStateOf(false) }
-    val taskDurationOptions = listOf("15 分", "30 分", "45 分", "60 分", "90 分", "120 分")
 
     val rightEndIconPadding = 8.dp
     val switchRightPadding = 8.dp
@@ -151,6 +145,7 @@ fun SettingsContentScreen(
                     DropdownMenu(
                         expanded = expandedWeekStart,
                         onDismissRequest = { expandedWeekStart = false },
+                        modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         weekStartOptions.forEach { option ->
                             DropdownMenuItem(
@@ -160,7 +155,8 @@ fun SettingsContentScreen(
                                             Icon(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = null,
-                                                tint = Color(0xFF4CAF50)
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(Modifier.width(8.dp))
                                         }
@@ -211,7 +207,7 @@ fun SettingsContentScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 既定のタスクの長さ（親バインド）
+        // 既定のタスクの長さ
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -232,6 +228,10 @@ fun SettingsContentScreen(
                         .weight(1f)
                         .padding(start = 10.dp)
                 )
+                var expandedTaskDuration by remember { mutableStateOf(false) }
+                val taskDurationOptions = listOf("15 分", "30 分", "45 分", "60 分", "90 分", "120 分")
+                var selectedTaskDuration by remember { mutableStateOf("60 分") }
+
                 Box {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -254,12 +254,13 @@ fun SettingsContentScreen(
                     DropdownMenu(
                         expanded = expandedTaskDuration,
                         onDismissRequest = { expandedTaskDuration = false },
+                        modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         taskDurationOptions.forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option) },
                                 onClick = {
-                                    onSelectedTaskDurationChange(option)
+                                    selectedTaskDuration = option
                                     expandedTaskDuration = false
                                 }
                             )
