@@ -539,14 +539,20 @@ fun AddTaskContent(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddTaskContentPreview() {
-    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
-    val dummyTaskViewModel = remember { TaskViewModel() }
-    AddTaskContent(
-        selectedDestination = dummySelectedDestination,
-        taskViewModel = dummyTaskViewModel,
-        defaultTaskDurationMinutes = 60
-    )
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AddTaskContentPreview() {
+//    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
+//    val dummyTaskViewModel = remember { TaskViewModel() }
+//
+//    // プレビュー時に一度だけユーザーIDをセットしておく
+//    LaunchedEffect(Unit) {
+//        dummyTaskViewModel.setUserId("preview")
+//    }
+//
+//    AddTaskContent(
+//        selectedDestination = dummySelectedDestination,
+//        taskViewModel = dummyTaskViewModel,
+//        defaultTaskDurationMinutes = 60
+//    )
+//}
