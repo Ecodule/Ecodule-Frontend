@@ -118,7 +118,7 @@ class AppWidget : GlanceAppWidget() {
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(140.dp) // 4~5件程度見える高さ
+                    .height(120.dp) // 4~5件程度見える高さ
             ) {
                 LazyColumn {
                     items(tasks) { task ->
