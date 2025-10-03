@@ -9,15 +9,14 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,13 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.painterResource
+import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
@@ -78,9 +76,9 @@ fun CalendarContentScreen(
     selectedDestination: MutableState<String>,
     onEventClick: (String) -> Unit = {},
     userViewModel: UserViewModel,
-    taskViewModel: TaskViewModel, // ← TaskViewModelを追加
+    taskViewModel: TaskViewModel,
     showWeekNumbers: Boolean = false,
-    weekStart: DayOfWeek = DayOfWeek.SUNDAY // 追加: 設定から受け取る週設定
+    weekStart: DayOfWeek = DayOfWeek.SUNDAY
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -91,26 +89,22 @@ fun CalendarContentScreen(
 
     var cameFromMonth by remember { mutableStateOf(false) }
 
-    // 表示基準日（yearMonth と連動）
     var baseDate by remember {
         mutableStateOf(
             yearMonth.atDay(LocalDate.now().dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
         )
     }
 
-    // 週開始日に合わせた週頭日・3日開始日
     val currentDay by remember { derivedStateOf { baseDate } }
     val currentWeekStart by remember(weekStart, baseDate) {
         derivedStateOf { WeekConfig.getStartOfWeek(baseDate, weekStart) }
     }
     val currentThreeDayStart by remember { derivedStateOf { baseDate.minusDays(1) } }
 
-    // yearMonthが変更された時にbaseDateを更新
     LaunchedEffect(yearMonth) {
         baseDate = yearMonth.atDay(baseDate.dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
     }
 
-    // 年号付き月表示
     val currentYear = LocalDate.now().year
     val showYear = yearMonth.year != currentYear
     val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
@@ -120,7 +114,6 @@ fun CalendarContentScreen(
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
 
-    // 追加: ユーザーIDが変わったらTaskViewModelにセット
     DisposableEffect(user?.id) {
         user?.id?.let { uid ->
             taskViewModel.setUserId(uid)
@@ -128,14 +121,11 @@ fun CalendarContentScreen(
         onDispose { }
     }
 
-    // 追加: TaskViewModelの予定情報を購読
     val events by taskViewModel.events.collectAsState()
 
-    // 表示範囲の予定をフィルタリング
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate, weekStart) {
         when (calendarMode) {
             CalendarMode.MONTH -> {
-                // 月全体（繰り返し含める場合は既存ヘルパーを利用）
                 com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth(events, yearMonth)
             }
             CalendarMode.DAY -> {
@@ -181,7 +171,6 @@ fun CalendarContentScreen(
             }
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // 上部バー
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -197,7 +186,6 @@ fun CalendarContentScreen(
                                 .size(32.dp)
                                 .pointerInput(Unit) {}
                                 .composed { this }
-                                .let { it }
                                 .padding(0.dp)
                                 .width(32.dp)
                                 .height(32.dp)
@@ -240,13 +228,11 @@ fun CalendarContentScreen(
                     }
                 }
 
-                // 曜日ヘッダー（月表示のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
                     WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
                 }
 
-                // 本体
                 var dragX by remember { mutableStateOf(0f) }
                 Box(
                     modifier = Modifier
@@ -368,23 +354,28 @@ fun CalendarContentScreen(
             }
         }
 
-        // 予定追加ボタン等（既存）
+        // 予定追加ボタン（背景と影を消し、葉っぱのみ表示）
         FloatingActionButton(
             onClick = { selectedDestination.value = EcoduleRoute.TASKS },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
-            containerColor = Color(0xFF88C057)
+            containerColor = Color.Transparent,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp
+            )
         ) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                painter = painterResource(id = R.drawable.ecodule_icon_addtask),
                 contentDescription = "予定追加",
-                modifier = Modifier.size(36.dp),
-                tint = Color.White
+                modifier = Modifier.size(64.dp),
+                tint = Color.Unspecified
             )
         }
 
-        // 表示切替ダイアログ（既存）
         AnimatedVisibility(visible = showModeDialog) {
             CalendarModeDialog(
                 currentMode = calendarMode,
@@ -446,21 +437,3 @@ fun CalendarModeDialog(
         }
     )
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun CalendarContentPreview() {
-    val context = LocalContext.current
-    val dummySelectedDestination = remember { mutableStateOf("Calendar") }
-    val dummyUserViewModel: UserViewModel = hiltViewModel()
-    val dummyTaskViewModel: TaskViewModel = hiltViewModel() // ← 追加
-    CalendarContentScreen(
-        selectedDestination = dummySelectedDestination,
-        userViewModel = dummyUserViewModel,
-        taskViewModel = dummyTaskViewModel // ← 追加
-    )
-}
-    CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
-}
- */
