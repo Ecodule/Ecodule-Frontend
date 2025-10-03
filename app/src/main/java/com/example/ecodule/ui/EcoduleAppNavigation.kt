@@ -56,8 +56,8 @@ fun EcoduleAppNavigation(
     onLogout: () -> Unit = {}
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
-    val taskViewModel = remember { TaskViewModel() }
-    val userViewModel: UserViewModel = hiltViewModel()
+    val taskViewModel: TaskViewModel = hiltViewModel()
+    val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
@@ -83,6 +83,7 @@ fun EcoduleAppNavigation(
         mutableStateOf(parseDurationMinutes(selectedTaskDuration))
     }
 
+    val todayEvents by taskViewModel.todayEvents.collectAsState()
     val today = LocalDate.now()
     
 
