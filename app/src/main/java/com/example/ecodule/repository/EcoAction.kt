@@ -21,5 +21,5 @@ data class EcoAction(
     val category: EcoActionCategory,
     val label: String, // UIに表示する名前 (例: "マイバッグを持参する")
     val co2Kg: Double, // 削減されるCO2量 (kg)
-    val savedYen: Int  // 節約される金額 (円)
+    val savedYen: Double  // 節約される金額 (円)
 )

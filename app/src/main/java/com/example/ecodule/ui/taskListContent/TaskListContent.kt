@@ -67,10 +67,6 @@ fun TaskListContent(
                     checkedStates = checkedStates,
                     expanded = expandedStates[eventKey] ?: false,
                     backgroundColor = bgColor,
-                    onCheckedChange = { label, checked ->
-                        val key = "${event.label}-${label}-${event.startDate.hour}"
-                        taskListViewModel.setChecked(key, checked)
-                    },
                     onExpandToggle = {
                         taskListViewModel.toggleExpanded(eventKey)
                     },

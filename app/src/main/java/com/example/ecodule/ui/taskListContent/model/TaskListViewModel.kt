@@ -1,5 +1,6 @@
 package com.example.ecodule.ui.taskListContent.model
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -8,11 +9,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.repository.EcoAction
 import com.example.ecodule.repository.EcoActionCategory
 import com.example.ecodule.repository.EcoActionRepository
+import com.example.ecodule.repository.UserData
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.repository.datastore.DataStoreTaskRepository
 import com.example.ecodule.repository.datastore.TokenManager
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.account.api.LoginApi
+import com.example.ecodule.ui.account.api.LoginResult
+import com.example.ecodule.ui.taskListContent.api.UpdateAchievement
+import com.example.ecodule.ui.taskListContent.api.UpdateAchievementResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,10 +33,17 @@ import kotlin.String
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
     private val ecoActionRepository: EcoActionRepository,
+    private val tokenManager: TokenManager,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
     // ここにタスクリストに関する状態管理やロジックを追加
     val isLoadingEcoAction = mutableStateOf(false)
-    val isSendingAchievement = mutableStateOf(false)
+
+    private val _isSendingAchievement = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val isSendingAchievement: StateFlow<Map<String, Boolean>> = _isSendingAchievement
+
+    private val _sendingAchievementError = MutableStateFlow<Map<String, String?>>(emptyMap())
+    val sendingAchievementError: StateFlow<Map<String, String?>> = _sendingAchievementError
 
     private val _checkedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val checkedStates: StateFlow<Map<String, Boolean>> = _checkedStates
@@ -38,9 +51,48 @@ class TaskListViewModel @Inject constructor(
     private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val expandedStates: StateFlow<Map<String, Boolean>> = _expandedStates
 
-    fun setChecked(key: String, checked: Boolean) {
-        _checkedStates.value = _checkedStates.value.toMutableMap().apply {
-            put(key, checked)
+    private val user = userRepository.user
+    private val userId = user.value?.id
+    private val userEmail = user.value?.email
+
+    fun setChecked(key: String, checked: Boolean, ecoAction: EcoAction) {
+        _isSendingAchievement.value = _isSendingAchievement.value.toMutableMap().apply {
+            put(key, true)
+        }
+
+        _sendingAchievementError.value = _sendingAchievementError.value.toMutableMap().apply {
+            put(key, null)
+        }
+
+        viewModelScope.launch {
+            val accessToken = tokenManager.getAccessToken(userEmail = userEmail ?: "")
+
+            val co2 = if (checked) ecoAction.co2Kg else -ecoAction.co2Kg
+            val money = if (checked) ecoAction.savedYen else -ecoAction.savedYen
+
+            when (val result = UpdateAchievement.updateAchievement(
+                accessToken = accessToken ?: "",
+                userId = userId ?: "",
+                co2 = co2,
+                money = money,
+            )) {
+                is UpdateAchievementResult.Success -> {
+                    Log.d("TaskListViewModel", "UpdateAchievement successful: $result")
+                    _checkedStates.value = _checkedStates.value.toMutableMap().apply {
+                        put(key, checked)
+                    }
+                }
+                is UpdateAchievementResult.Error -> {
+                    Log.d("TaskListViewModel", "UpdateAchievement failed: $result")
+                    _sendingAchievementError.value = _sendingAchievementError.value.toMutableMap().apply {
+                        put(key, result.message)
+                    }
+                }
+            }
+
+            _isSendingAchievement.value = _isSendingAchievement.value.toMutableMap().apply {
+                put(key, false)
+            }
         }
     }
 

@@ -8,14 +8,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +29,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.repository.EcoAction
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.taskListContent.darkenColor
+import com.example.ecodule.ui.taskListContent.api.UpdateAchievement
 import com.example.ecodule.ui.taskListContent.model.TaskListViewModel
 import kotlin.collections.forEach
+
 
 @Composable
 fun TaskSectionWithTitleAndTime(
@@ -35,8 +41,8 @@ fun TaskSectionWithTitleAndTime(
     checkedStates: Map<String, Boolean>,
     expanded: Boolean,
     backgroundColor: Color,
-    onCheckedChange: (String, Boolean) -> Unit,
     onExpandToggle: () -> Unit,
+    taskListViewModel: TaskListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     Log.d("TaskSection", "Rendering section for event: ${event.label}, ecoActions: ${items.map { it.label }}")
@@ -55,7 +61,7 @@ fun TaskSectionWithTitleAndTime(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            if (event.startDate.hour != null && event.endDate.hour != null) {
+            if (event.startDate.hour != 0 && event.endDate.hour != 0) {
                 Text(
                     text = "${event.startDate.hour}:00 ～ ${event.endDate.hour}:00",
                     style = MaterialTheme.typography.bodySmall,
@@ -71,16 +77,33 @@ fun TaskSectionWithTitleAndTime(
                     items.forEach { ecoAction ->
                         val key = "${event.label}-${ecoAction.label}-${event.startDate.hour}"
                         val checked = checkedStates[key] ?: false
+
+                        val isLoading by taskListViewModel.isSendingAchievement.collectAsState()
+                        val errorMessage by taskListViewModel.sendingAchievementError.collectAsState()
+
+                        Log.d("TaskSection", "Rendering action: ${ecoAction.label}, checked: $checked, isLoading: ${isLoading[key]}")
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = checked,
-                                onCheckedChange = { onCheckedChange(ecoAction.label, it) },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = checkboxColor,
-                                    uncheckedColor = checkboxColor,
-                                    checkmarkColor = Color.White
+                            // チェックボックスとローディングインジケーターの切り替え
+                            if (isLoading[key] == true) {
+                                CircularProgressIndicator(
+                                    color = Color.Gray,
+                                    strokeWidth = 3.dp,
                                 )
-                            )
+                            } else {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = {
+                                        taskListViewModel.setChecked(key, it, ecoAction)
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = checkboxColor,
+                                        uncheckedColor = checkboxColor,
+                                        checkmarkColor = Color.White
+                                    )
+                                )
+                            }
+
                             Column {
                                 Text(
                                     text = ecoAction.label,
@@ -89,8 +112,15 @@ fun TaskSectionWithTitleAndTime(
                                 Text(
                                     text = "CO₂削減量: ${ecoAction.co2Kg}kg / 節約額: ¥${ecoAction.savedYen}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+//                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
+                                if (errorMessage[key] != null) {
+                                    Text(
+                                        text = "エラー: ${errorMessage[key]}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
                     }
