@@ -12,14 +12,22 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ecodule.ui.statistics.model.StatisticsViewModel
+import java.text.NumberFormat
+import java.util.Locale
 
 val bodyStyle = TextStyle(
     fontSize = 28.sp,
@@ -32,16 +40,46 @@ val boldBodyStyle = TextStyle(
     color = Color.Black
 )
 
-
 @Composable
 fun StatisticsContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: StatisticsViewModel? = null // プレビュー対応のためオプショナル
 ) {
-    val co2Value = 1.23
-    val allCo2Value = 123456.78
-    val savingValue = 12345
-    val savingDiff = -5500
-    val appleCount = 26
+    val isPreview = LocalInspectionMode.current
+    // 実行時のみ Hilt から取得（プレビュー時は null のまま）
+    val vm = viewModel ?: if (!isPreview) hiltViewModel() else null
+
+    // 状態の購読（vm が null の場合はダミー表示にフォールバック）
+    val isLoadingUser by (vm?.isLoadingUserStats?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf(false))
+    val userError by (vm?.userStatsError?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf<String?>(null))
+    val userStats by (vm?.userStats?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf<StatisticsViewModel.UserStatsUiState?>(null))
+
+    val isLoadingOverall by (vm?.isLoadingOverallStats?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf(false))
+    val overallError by (vm?.overallStatsError?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf<String?>(null))
+    val overallStats by (vm?.overallStats?.collectAsStateWithLifecycle() ?: androidx.compose.runtime.mutableStateOf<StatisticsViewModel.OverallStatsUiState?>(null))
+
+    // 初回取得
+    LaunchedEffect(vm != null) {
+        if (vm != null) {
+            vm.fetchUserStatistics()
+            vm.fetchOverallStatistics()
+        }
+    }
+
+    // 表示用フォーマット
+    val numberFormatter = NumberFormat.getNumberInstance(Locale.JAPAN).apply {
+        maximumFractionDigits = 2
+        minimumFractionDigits = 0
+    }
+
+    fun formatKg(value: Double?): String =
+        value?.let { "${numberFormatter.format(it)} Kg" } ?: "-- Kg"
+
+    fun formatYen(value: Double?): String =
+        value?.let { "${numberFormatter.format(it)} 円" } ?: "-- 円"
+
+    // 差分の表示は API 仕様にないため、ここでは空文字を渡し、将来仕様追加時に差し替え
+    val savingDiffText = ""
 
     Column(
         modifier = modifier
@@ -57,26 +95,104 @@ fun StatisticsContent(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        StatItemWithIcon(
-            icon = "🌱",
-            label = "CO₂削減量",
-            value = "${co2Value} Kg"
-        )
+        // ユーザー統計（CO2）
+        when {
+            isLoadingUser -> {
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "CO₂削減量",
+                    value = "読み込み中..."
+                )
+            }
+            userError != null -> {
+                Text(
+                    text = userError ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = bodyStyle,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "CO₂削減量",
+                    value = formatKg(userStats?.co2Reduction)
+                )
+            }
+            else -> {
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "CO₂削減量",
+                    value = formatKg(userStats?.co2Reduction)
+                )
+            }
+        }
 
-        StatItemWithIconAndDifference(
-            icon = "💴",
-            label = "今月の節約額",
-            value = "${savingValue} 円",
-            difference = "${savingDiff}",
-            differenceColor = Color.Blue
-        )
+        // ユーザー統計（金額）: 差分表示は空（API未対応）
+        when {
+            isLoadingUser -> {
+                StatItemWithIconAndDifference(
+                    icon = "💴",
+                    label = "今月の節約額",
+                    value = "読み込み中...",
+                    difference = savingDiffText,
+                    differenceColor = Color.Blue
+                )
+            }
+            userError != null -> {
+                StatItemWithIconAndDifference(
+                    icon = "💴",
+                    label = "今月の節約額",
+                    value = formatYen(userStats?.moneySaved),
+                    difference = savingDiffText,
+                    differenceColor = Color.Blue
+                )
+            }
+            else -> {
+                StatItemWithIconAndDifference(
+                    icon = "💴",
+                    label = "今月の節約額",
+                    value = formatYen(userStats?.moneySaved),
+                    difference = savingDiffText,
+                    differenceColor = Color.Blue
+                )
+            }
+        }
 
-        StatItemWithIcon(
-            icon = "🌱",
-            label = "全ユーザーのCO₂削減量",
-            value = "${allCo2Value} Kg"
-        )
+        // 全体統計（全ユーザーCO2）
+        when {
+            isLoadingOverall -> {
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "全ユーザーのCO₂削減量",
+                    value = "読み込み中..."
+                )
+            }
+            overallError != null -> {
+                Text(
+                    text = overallError ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = bodyStyle,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "全ユーザーのCO₂削減量",
+                    value = formatKg(overallStats?.totalCo2Reduction)
+                )
+            }
+            else -> {
+                StatItemWithIcon(
+                    icon = "🌱",
+                    label = "全ユーザーのCO₂削減量",
+                    value = formatKg(overallStats?.totalCo2Reduction)
+                )
+            }
+        }
 
+//        // 仕様次第でりんご表示を再開
 //        StatItemWithIcon(
 //            icon = "🍎",
 //            label = "集めたりんごの数",
@@ -172,5 +288,6 @@ fun StatItemWithIconAndDifference(
 @Preview
 @Composable
 fun StatisticsContentPreview() {
+    // プレビューでは Hilt/ViewModel を使わずダミー表示
     StatisticsContent()
 }
