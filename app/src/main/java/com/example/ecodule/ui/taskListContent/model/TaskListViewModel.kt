@@ -11,6 +11,7 @@ import com.example.ecodule.repository.EcoActionCategory
 import com.example.ecodule.repository.EcoActionRepository
 import com.example.ecodule.repository.UserData
 import com.example.ecodule.repository.UserRepository
+import com.example.ecodule.repository.CheckedStateRepository
 import com.example.ecodule.repository.datastore.DataStoreTaskRepository
 import com.example.ecodule.repository.datastore.TokenManager
 import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
@@ -35,6 +36,7 @@ class TaskListViewModel @Inject constructor(
     private val ecoActionRepository: EcoActionRepository,
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
+    private val checkedStateRepository: CheckedStateRepository, // 追加: チェック状態の永続化
 ) : ViewModel() {
     // ここにタスクリストに関する状態管理やロジックを追加
     val isLoadingEcoAction = mutableStateOf(false)
@@ -45,21 +47,25 @@ class TaskListViewModel @Inject constructor(
     private val _sendingAchievementError = MutableStateFlow<Map<String, String?>>(emptyMap())
     val sendingAchievementError: StateFlow<Map<String, String?>> = _sendingAchievementError
 
-    private val _checkedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val checkedStates: StateFlow<Map<String, Boolean>> = _checkedStates
-
-    private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val expandedStates: StateFlow<Map<String, Boolean>> = _expandedStates
-
+    // 永続化されたチェック状態を DataStore から購読する
     private val user = userRepository.user
     private val userId = user.value?.id
     private val userEmail = user.value?.email
 
+    // DataStore から読み出すため、ローカルのMap管理を廃止し、Repositoryのフローを公開
+    val checkedStates: StateFlow<Map<String, Boolean>> =
+        checkedStateRepository
+            .observeCheckedStates(userId = userId ?: "")
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val expandedStates: StateFlow<Map<String, Boolean>> = _expandedStates
+
     fun setChecked(key: String, checked: Boolean, ecoAction: EcoAction) {
+        // 送信中フラグ
         _isSendingAchievement.value = _isSendingAchievement.value.toMutableMap().apply {
             put(key, true)
         }
-
         _sendingAchievementError.value = _sendingAchievementError.value.toMutableMap().apply {
             put(key, null)
         }
@@ -78,9 +84,8 @@ class TaskListViewModel @Inject constructor(
             )) {
                 is UpdateAchievementResult.Success -> {
                     Log.d("TaskListViewModel", "UpdateAchievement successful: $result")
-                    _checkedStates.value = _checkedStates.value.toMutableMap().apply {
-                        put(key, checked)
-                    }
+                    // 成功時に DataStore にも保存（状態は observeCheckedStates を通してUIに反映）
+                    checkedStateRepository.setChecked(userId = userId ?: "", key = key, checked = checked)
                 }
                 is UpdateAchievementResult.Error -> {
                     Log.d("TaskListViewModel", "UpdateAchievement failed: $result")

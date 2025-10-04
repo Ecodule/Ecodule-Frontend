@@ -5,6 +5,7 @@ import androidx.core.content.contentValuesOf
 import com.example.ecodule.repository.EcoActionRepository
 import com.example.ecodule.repository.TaskRepository
 import com.example.ecodule.repository.UserRepository
+import com.example.ecodule.repository.datastore.DataStoreCheckedStateRepository
 import com.example.ecodule.repository.datastore.DataStoreEcoActionRepository
 import com.example.ecodule.repository.datastore.DataStoreTaskRepository
 import com.example.ecodule.repository.datastore.DataStoreUserRepository
@@ -42,6 +43,14 @@ object AppModule {
         @ApplicationContext context: Context
     ): EcoActionRepository {
         return DataStoreEcoActionRepository(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCheckedStateRepository(
+        @ApplicationContext context: Context
+    ): com.example.ecodule.repository.CheckedStateRepository {
+        return DataStoreCheckedStateRepository(context)
     }
 
     // 以下を追加
