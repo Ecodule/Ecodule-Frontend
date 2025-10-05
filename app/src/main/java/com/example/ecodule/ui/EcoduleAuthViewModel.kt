@@ -1,11 +1,14 @@
 package com.example.ecodule.ui
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.collectAsState
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.repository.datastore.TokenManager
+import com.example.ecodule.ui.widget.AppWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EcoduleAuthViewModel @Inject constructor(
+    private val application: Application, // 4. Applicationを注入
     private val userRepository: UserRepository,
     private val tokenManager: TokenManager
 ) : ViewModel() {
@@ -80,6 +84,17 @@ class EcoduleAuthViewModel @Inject constructor(
             tokenManager.deleteTokens()
             _isGuestMode.value = false
             _authState.value = AuthState.LOGGED_OUT
+        }
+    }
+
+    /**
+     * 7. AppWidgetを更新するための関数を追加
+     */
+    private suspend fun updateAppWidget() {
+        val manager = GlanceAppWidgetManager(application)
+        val glanceIds = manager.getGlanceIds(AppWidget::class.java)
+        glanceIds.forEach { glanceId ->
+            AppWidget().update(application, glanceId)
         }
     }
 }

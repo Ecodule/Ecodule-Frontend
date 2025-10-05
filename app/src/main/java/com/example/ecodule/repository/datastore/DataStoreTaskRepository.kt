@@ -20,6 +20,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color
+import com.example.ecodule.repository.UserData
 
 val Context.taskStore: DataStore<Preferences> by preferencesDataStore("task")
 fun taskKey(userId: String) = stringPreferencesKey("tasks_${userId}")
@@ -47,7 +48,6 @@ fun getCategoryColor(category: String): Color {
 class DataStoreTaskRepository @Inject constructor(
     @ApplicationContext
     private val context: Context
-
 ): TaskRepository {
     private val scope = CoroutineScope(Dispatchers.IO)
 

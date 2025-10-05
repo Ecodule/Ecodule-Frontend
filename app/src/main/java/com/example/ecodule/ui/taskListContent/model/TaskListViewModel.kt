@@ -49,13 +49,22 @@ class TaskListViewModel @Inject constructor(
 
     // 永続化されたチェック状態を DataStore から購読する
     private val user = userRepository.user
-    private val userId = user.value?.id
-    private val userEmail = user.value?.email
+    private val userId = MutableStateFlow<String?>(null)
+    private val userEmail = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            user.collect { userData ->
+                userId.value = userData?.id
+                userEmail.value = userData?.email
+            }
+        }
+    }
 
     // DataStore から読み出すため、ローカルのMap管理を廃止し、Repositoryのフローを公開
     val checkedStates: StateFlow<Map<String, Boolean>> =
         checkedStateRepository
-            .observeCheckedStates(userId = userId ?: "")
+            .observeCheckedStates(userId = userId.value ?: "")
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
@@ -71,21 +80,21 @@ class TaskListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val accessToken = tokenManager.getAccessToken(userEmail = userEmail ?: "")
+            val accessToken = tokenManager.getAccessToken(userEmail = userEmail.value ?: "")
 
             val co2 = if (checked) ecoAction.co2Kg else -ecoAction.co2Kg
             val money = if (checked) ecoAction.savedYen else -ecoAction.savedYen
 
             when (val result = UpdateAchievement.updateAchievement(
                 accessToken = accessToken ?: "",
-                userId = userId ?: "",
+                userId = userId.value ?: "",
                 co2 = co2,
                 money = money,
             )) {
                 is UpdateAchievementResult.Success -> {
                     Log.d("TaskListViewModel", "UpdateAchievement successful: $result")
                     // 成功時に DataStore にも保存（状態は observeCheckedStates を通してUIに反映）
-                    checkedStateRepository.setChecked(userId = userId ?: "", key = key, checked = checked)
+                    checkedStateRepository.setChecked(userId = userId.value ?: "", key = key, checked = checked)
                 }
                 is UpdateAchievementResult.Error -> {
                     Log.d("TaskListViewModel", "UpdateAchievement failed: $result")
