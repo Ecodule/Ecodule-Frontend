@@ -12,21 +12,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
-import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
@@ -42,12 +34,10 @@ import com.example.ecodule.ui.theme.BottomNavBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedIcon
 import com.example.ecodule.ui.theme.BottomNavUnselectedIcon
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
+import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 
 @Composable
 fun EcoduleAppNavigation(
@@ -57,16 +47,15 @@ fun EcoduleAppNavigation(
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel: TaskViewModel = hiltViewModel()
-    val userViewModel: UserViewModel = hiltViewModel() // HiltからViewModelを取得
+    val userViewModel: UserViewModel = hiltViewModel()
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
     var userName by remember { mutableStateOf("User Name") }
-    var birthDate by remember { mutableStateOf("2001/01/01")}
+    var birthDate by remember { mutableStateOf("2001/01/01") }
 
-    // 設定（画面間で保持）
     var showWeekNumbers by rememberSaveable { mutableStateOf(false) }
     var selectedWeekStartLabel by rememberSaveable { mutableStateOf("日曜日") }
-    var selectedTaskDuration by rememberSaveable { mutableStateOf("60 分") } // 追加
+    var selectedTaskDuration by rememberSaveable { mutableStateOf("60 分") }
 
     fun toDayOfWeek(label: String): DayOfWeek = when (label) {
         "土曜日" -> DayOfWeek.SATURDAY
@@ -76,7 +65,6 @@ fun EcoduleAppNavigation(
     val weekStart: DayOfWeek = remember(selectedWeekStartLabel) { toDayOfWeek(selectedWeekStartLabel) }
 
     fun parseDurationMinutes(label: String): Int {
-        // "60 分" -> 60
         return label.split(" ").firstOrNull()?.toIntOrNull() ?: 60
     }
     val defaultTaskDurationMinutes by remember(selectedTaskDuration) {
@@ -84,8 +72,6 @@ fun EcoduleAppNavigation(
     }
 
     val todayEvents by taskViewModel.todayEvents.collectAsState()
-    val today = LocalDate.now()
-    
 
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
@@ -93,7 +79,12 @@ fun EcoduleAppNavigation(
         EcoduleRoute.SETTINGSGOOGLEINTEGRATION
     )
 
-    val events by taskViewModel.events.collectAsState()
+    // カレンダー状態をタスク追加へ受け渡すための一時保持
+    var pendingCalendarMode by remember { mutableStateOf<CalendarMode?>(null) }
+    var pendingBaseDate by remember { mutableStateOf<LocalDate?>(null) }
+    var pendingWeekStartDate by remember { mutableStateOf<LocalDate?>(null) }
+    var pendingThreeDayStart by remember { mutableStateOf<LocalDate?>(null) }
+    var pendingYearMonth by remember { mutableStateOf<YearMonth?>(null) }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -110,7 +101,16 @@ fun EcoduleAppNavigation(
                     userViewModel = userViewModel,
                     taskViewModel = taskViewModel,
                     showWeekNumbers = showWeekNumbers,
-                    weekStart = weekStart
+                    weekStart = weekStart,
+                    onAddTaskRequest = { mode, base, weekStartDate, threeDayStart, ym ->
+                        pendingCalendarMode = mode
+                        pendingBaseDate = base
+                        pendingWeekStartDate = weekStartDate
+                        pendingThreeDayStart = threeDayStart
+                        pendingYearMonth = ym
+                        editingEventId.value = null
+                        selectedDestination.value = EcoduleRoute.TASKS
+                    }
                 )
             }
             EcoduleRoute.TASKS -> {
@@ -120,8 +120,12 @@ fun EcoduleAppNavigation(
                     taskViewModel = taskViewModel,
                     editingEventId = editingEventId.value,
                     onEditComplete = { editingEventId.value = null },
-                    // 追加: 既定のタスク長（分）
-                    defaultTaskDurationMinutes = defaultTaskDurationMinutes
+                    defaultTaskDurationMinutes = defaultTaskDurationMinutes,
+                    calendarMode = pendingCalendarMode,
+                    displayedBaseDate = pendingBaseDate,
+                    weekStartDate = pendingWeekStartDate,
+                    threeDayStartDate = pendingThreeDayStart,
+                    displayedYearMonth = pendingYearMonth
                 )
             }
             EcoduleRoute.TASKSLIST -> {
@@ -137,12 +141,10 @@ fun EcoduleAppNavigation(
                 SettingsContentScreen(
                     modifier = Modifier.weight(1f),
                     userName = userName,
-                    // 週設定
                     selectedWeekStart = selectedWeekStartLabel,
                     onSelectedWeekStartChange = { selectedWeekStartLabel = it },
                     showWeekNumbers = showWeekNumbers,
                     onShowWeekNumbersChange = { showWeekNumbers = it },
-                    // 既定のタスク長（親で保持）
                     selectedTaskDuration = selectedTaskDuration,
                     onSelectedTaskDurationChange = { selectedTaskDuration = it },
                     onNavigateUserName = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
@@ -179,8 +181,8 @@ fun EcoduleAppNavigation(
                     onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
                     onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
                     currentBirthDate = birthDate,
-                    onBirthDateChanged = { newbirthDate ->
-                        birthDate = newbirthDate
+                    onBirthDateChanged = { newDate ->
+                        birthDate = newDate
                     },
                     onLogout = {
                         if (!isGuestMode) {
@@ -252,16 +254,13 @@ object EcoduleRoute {
     const val STATISTICS = "Statistics"
     const val TASKSLIST = "TasksList"
     const val SETTINGS = "Settings"
-    const val SETTINGSDETAILS = "SettingsDetails" // 新しく追加
+    const val SETTINGSDETAILS = "SettingsDetails"
     const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
     const val SETTINGSGOOGLEINTEGRATION = "SettingsGoogleIntegration"
-
-    // 将来的に他の詳細画面も追加可能
-    // const val SETTINGSUSERNAME = "SettingsUserName"
-    // const val SETTINGSTIMEZONE = "SettingsTimeZone"
 }
+
 data class EcoduleTopLevelDestination(
     val route: String,
     val selectedIcon: ImageVector,

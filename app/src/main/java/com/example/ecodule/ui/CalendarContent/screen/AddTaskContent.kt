@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
@@ -24,10 +23,13 @@ import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.components.CategoryTabs
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 
 @Composable
 fun DatePickerTextButton(
@@ -152,13 +154,28 @@ private fun computeEndDateAndTime(startDate: String, startTime: String, duration
     val startTotal = h * 60 + m
     val endTotal = startTotal + durationMin
     val endTime = addMinutesToTime(startTime, durationMin)
-    // 日跨ぎなら翌日に
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
     var date = LocalDate.parse(startDate, dateFormatter)
     if (endTotal >= 24 * 60) {
         date = date.plusDays(1)
     }
     return date.format(dateFormatter) to endTime
+}
+
+private fun snapNowToNearest30(): String {
+    val now = LocalTime.now()
+    var hour = now.hour
+    val minute = now.minute
+    val snappedMinute: Int = if (minute == 0) 0 else if (minute <= 30) 30 else {
+        hour += 1
+        0
+    }
+    if (hour >= 24) {
+        // 24:00 は扱いづらいので 23:30 に丸める（必要なら翌日繰り上げ仕様へ拡張可）
+        hour = 23
+        return "%02d:%02d".format(hour, 30)
+    }
+    return "%02d:%02d".format(hour, snappedMinute)
 }
 
 @Composable
@@ -170,8 +187,13 @@ fun AddTaskContent(
     taskViewModel: TaskViewModel,
     editingEventId: String? = null,
     onEditComplete: () -> Unit = {},
-    // 追加: 設定から受け取る既定のタスク長（分）
-    defaultTaskDurationMinutes: Int = 60
+    defaultTaskDurationMinutes: Int = 60,
+    // 追加: カレンダー側から渡されるコンテキスト
+    calendarMode: CalendarMode? = null,
+    displayedBaseDate: LocalDate? = null,
+    weekStartDate: LocalDate? = null,
+    threeDayStartDate: LocalDate? = null,
+    displayedYearMonth: YearMonth? = null
 ) {
     val todayLocalDate = LocalDate.now()
     val todayString = todayLocalDate.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
@@ -207,7 +229,7 @@ fun AddTaskContent(
 
     Log.d("addTaskContent", categories.toString())
 
-    // 編集時のデータ読み込み
+    // 初期日付決定（編集でない & 未入力の場合のみ）
     LaunchedEffect(editingEventId) {
         if (editingEventId != null) {
             val event = taskViewModel.getEventById(editingEventId)
@@ -245,12 +267,33 @@ fun AddTaskContent(
                 memo = it.memo
                 notificationMinutes = it.notificationMinutes
             }
+        } else {
+            // 新規作成時：日付が未確定ならカレンダー状態に応じて初期値を設定
+            if (startDateText.isBlank()) {
+                val fmt = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+                val initialDate = determineInitialDate(
+                    mode = calendarMode,
+                    today = todayLocalDate,
+                    baseDate = displayedBaseDate,
+                    weekStart = weekStartDate,
+                    threeDayStart = threeDayStartDate,
+                    shownYearMonth = displayedYearMonth
+                )
+                startDateText = initialDate.format(fmt)
+            }
         }
     }
 
-    // 既定値の決定（終了は開始＋既定の長さ。日跨ぎは翌日扱い）
+    // 現在時刻を 30 分単位にスナップした開始時刻（新規時のみ保持）
+    val snappedStartTime by remember {
+        mutableStateOf(snapNowToNearest30())
+    }
+
+    // 実際使用する開始時刻
     val actualStartDate = startDateText.ifBlank { todayString }
-    val actualStartTime = startTimeText.ifBlank { "07:00" }
+    val actualStartTime = startTimeText.ifBlank { snappedStartTime }
+
+    // 終了日時の派生（ユーザー未入力の場合に既定タスク長で算出）
     val derivedEnd = remember(actualStartDate, actualStartTime, defaultTaskDurationMinutes) {
         computeEndDateAndTime(actualStartDate, actualStartTime, defaultTaskDurationMinutes)
     }
@@ -359,10 +402,9 @@ fun AddTaskContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     TimePickerTextButton(
                         label = "開始",
-                        timeText = startTimeText, // 入力中はユーザー入力を優先表示
+                        timeText = startTimeText.ifBlank { actualStartTime },
                         onTimeSelected = { selected ->
                             startTimeText = selected
-                            // endTimeText が未入力なら自動追従（表示は actualEndTime に反映）
                         },
                         modifier = Modifier.width(80.dp)
                     )
@@ -390,7 +432,7 @@ fun AddTaskContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     TimePickerTextButton(
                         label = "終了",
-                        timeText = endTimeText.ifBlank { actualEndTime }, // 未入力なら自動値を見せる
+                        timeText = endTimeText.ifBlank { actualEndTime },
                         onTimeSelected = { selected -> endTimeText = selected },
                         modifier = Modifier.width(80.dp)
                     )
@@ -539,20 +581,48 @@ fun AddTaskContent(
     }
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun AddTaskContentPreview() {
-//    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
-//    val dummyTaskViewModel = remember { TaskViewModel() }
-//
-//    // プレビュー時に一度だけユーザーIDをセットしておく
-//    LaunchedEffect(Unit) {
-//        dummyTaskViewModel.setUserId("preview")
-//    }
-//
-//    AddTaskContent(
-//        selectedDestination = dummySelectedDestination,
-//        taskViewModel = dummyTaskViewModel,
-//        defaultTaskDurationMinutes = 60
-//    )
-//}
+/**
+ * カレンダーモードに基づく初期日付決定
+ */
+private fun determineInitialDate(
+    mode: CalendarMode?,
+    today: LocalDate,
+    baseDate: LocalDate?,
+    weekStart: LocalDate?,
+    threeDayStart: LocalDate?,
+    shownYearMonth: YearMonth?
+): LocalDate {
+    if (mode == null) return today
+    return when (mode) {
+        CalendarMode.DAY -> baseDate ?: today
+        CalendarMode.THREE_DAY -> {
+            val start = threeDayStart
+            if (start == null) today
+            else {
+                val range = listOf(start, start.plusDays(1), start.plusDays(2))
+                if (today in range) today else start
+            }
+        }
+        CalendarMode.WEEK -> {
+            val ws = weekStart
+            if (ws == null) today
+            else {
+                val end = ws.plusDays(6)
+                if (!today.isBefore(ws) && !today.isAfter(end)) today else ws
+            }
+        }
+        CalendarMode.MONTH -> {
+            val ym = shownYearMonth
+            if (ym == null) today
+            else {
+                val currentYm = YearMonth.from(today)
+                if (ym == currentYm) today else ym.atDay(1)
+            }
+        }
+        CalendarMode.SCHEDULE -> {
+            val ym = shownYearMonth
+            val currentYm = YearMonth.from(today)
+            if (ym != null && ym != currentYm) ym.atDay(1) else today
+        }
+    }
+}

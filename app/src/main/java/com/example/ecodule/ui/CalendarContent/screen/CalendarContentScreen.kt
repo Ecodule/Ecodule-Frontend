@@ -7,7 +7,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
@@ -17,24 +16,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,7 +34,6 @@ import com.example.ecodule.ui.CalendarContent.ui.WheelsMonthPicker
 import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.WeekdayHeader
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
-import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.UserViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -79,7 +63,15 @@ fun CalendarContentScreen(
     userViewModel: UserViewModel,
     taskViewModel: TaskViewModel,
     showWeekNumbers: Boolean = false,
-    weekStart: DayOfWeek = DayOfWeek.SUNDAY
+    weekStart: DayOfWeek = DayOfWeek.SUNDAY,
+    // 追加: タスク追加要求コールバック（カレンダー状態を親へ渡す）
+    onAddTaskRequest: (
+        CalendarMode,
+        LocalDate,   // baseDate
+        LocalDate,   // currentWeekStart
+        LocalDate,   // currentThreeDayStart
+        YearMonth    // yearMonth
+    ) -> Unit = { _, _, _, _, _ -> }
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -172,7 +164,6 @@ fun CalendarContentScreen(
             }
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // 上部バー
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -205,20 +196,16 @@ fun CalendarContentScreen(
 
                     Spacer(Modifier.width(10.dp))
 
-                    // ドラムロール（月スワイプ）
                     WheelsMonthPicker(
                         currentMonth = yearMonth,
                         onMonthChanged = { newYm ->
-                            // ヘッダーのスワイプで月変更 -> 本体状態に反映
                             yearMonth = newYm
-                            // 現在の baseDate の日を保ちながら、範囲内に補正
                             baseDate = newYm.atDay(baseDate.dayOfMonth.coerceAtMost(newYm.lengthOfMonth()))
                         },
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                // 曜日ヘッダー（月表示のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
                     WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
@@ -299,7 +286,7 @@ fun CalendarContentScreen(
                             ScrollableWeekDayTimeView(
                                 weekStart = currentWeekStart,
                                 events = filteredEvents,
-                                onDayClick = { /* no-op */ },
+                                onDayClick = { },
                                 onEventClick = onEventClick,
                                 showWeekNumbers = showWeekNumbers,
                                 weekStartDay = weekStart
@@ -309,7 +296,7 @@ fun CalendarContentScreen(
                             ScrollableDayTimeView(
                                 day = currentDay,
                                 events = filteredEvents,
-                                onDayClick = { /* no-op */ },
+                                onDayClick = { },
                                 onEventClick = onEventClick,
                                 showWeekNumbers = showWeekNumbers,
                                 weekStartDay = weekStart
@@ -319,7 +306,7 @@ fun CalendarContentScreen(
                             ScrollableThreeDayTimeView(
                                 startDay = currentThreeDayStart,
                                 events = filteredEvents,
-                                onDayClick = { /* no-op */ },
+                                onDayClick = { },
                                 onEventClick = onEventClick,
                                 showWeekNumbers = showWeekNumbers,
                                 weekStartDay = weekStart
@@ -329,7 +316,7 @@ fun CalendarContentScreen(
                             CalendarScheduleView(
                                 yearMonth = yearMonth,
                                 events = filteredEvents.sortedBy { it.startDate },
-                                onDayClick = { /* no-op */ },
+                                onDayClick = { },
                                 onEventClick = onEventClick
                             )
                         }
@@ -345,9 +332,17 @@ fun CalendarContentScreen(
             }
         }
 
-        // 予定追加ボタン（背景と影を消し、葉っぱのみ表示）
+        // 追加ボタン：親へ現在の表示状態を通知
         FloatingActionButton(
-            onClick = { selectedDestination.value = EcoduleRoute.TASKS },
+            onClick = {
+                onAddTaskRequest(
+                    calendarMode,
+                    baseDate,
+                    currentWeekStart,
+                    currentThreeDayStart,
+                    yearMonth
+                )
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
@@ -395,7 +390,7 @@ fun CalendarModeDialog(
         dismissButton = {},
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("カレンダー", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("カレンダー", fontSize = 20.sp)
             }
         },
         text = {
@@ -419,7 +414,6 @@ fun CalendarModeDialog(
                         Text(
                             mode.label,
                             fontSize = 17.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             color = if (selected) Color(0xFF1565C0) else Color.Unspecified
                         )
                     }
