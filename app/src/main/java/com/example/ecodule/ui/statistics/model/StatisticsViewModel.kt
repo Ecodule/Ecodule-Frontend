@@ -22,8 +22,17 @@ class StatisticsViewModel @Inject constructor(
 
     // ユーザー情報（TaskListViewModel と同じ取得スタイルに合わせる）
     private val user = userRepository.user
-    private val userId = user.value?.id
-    private val userEmail = user.value?.email
+    private val userId = MutableStateFlow<String?>(null)
+    private val userEmail = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            user.collect { userData ->
+                userId.value = userData?.id
+                userEmail.value = userData?.email
+            }
+        }
+    }
 
     // ユーザー統計の状態
     private val _isLoadingUserStats = MutableStateFlow(false)
@@ -62,8 +71,8 @@ class StatisticsViewModel @Inject constructor(
         _userStatsError.value = null
 
         viewModelScope.launch {
-            val accessToken = tokenManager.getAccessToken(userEmail = userEmail ?: "")
-            if (accessToken.isNullOrBlank() || userId.isNullOrBlank()) {
+            val accessToken = tokenManager.getAccessToken(userEmail = userEmail.value?: "")
+            if (accessToken.isNullOrBlank() || userId.value.isNullOrBlank()) {
                 _isLoadingUserStats.value = false
                 _userStatsError.value = "ユーザー情報またはトークンが取得できませんでした。"
                 return@launch
@@ -71,7 +80,7 @@ class StatisticsViewModel @Inject constructor(
 
             when (val result = StatisticsApi.getUserSimpleStatistics(
                 accessToken = accessToken,
-                userId = userId
+                userId = userId.value ?: ""
             )) {
                 is GetUserStatisticsResult.Success -> {
                     _userStats.value = UserStatsUiState(
@@ -99,7 +108,7 @@ class StatisticsViewModel @Inject constructor(
         _overallStatsError.value = null
 
         viewModelScope.launch {
-            val accessToken = tokenManager.getAccessToken(userEmail = userEmail ?: "")
+            val accessToken = tokenManager.getAccessToken(userEmail = userEmail.value ?: "")
             if (accessToken.isNullOrBlank()) {
                 _isLoadingOverallStats.value = false
                 _overallStatsError.value = "トークンが取得できませんでした。"

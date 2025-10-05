@@ -9,4 +9,6 @@
     android:previewImage="@null"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:configure="com.example.ecodule.ui.widget.AppWidgetConfigureActivity"
+    />
