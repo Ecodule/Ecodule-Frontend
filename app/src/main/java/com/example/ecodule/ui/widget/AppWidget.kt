@@ -1,6 +1,7 @@
 package com.example.ecodule.ui.widget
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -84,6 +85,8 @@ class AppWidget : GlanceAppWidget() {
             }.getOrElse { emptyMap() }
         } ?: emptyMap()
 
+        Log.d("AppWidget", "Rendering widget with event:, checkedMap: $checkedMap")
+
         val black = ColorProvider(day = Color.Black, night = Color.Black)
 
         val today = LocalDate.now()
@@ -127,7 +130,10 @@ class AppWidget : GlanceAppWidget() {
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(125.dp)
+                    .background(ColorProvider(Color.White.copy(alpha = 0.5f)))
+                    .cornerRadius(8.dp)
+                    .padding(2.dp)
             ) {
                 if (currentEvent == null) {
                     Text(

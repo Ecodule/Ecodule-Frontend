@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
@@ -55,6 +56,22 @@ class DataStoreCheckedStateRepository @Inject constructor(
                 }
             }
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
+    override suspend fun getCheckedStatesOnce(userId: String): Map<String, Boolean> {
+        return try {
+            // .first()を呼ぶことで、ディスクからの最初のデータ emission を待つ
+            val pref = context.checkedStateStore.data.first()
+            val json = pref[checkedStateKey(userId)] ?: "[]"
+            val entries = Json.decodeFromString(
+                ListSerializer(CheckedStateEntry.serializer()),
+                json
+            )
+            entries.associate { it.key to it.checked }
+        } catch (e: Exception) {
+            Log.e("CheckedStateRepo", "Failed to get checked states once: ${e.message}")
+            emptyMap()
+        }
+    }
 
     override suspend fun setChecked(userId: String, key: String, checked: Boolean) {
         context.checkedStateStore.edit { pref ->

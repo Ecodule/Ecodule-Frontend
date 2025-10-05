@@ -45,8 +45,6 @@ fun TaskSectionWithTitleAndTime(
     taskListViewModel: TaskListViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    Log.d("TaskSection", "Rendering section for event: ${event.label}, ecoActions: ${items.map { it.label }}")
-
     Card(
         modifier = modifier
             .padding(horizontal = 2.dp, vertical = 2.dp)
@@ -80,8 +78,6 @@ fun TaskSectionWithTitleAndTime(
 
                         val isLoading by taskListViewModel.isSendingAchievement.collectAsState()
                         val errorMessage by taskListViewModel.sendingAchievementError.collectAsState()
-
-                        Log.d("TaskSection", "Rendering action: ${ecoAction.label}, checked: $checked, isLoading: ${isLoading[key]}")
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // チェックボックスとローディングインジケーターの切り替え

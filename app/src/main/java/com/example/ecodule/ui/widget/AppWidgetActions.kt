@@ -7,6 +7,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.ToggleableStateKey
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.taskListContent.api.UpdateAchievement
 import com.example.ecodule.ui.taskListContent.api.UpdateAchievementResult
 import dagger.hilt.android.EntryPointAccessors
@@ -30,20 +31,21 @@ class NextEventAction : ActionCallback {
 
         Log.d("AppWidget", "NextEventAction: currentEventId=$currentEventId")
 
-        val today = LocalDate.now()
+        val todayEvents = try {
+            val today = LocalDate.now()
+            // ★★★ ここを修正 ★★★
+            // observeTasks(...).first() の代わりに getTasksOnce(...) を呼び出す
+            val allTasks = ep.taskRepository().getTasksOnce(userId)
+            Log.d("AppWidget", "Total tasks loaded with getTasksOnce: ${allTasks.size}")
 
-        var events: List<CurrentEventState> = emptyList()
+            allTasks.filter { it.startDate.toLocalDate() == today }
+                .sortedBy { it.startDate }
+        } catch (e: Exception) {
+            Log.e("AppWidget", "Failed to load tasks", e)
+            emptyList()
+        }
 
-        events = runCatching {
-            ep.taskRepository().observeTasks(userId).first()
-                .map { CurrentEventState.from(it) }
-//                .filter { it.startDate.toLocalDate() == today }
-//                .sortedBy { it.startDate }
-        }.getOrElse { emptyList() }
-
-        Log.d("AppWidget", "NextEventAction: events=${events.map{it.id}}")
-
-        if (events.isEmpty()) {
+        if (todayEvents.isEmpty()) {
             updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                 prefs.toMutablePreferences().apply {
                     removeAllForWidget()
@@ -53,30 +55,36 @@ class NextEventAction : ActionCallback {
             return
         }
 
-        val idx = events.indexOfFirst { it.id == currentEventId }
-        val next = when {
-            idx == -1 -> events.first()
-            idx + 1 < events.size -> events[idx + 1]
-            else -> events.first()
+        val idx = todayEvents.indexOfFirst { it.id == currentEventId }
+        val next: CalendarEvent? = when {
+            idx == -1 -> todayEvents.first()
+            idx + 1 < todayEvents.size -> todayEvents[idx + 1]
+            else -> null
         }
 
         updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
             prefs.toMutablePreferences().apply {
+                if (next == null) {
+                    removeAllForWidget()
+                    return@apply
+                }
                 val eventState = next
                 this[PrefKeys.currentEventJson] =
-                    Json.encodeToString(CurrentEventState.serializer(), eventState)
+                    Json.encodeToString(CurrentEventState.serializer(), CurrentEventState.from(eventState))
                 this[PrefKeys.currentEventId] = eventState.id
 
-                val ecoList = loadEcoActionsForEvent(ep, next)
+                val ecoList = loadEcoActionsForEvent(ep, CurrentEventState.from(next))
                 this[PrefKeys.ecoActionsJson] =
                     Json.encodeToString(ListSerializer(EcoActionItem.serializer()), ecoList)
 
                 val checkedMapForUser = runCatching {
-                    ep.checkedStateRepository().observeCheckedStates(userId).first()
+                    ep.checkedStateRepository().getCheckedStatesOnce(userId)
                 }.getOrElse { emptyMap() }
 
+                Log.d("AppWidget", "Checked states loaded for user $userId: ${checkedMapForUser.size} items")
+
                 val entries = ecoList.map { item ->
-                    val key = buildCheckedKey(eventState, item)
+                    val key = buildCheckedKey(CurrentEventState.from(next), item)
                     CheckedEntry(key, checked = checkedMapForUser[key] ?: false)
                 }
                 this[PrefKeys.checkedJson] =

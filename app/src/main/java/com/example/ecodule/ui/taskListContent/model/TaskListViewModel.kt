@@ -1,7 +1,12 @@
 package com.example.ecodule.ui.taskListContent.model
 
+import android.app.Application
+import android.appwidget.AppWidgetManager
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.glance.GlanceId
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +25,10 @@ import com.example.ecodule.ui.account.api.LoginApi
 import com.example.ecodule.ui.account.api.LoginResult
 import com.example.ecodule.ui.taskListContent.api.UpdateAchievement
 import com.example.ecodule.ui.taskListContent.api.UpdateAchievementResult
+import com.example.ecodule.ui.widget.AppWidget
+import com.example.ecodule.ui.widget.MyWidgetReceiver
+import com.example.ecodule.ui.widget.ensureInitialized
+import com.example.ecodule.ui.widget.reviewWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +42,7 @@ import kotlin.String
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
+    private val application: Application, // 4. Applicationを注入
     private val ecoActionRepository: EcoActionRepository,
     private val tokenManager: TokenManager,
     private val userRepository: UserRepository,
@@ -95,6 +105,9 @@ class TaskListViewModel @Inject constructor(
                     Log.d("TaskListViewModel", "UpdateAchievement successful: $result")
                     // 成功時に DataStore にも保存（状態は observeCheckedStates を通してUIに反映）
                     checkedStateRepository.setChecked(userId = userId.value ?: "", key = key, checked = checked)
+
+                    // 2. ウィジェットに更新を通知
+                    updateAppWidget()
                 }
                 is UpdateAchievementResult.Error -> {
                     Log.d("TaskListViewModel", "UpdateAchievement failed: $result")
@@ -136,5 +149,29 @@ class TaskListViewModel @Inject constructor(
         }
 
         return ecoActions
+    }
+
+    /**
+     * 6. AppWidgetを更新するための関数を追加
+     */
+    /**
+     * AppWidgetを更新するための関数
+     * Intentを直接ブロードキャストする方式に変更
+     */
+    private suspend fun updateAppWidget() {
+        Log.d("TaskListViewModel", "Directly updating AppWidget state...")
+        val manager = GlanceAppWidgetManager(application)
+        val glanceIds = manager.getGlanceIds(AppWidget::class.java)
+
+        if (glanceIds.isNotEmpty()) {
+            glanceIds.forEach { glanceId ->
+                reviewWidget(application, glanceId)
+                // ★ 3. 状態更新後に、UIの再描画を要求
+                AppWidget().update(application, glanceId)
+            }
+            Log.d("TaskListViewModel", "Direct update and recomposition triggered for IDs: $glanceIds")
+        } else {
+            Log.d("TaskListViewModel", "No AppWidgets found to update.")
+        }
     }
 }
