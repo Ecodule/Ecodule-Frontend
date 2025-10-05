@@ -45,6 +45,7 @@ class NextEventAction : ActionCallback {
             emptyList()
         }
 
+        // 今日の予定が一つもない場合、状態をクリアして終了
         if (todayEvents.isEmpty()) {
             updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                 prefs.toMutablePreferences().apply {
@@ -55,12 +56,31 @@ class NextEventAction : ActionCallback {
             return
         }
 
+        // 現在のイベントを完了にする
+        runCatching {
+            val currentEvent: CalendarEvent? = todayEvents.firstOrNull { it.id == currentEventId }
+            if (currentEvent == null) {
+                return@runCatching
+            }
+
+            currentEvent.isCompleted = true
+            ep.taskRepository().deleteTask(userId, currentEvent.id)
+            ep.taskRepository().addTask(userId, currentEvent)
+
+            Log.d("AppWidget", "Marked event as completed: ${currentEvent}")
+        }.onFailure { e -> Log.e("AppWidget", "setChecked failed: ${e.message}") }
+
+
+        // 次のイベントを決定
         val idx = todayEvents.indexOfFirst { it.id == currentEventId }
         val next: CalendarEvent? = when {
-            idx == -1 -> todayEvents.first()
-            idx + 1 < todayEvents.size -> todayEvents[idx + 1]
-            else -> null
+            (idx == -1 && !todayEvents.first().isCompleted) -> todayEvents.first()
+            (idx + 1 < todayEvents.size && !todayEvents[idx + 1].isCompleted) -> todayEvents[idx + 1]
+            todayEvents.all { it.isCompleted } -> null
+            else -> todayEvents.firstOrNull { !it.isCompleted }
         }
+
+        Log.d("AppWidget", "Next event selected: $next")
 
         updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
             prefs.toMutablePreferences().apply {
