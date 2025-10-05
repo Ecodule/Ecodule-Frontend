@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.ecodule.repository.UserRepository
 import com.example.ecodule.repository.datastore.TokenManager
 import com.example.ecodule.ui.widget.AppWidget
+import com.example.ecodule.ui.widget.reviewWidget
+import com.example.ecodule.ui.widget.reviewWidgetAndNext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -84,17 +86,28 @@ class EcoduleAuthViewModel @Inject constructor(
             tokenManager.deleteTokens()
             _isGuestMode.value = false
             _authState.value = AuthState.LOGGED_OUT
+
+            updateWidget()
         }
     }
 
     /**
      * 7. AppWidgetを更新するための関数を追加
      */
-    private suspend fun updateAppWidget() {
+    private suspend fun updateWidget() {
+        Log.d("TaskListViewModel", "Directly updating AppWidget state...")
         val manager = GlanceAppWidgetManager(application)
         val glanceIds = manager.getGlanceIds(AppWidget::class.java)
-        glanceIds.forEach { glanceId ->
-            AppWidget().update(application, glanceId)
+
+        if (glanceIds.isNotEmpty()) {
+            glanceIds.forEach { glanceId ->
+                reviewWidget(application, glanceId)
+                // ★ 3. 状態更新後に、UIの再描画を要求
+                AppWidget().update(application, glanceId)
+            }
+            Log.d("TaskListViewModel", "Direct update and recomposition triggered for IDs: $glanceIds")
+        } else {
+            Log.d("TaskListViewModel", "No AppWidgets found to update.")
         }
     }
 }
