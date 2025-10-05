@@ -52,7 +52,7 @@ fun WheelsMonthPicker(
     unselectedFontSizeSp: Int = 16,
 
     // Anchor (committed month head from left)
-    snapAlignOffsetDp: Dp = 0.dp,
+    snapAlignOffsetDp: Dp = (-2).dp,
 
     // Padding
     contentStartPaddingDp: Dp = 8.dp,
