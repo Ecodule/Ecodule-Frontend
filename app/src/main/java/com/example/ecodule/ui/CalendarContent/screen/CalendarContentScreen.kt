@@ -45,6 +45,7 @@ import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
+import com.example.ecodule.ui.CalendarContent.ui.WheelsMonthPicker
 import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.WeekdayHeader
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
@@ -171,6 +172,7 @@ fun CalendarContentScreen(
             }
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                // 上部バー
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -184,16 +186,6 @@ fun CalendarContentScreen(
                             contentDescription = "戻る",
                             modifier = Modifier
                                 .size(32.dp)
-                                .pointerInput(Unit) {}
-                                .composed { this }
-                                .padding(0.dp)
-                                .width(32.dp)
-                                .height(32.dp)
-                                .then(
-                                    Modifier
-                                        .padding(0.dp)
-                                        .width(32.dp)
-                                )
                                 .noRippleClickable {
                                     calendarMode = CalendarMode.MONTH
                                     yearMonth = YearMonth.of(baseDate.year, baseDate.month)
@@ -212,22 +204,21 @@ fun CalendarContentScreen(
                     }
 
                     Spacer(Modifier.width(10.dp))
-                    Text(
-                        monthLabel,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF444444)
+
+                    // ドラムロール（月スワイプ）
+                    WheelsMonthPicker(
+                        currentMonth = yearMonth,
+                        onMonthChanged = { newYm ->
+                            // ヘッダーのスワイプで月変更 -> 本体状態に反映
+                            yearMonth = newYm
+                            // 現在の baseDate の日を保ちながら、範囲内に補正
+                            baseDate = newYm.atDay(baseDate.dayOfMonth.coerceAtMost(newYm.lengthOfMonth()))
+                        },
+                        modifier = Modifier.weight(1f)
                     )
-                    if (calendarMode == CalendarMode.MONTH) {
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            nextMonthLabel,
-                            fontSize = 22.sp,
-                            color = Color(0xFFB0B0B0)
-                        )
-                    }
                 }
 
+                // 曜日ヘッダー（月表示のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
                     WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
