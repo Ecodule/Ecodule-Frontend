@@ -1,6 +1,11 @@
 package com.example.ecodule.ui
 
 import android.app.Activity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecodule.ui.account.AccountCreateScreen
 import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
+import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 
 @Composable
 fun EcoduleAuthNavigation(
@@ -33,26 +39,29 @@ fun EcoduleAuthNavigation(
         window?.let {
             WindowCompat.setDecorFitsSystemWindows(it, false)
             val insetsController = WindowCompat.getInsetsController(it, view)
-            insetsController?.isAppearanceLightStatusBars = true // これでステータスバーの文字色が黒
+            insetsController?.isAppearanceLightStatusBars = true
         }
     }
 
-    // ViewModelから認証状態とゲストモードの状態を監視
     val authState by authViewModel.authState.collectAsState()
     val isGuestMode by authViewModel.isGuestMode.collectAsState()
 
-    // Composable内で画面の状態を管理する変数
-    // (SIGNUPやFORGOT_PASSWORD画面への遷移のため)
+    // ログアウト状態内での画面遷移管理
     val screenState = remember { mutableStateOf(AuthScreenState.LOGIN) }
 
-    Column(
+    // 大枠 (AuthState) の切り替えはシンプルにフェード
+    AnimatedContent(
+        targetState = authState,
+        transitionSpec = {
+            fadeIn(tween(250)) togetherWith fadeOut(tween(200))
+        },
+        label = "AuthStateAnimatedContent",
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-    ) {
-        when (authState) {
+    ) { state ->
+        when (state) {
             AuthState.LOADING -> {
-                // 読み込み中はインジケータを表示
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -61,26 +70,35 @@ fun EcoduleAuthNavigation(
                 }
             }
             AuthState.LOGGED_OUT -> {
-                // ログアウト状態の場合、ログイン関連の画面を表示
-                when (screenState.value) {
-                    AuthScreenState.LOGIN -> AccountSignInScreen(
-                        onLoginSuccess = { authViewModel.onLoginSuccess() },
-                        onForgotPassword = { screenState.value = AuthScreenState.FORGOT_PASSWORD },
-                        onSignUp = { screenState.value = AuthScreenState.SIGNUP },
-                        onGuestMode = { authViewModel.onGuestMode() }
-                    )
-                    AuthScreenState.SIGNUP -> AccountCreateScreen(
-                        onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
-                        onLoginSuccess = { authViewModel.onLoginSuccess() },
-                    )
-                    AuthScreenState.FORGOT_PASSWORD -> AccountForgotPasswordScreen(
-                        onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
-                        onPasswordResetSent = { screenState.value = AuthScreenState.LOGIN }
-                    )
+                // ここで LOGIN / SIGNUP / FORGOT をアニメーション遷移
+                EcoduleAnimatedNavContainer(
+                    currentRoute = screenState.value.name
+                ) { routeKey ->
+                    val currentScreen = AuthScreenState.valueOf(routeKey)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        when (currentScreen) {
+                            AuthScreenState.LOGIN -> AccountSignInScreen(
+                                onLoginSuccess = { authViewModel.onLoginSuccess() },
+                                onForgotPassword = { screenState.value = AuthScreenState.FORGOT_PASSWORD },
+                                onSignUp = { screenState.value = AuthScreenState.SIGNUP },
+                                onGuestMode = { authViewModel.onGuestMode() }
+                            )
+                            AuthScreenState.SIGNUP -> AccountCreateScreen(
+                                onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
+                                onLoginSuccess = { authViewModel.onLoginSuccess() },
+                            )
+                            AuthScreenState.FORGOT_PASSWORD -> AccountForgotPasswordScreen(
+                                onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
+                                onPasswordResetSent = { screenState.value = AuthScreenState.LOGIN }
+                            )
+                        }
+                    }
                 }
             }
             AuthState.LOGGED_IN -> {
-                // ログイン済みの場合はメインアプリのナビゲーションを表示
                 EcoduleAppNavigation(
                     isGuestMode = isGuestMode,
                     onLogout = { authViewModel.onLogout() }
@@ -90,7 +108,7 @@ fun EcoduleAuthNavigation(
     }
 }
 
-// ログアウト時の画面状態を定義
+// ログアウト時の画面状態
 private enum class AuthScreenState {
     LOGIN,
     SIGNUP,
