@@ -9,6 +9,8 @@ interface TaskRepository {
      */
     fun observeTasks(userId: String): StateFlow<List<CalendarEvent>>
 
+    suspend fun getTasksOnce(userId: String): List<CalendarEvent>
+
     /**
      * 新しいタスクを追加します。
      */

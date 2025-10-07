@@ -626,3 +626,15 @@ private fun determineInitialDate(
         }
     }
 }
+
+//@Preview(showBackground = true)
+//@Composable
+//fun AddTaskContentPreview() {
+//    val dummySelectedDestination = remember { mutableStateOf("Tasks") }
+//    val dummyTaskViewModel = remember { TaskViewModel() }
+//    AddTaskContent(
+//        selectedDestination = dummySelectedDestination,
+//        taskViewModel = dummyTaskViewModel,
+//        defaultTaskDurationMinutes = 60
+//    )
+//}
