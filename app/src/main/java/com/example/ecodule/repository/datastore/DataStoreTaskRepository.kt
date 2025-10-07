@@ -20,11 +20,11 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color
+import com.example.ecodule.notification.NotificationScheduler
 
 val Context.taskStore: DataStore<Preferences> by preferencesDataStore("task")
 fun taskKey(userId: String) = stringPreferencesKey("tasks_${userId}")
 
-// カテゴリ名からカラーIntを返す関数
 fun getCategoryColorInt(category: String): Int {
     return when (category) {
         "ゴミ出し" -> 0xFF1E688D.toInt()
@@ -58,11 +58,9 @@ class DataStoreTaskRepository @Inject constructor(
                 val tasksJson = pref[taskKey(userId)] ?: "[]"
                 try {
                     val events = Json.decodeFromString(ListSerializer(CalendarEvent.serializer()), tasksJson)
-                    // category/colorIntからcolorプロパティを復元
                     events.map { event ->
                         val expectedColorInt = getCategoryColorInt(event.category)
                         val colorIntToUse = if (event.colorInt == 0xFFB3E6FF.toInt() && event.category.isNotBlank()) {
-                            // 初期値ならカテゴリから色を決定
                             expectedColorInt
                         } else {
                             event.colorInt
@@ -87,12 +85,14 @@ class DataStoreTaskRepository @Inject constructor(
                 Log.e("DataStoreTaskRepository", "Failed to deserialize tasks: ${e.message}")
                 emptyList()
             }
-            // categoryに応じてcolorIntとcolorを正しく設定する
             val categoryColorInt = getCategoryColorInt(newTask.category)
             val eventToSave = newTask.copy(
                 colorInt = categoryColorInt,
                 color = Color(categoryColorInt)
             )
+            Log.d("addTask", "addTask: id=${eventToSave.id}, startDate=${eventToSave.startDate}, notificationMinutes=${eventToSave.notificationMinutes}")
+            // 保存前にアラームをスケジュール（notificationMinutes を使用）
+            NotificationScheduler.scheduleNotification(context, eventToSave, userId)
             val updatedTasks = currentTasks + eventToSave
             pref[taskKey(userId)] = Json.encodeToString(ListSerializer(CalendarEvent.serializer()), updatedTasks)
         }
@@ -108,6 +108,8 @@ class DataStoreTaskRepository @Inject constructor(
                 emptyList()
             }
             val updatedTasks = currentTasks.filterNot { it.id == eventId }
+            // アラームをキャンセル
+            NotificationScheduler.cancelNotification(context, eventId)
             pref[taskKey(userId)] = Json.encodeToString(ListSerializer(CalendarEvent.serializer()), updatedTasks)
         }
     }
@@ -117,4 +119,5 @@ class DataStoreTaskRepository @Inject constructor(
             pref.remove(taskKey(userId))
         }
     }
+
 }

@@ -271,6 +271,16 @@ fun AddTaskContent(
         else null
     } catch (_: Exception) { null }
 
+    // 通知予定日時（ミリ秒）算出
+    val notificationPlannedMillis = try {
+        val taskStartMillis = if (allDay) sdfDate.parse(actualStartDate)?.time
+        else sdfDateTime.parse("$actualStartDate $actualStartTime")?.time
+        taskStartMillis?.minus(notificationMinutes * 60 * 1000)
+    } catch (_: Exception) { null }
+
+    val nowMillis = System.currentTimeMillis()
+    val notificationWillWork = notificationPlannedMillis != null && notificationPlannedMillis > nowMillis
+
     val canSave = title.isNotBlank()
             && actualStartDate.isNotBlank()
             && actualEndDate.isNotBlank()
@@ -278,6 +288,7 @@ fun AddTaskContent(
             && startDate != null
             && endDate != null
             && !endDate.before(startDate)
+            && notificationWillWork
 
     Column(
         modifier = modifier
@@ -406,6 +417,15 @@ fun AddTaskContent(
             )
         }
 
+        // 通知予定が過去の場合の警告
+        if (!notificationWillWork) {
+            Text(
+                text = "通知時刻が過去になります。開始時刻・通知分前を見直してください。",
+                color = Color.Red,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+
         var repeatMenuExpanded by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier
@@ -479,6 +499,7 @@ fun AddTaskContent(
             Button(
                 onClick = {
                     if (!canSave) return@Button
+                    Log.d("AddTaskContent", "通知予定: $notificationPlannedMillis, 現在: $nowMillis, 通知分前: $notificationMinutes")
 
                     if (isEditing && editingEventId != null) {
                         val event = taskViewModel.getEventById(editingEventId)
