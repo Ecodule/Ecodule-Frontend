@@ -19,9 +19,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
-import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
+import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
+import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
+import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.account.SettingsAccountScreen
 import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
@@ -37,7 +39,6 @@ import com.example.ecodule.ui.theme.BottomNavUnselectedIcon
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 
 @Composable
 fun EcoduleAppNavigation(
@@ -64,9 +65,9 @@ fun EcoduleAppNavigation(
     }
     val weekStart: DayOfWeek = remember(selectedWeekStartLabel) { toDayOfWeek(selectedWeekStartLabel) }
 
-    fun parseDurationMinutes(label: String): Int {
-        return label.split(" ").firstOrNull()?.toIntOrNull() ?: 60
-    }
+    fun parseDurationMinutes(label: String): Int =
+        label.split(" ").firstOrNull()?.toIntOrNull() ?: 60
+
     val defaultTaskDurationMinutes by remember(selectedTaskDuration) {
         mutableStateOf(parseDurationMinutes(selectedTaskDuration))
     }
@@ -76,10 +77,13 @@ fun EcoduleAppNavigation(
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
         EcoduleRoute.SETTINGSNOTIFICATIONS,
-        EcoduleRoute.SETTINGSGOOGLEINTEGRATION
+        EcoduleRoute.SETTINGSGOOGLEINTEGRATION,
+        EcoduleRoute.SETTINGSACCOUNT,
+        EcoduleRoute.SETTINGSUSERNAME,
+        EcoduleRoute.TASKS
     )
 
-    // カレンダー状態をタスク追加へ受け渡すための一時保持
+    // カレンダー → タスク追加へ状態受け渡し用
     var pendingCalendarMode by remember { mutableStateOf<CalendarMode?>(null) }
     var pendingBaseDate by remember { mutableStateOf<LocalDate?>(null) }
     var pendingWeekStartDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -89,135 +93,130 @@ fun EcoduleAppNavigation(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        when (selectedDestination.value) {
-            EcoduleRoute.CALENDAR -> {
-                CalendarContentScreen(
-                    modifier = Modifier.weight(1f),
-                    selectedDestination = selectedDestination,
-                    onEventClick = { eventId ->
-                        editingEventId.value = eventId
-                        selectedDestination.value = EcoduleRoute.TASKS
-                    },
-                    userViewModel = userViewModel,
-                    taskViewModel = taskViewModel,
-                    showWeekNumbers = showWeekNumbers,
-                    weekStart = weekStart,
-                    onAddTaskRequest = { mode, base, weekStartDate, threeDayStart, ym ->
-                        pendingCalendarMode = mode
-                        pendingBaseDate = base
-                        pendingWeekStartDate = weekStartDate
-                        pendingThreeDayStart = threeDayStart
-                        pendingYearMonth = ym
-                        editingEventId.value = null
-                        selectedDestination.value = EcoduleRoute.TASKS
-                    }
-                )
-            }
-            EcoduleRoute.TASKS -> {
-                AddTaskContent(
-                    modifier = Modifier.weight(1f),
-                    selectedDestination = selectedDestination,
-                    taskViewModel = taskViewModel,
-                    editingEventId = editingEventId.value,
-                    onEditComplete = { editingEventId.value = null },
-                    defaultTaskDurationMinutes = defaultTaskDurationMinutes,
-                    calendarMode = pendingCalendarMode,
-                    displayedBaseDate = pendingBaseDate,
-                    weekStartDate = pendingWeekStartDate,
-                    threeDayStartDate = pendingThreeDayStart,
-                    displayedYearMonth = pendingYearMonth
-                )
-            }
-            EcoduleRoute.TASKSLIST -> {
-                TaskListContent(
-                    modifier = Modifier.weight(1f),
-                    todayEvents = todayEvents
-                )
-            }
-            EcoduleRoute.STATISTICS -> {
-                StatisticsContent(modifier = Modifier.weight(1f))
-            }
-            EcoduleRoute.SETTINGS -> {
-                SettingsContentScreen(
-                    modifier = Modifier.weight(1f),
-                    userName = userName,
-                    selectedWeekStart = selectedWeekStartLabel,
-                    onSelectedWeekStartChange = { selectedWeekStartLabel = it },
-                    showWeekNumbers = showWeekNumbers,
-                    onShowWeekNumbersChange = { showWeekNumbers = it },
-                    selectedTaskDuration = selectedTaskDuration,
-                    onSelectedTaskDurationChange = { selectedTaskDuration = it },
-                    onNavigateUserName = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
-                    onNavigateNotifications = { selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS },
-                    onNavigateGoogleCalendar = { selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION },
-                    onNavigateDetail = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS }
-                )
-            }
-            EcoduleRoute.SETTINGSDETAILS -> {
-                SettingsDetailsScreen(
-                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
-                        Modifier.fillMaxSize()
-                    } else {
-                        Modifier.weight(1f)
-                    },
-                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
-                    onNavigateLicense = { },
-                    onNavigateTerms = { }
-                )
-            }
-            EcoduleRoute.SETTINGSNOTIFICATIONS -> {
-                SettingNotificationsScreen(
-                    modifier = if (hideBottomBarRoutes.contains(selectedDestination.value)) {
-                        Modifier.fillMaxSize()
-                    } else {
-                        Modifier.weight(1f)
-                    },
-                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
-                )
-            }
-            EcoduleRoute.SETTINGSACCOUNT -> {
-                SettingsAccountScreen(
-                    userName = userName,
-                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
-                    onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
-                    currentBirthDate = birthDate,
-                    onBirthDateChanged = { newDate ->
-                        birthDate = newDate
-                    },
-                    onLogout = {
-                        if (!isGuestMode) {
-                            authViewModel.onLogout()
+        EcoduleAnimatedNavContainer(
+            currentRoute = selectedDestination.value,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) { route ->
+            when (route) {
+                EcoduleRoute.CALENDAR -> {
+                    CalendarContentScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        selectedDestination = selectedDestination,
+                        onEventClick = { eventId ->
+                            editingEventId.value = eventId
+                            selectedDestination.value = EcoduleRoute.TASKS
+                        },
+                        userViewModel = userViewModel,
+                        taskViewModel = taskViewModel,
+                        showWeekNumbers = showWeekNumbers,
+                        weekStart = weekStart,
+                        onAddTaskRequest = { mode, base, weekStartDate, threeDayStart, ym ->
+                            pendingCalendarMode = mode
+                            pendingBaseDate = base
+                            pendingWeekStartDate = weekStartDate
+                            pendingThreeDayStart = threeDayStart
+                            pendingYearMonth = ym
+                            editingEventId.value = null
+                            selectedDestination.value = EcoduleRoute.TASKS
                         }
-                    },
-                )
-            }
-            EcoduleRoute.SETTINGSUSERNAME -> {
-                SettingsUserNameScreen(
-                    currentUserName = userName,
-                    onBackToAccount = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
-                    onUserNameChanged = { newName ->
-                        userName = newName
-                        selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
-                    },
-                )
-            }
-            EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
-                SettingsGoogleIntegrationScreen(
-                    initialGoogleLinked = false,
-                    initialGoogleUserName = "",
-                    initialGoogleEmail = "",
-                    initialCalendarLinked = false,
-                    onGoogleAccountLink = { true; "Test User" to "testuser@gmail.com" },
-                    onGoogleAccountUnlink = { },
-                    onCalendarLink = { },
-                    onCalendarUnlink = { },
-                    onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
-                )
+                    )
+                }
+                EcoduleRoute.TASKS -> {
+                    AddTaskContent(
+                        modifier = Modifier.fillMaxSize(),
+                        selectedDestination = selectedDestination,
+                        taskViewModel = taskViewModel,
+                        editingEventId = editingEventId.value,
+                        onEditComplete = { editingEventId.value = null },
+                        defaultTaskDurationMinutes = defaultTaskDurationMinutes,
+                        calendarMode = pendingCalendarMode,
+                        displayedBaseDate = pendingBaseDate,
+                        weekStartDate = pendingWeekStartDate,
+                        threeDayStartDate = pendingThreeDayStart,
+                        displayedYearMonth = pendingYearMonth
+                    )
+                }
+                EcoduleRoute.TASKSLIST -> {
+                    TaskListContent(
+                        modifier = Modifier.fillMaxSize(),
+                        todayEvents = todayEvents
+                    )
+                }
+                EcoduleRoute.STATISTICS -> {
+                    StatisticsContent(modifier = Modifier.fillMaxSize())
+                }
+                EcoduleRoute.SETTINGS -> {
+                    SettingsContentScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        userName = userName,
+                        selectedWeekStart = selectedWeekStartLabel,
+                        onSelectedWeekStartChange = { selectedWeekStartLabel = it },
+                        showWeekNumbers = showWeekNumbers,
+                        onShowWeekNumbersChange = { showWeekNumbers = it },
+                        selectedTaskDuration = selectedTaskDuration,
+                        onSelectedTaskDurationChange = { selectedTaskDuration = it },
+                        onNavigateUserName = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
+                        onNavigateNotifications = { selectedDestination.value = EcoduleRoute.SETTINGSNOTIFICATIONS },
+                        onNavigateGoogleCalendar = { selectedDestination.value = EcoduleRoute.SETTINGSGOOGLEINTEGRATION },
+                        onNavigateDetail = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS }
+                    )
+                }
+                EcoduleRoute.SETTINGSDETAILS -> {
+                    SettingsDetailsScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
+                        onNavigateLicense = { },
+                        onNavigateTerms = { }
+                    )
+                }
+                EcoduleRoute.SETTINGSNOTIFICATIONS -> {
+                    SettingNotificationsScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
+                    )
+                }
+                EcoduleRoute.SETTINGSACCOUNT -> {
+                    SettingsAccountScreen(
+                        userName = userName,
+                        onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
+                        onChangeUserName = { selectedDestination.value = EcoduleRoute.SETTINGSUSERNAME },
+                        currentBirthDate = birthDate,
+                        onBirthDateChanged = { newDate -> birthDate = newDate },
+                        onLogout = {
+                            if (!isGuestMode) authViewModel.onLogout()
+                        }
+                    )
+                }
+                EcoduleRoute.SETTINGSUSERNAME -> {
+                    SettingsUserNameScreen(
+                        currentUserName = userName,
+                        onBackToAccount = { selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT },
+                        onUserNameChanged = { newName ->
+                            userName = newName
+                            selectedDestination.value = EcoduleRoute.SETTINGSACCOUNT
+                        }
+                    )
+                }
+                EcoduleRoute.SETTINGSGOOGLEINTEGRATION -> {
+                    SettingsGoogleIntegrationScreen(
+                        initialGoogleLinked = false,
+                        initialGoogleUserName = "",
+                        initialGoogleEmail = "",
+                        initialCalendarLinked = false,
+                        onGoogleAccountLink = { true; "Test User" to "testuser@gmail.com" },
+                        onGoogleAccountUnlink = { },
+                        onCalendarLink = { },
+                        onCalendarUnlink = { },
+                        onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
+                    )
+                }
             }
         }
 
         if (!hideBottomBarRoutes.contains(selectedDestination.value)) {
-            NavigationBar(
+            androidx.compose.material3.NavigationBar(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = BottomNavBackground
             ) {
