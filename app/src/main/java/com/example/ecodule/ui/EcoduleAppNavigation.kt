@@ -32,7 +32,7 @@ import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.model.CalendarViewModel
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
-import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
+import com.example.ecodule.ui.addtaskcontent.screen.AddTaskContent
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 import com.example.ecodule.ui.settings.SettingsContentScreen
@@ -47,7 +47,6 @@ import com.example.ecodule.ui.theme.BottomNavBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedBackground
 import com.example.ecodule.ui.theme.BottomNavSelectedIcon
 import com.example.ecodule.ui.theme.BottomNavUnselectedIcon
-import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
