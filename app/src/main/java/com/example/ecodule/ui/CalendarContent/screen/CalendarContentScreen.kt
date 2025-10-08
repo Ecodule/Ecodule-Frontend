@@ -17,20 +17,22 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.ui.res.painterResource
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
+import com.example.ecodule.ui.CalendarContent.model.CalendarViewModel
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
-import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
 import com.example.ecodule.ui.CalendarContent.ui.WheelsMonthPicker
+import com.example.ecodule.ui.CalendarContent.ui.TodayReturnButton
+import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.WeekdayHeader
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
@@ -60,7 +62,7 @@ fun getCategoryColor(category: String): Color {
 @Composable
 fun CalendarContentScreen(
     modifier: Modifier = Modifier,
-    initialYearMonth: YearMonth = YearMonth.now(),
+    calendarViewModel: CalendarViewModel,
     selectedDestination: MutableState<String>,
     onEventClick: (String) -> Unit = {},
     userViewModel: UserViewModel,
@@ -75,39 +77,32 @@ fun CalendarContentScreen(
         YearMonth
     ) -> Unit = { _, _, _, _, _ -> }
 ) {
-    var yearMonth by remember { mutableStateOf(initialYearMonth) }
-    var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
+    val ui by calendarViewModel.uiState.collectAsState()
+
+    val calendarMode = ui.calendarMode
+    val yearMonth = ui.yearMonth
+    val baseDate = ui.baseDate
+    val pageDirection = ui.pageDirection
+    val cameFromMonth = ui.cameFromMonth
+
     var showModeDialog by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val swipeRefreshState = rememberSwipeRefreshState(refreshing)
 
-    var cameFromMonth by remember { mutableStateOf(false) }
-
-    var baseDate by remember {
-        mutableStateOf(
-            yearMonth.atDay(LocalDate.now().dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
-        )
+    // Derived
+    val currentWeekStart = remember(weekStart, baseDate) {
+        WeekConfig.getStartOfWeek(baseDate, weekStart)
     }
+    val currentThreeDayStart = baseDate.minusDays(1)
 
-    // スライド方向管理
-    var pageDirection by remember { mutableStateOf(CalendarSlideDirection.NONE) }
-
-    val currentDay by remember { derivedStateOf { baseDate } }
-    val currentWeekStart by remember(weekStart, baseDate) {
-        derivedStateOf { WeekConfig.getStartOfWeek(baseDate, weekStart) }
+    // baseDate が月の日数超過の場合調整
+    LaunchedEffect(yearMonth, baseDate) {
+        val maxDay = yearMonth.lengthOfMonth()
+        if (baseDate.dayOfMonth > maxDay) {
+            calendarViewModel.setBaseDate(yearMonth.atDay(maxDay))
+        }
     }
-    val currentThreeDayStart by remember { derivedStateOf { baseDate.minusDays(1) } }
-
-    LaunchedEffect(yearMonth) {
-        baseDate = yearMonth.atDay(baseDate.dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
-    }
-
-    val currentYear = LocalDate.now().year
-    val showYear = yearMonth.year != currentYear
-    val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
-    val nextMonth = yearMonth.plusMonths(1)
-    val nextMonthLabel = if (showYear || nextMonth.year != currentYear) "${nextMonth.year}年${nextMonth.month.value}月" else "${nextMonth.month.value}月"
 
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
@@ -128,9 +123,9 @@ fun CalendarContentScreen(
             }
             CalendarMode.DAY -> {
                 events.filter {
-                    it.startDate.year == currentDay.year &&
-                            it.startDate.monthValue == currentDay.monthValue &&
-                            it.startDate.dayOfMonth == currentDay.dayOfMonth
+                    it.startDate.year == baseDate.year &&
+                            it.startDate.monthValue == baseDate.monthValue &&
+                            it.startDate.dayOfMonth == baseDate.dayOfMonth
                 }
             }
             CalendarMode.WEEK -> {
@@ -148,7 +143,10 @@ fun CalendarContentScreen(
                 }
             }
             CalendarMode.SCHEDULE -> {
-                events.filter { it.startDate.monthValue == yearMonth.monthValue && it.startDate.year == yearMonth.year }
+                events.filter {
+                    it.startDate.monthValue == yearMonth.monthValue &&
+                            it.startDate.year == yearMonth.year
+                }
             }
         }
     }
@@ -173,8 +171,7 @@ fun CalendarContentScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (calendarMode == CalendarMode.DAY && cameFromMonth) {
                         Icon(
@@ -183,11 +180,8 @@ fun CalendarContentScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .noRippleClickable {
-                                    calendarMode = CalendarMode.MONTH
-                                    yearMonth = YearMonth.of(baseDate.year, baseDate.month)
-                                    cameFromMonth = false
+                                    calendarViewModel.backToMonthFromDay()
                                     showModeDialog = false
-                                    pageDirection = CalendarSlideDirection.NONE
                                 }
                         )
                     } else {
@@ -205,11 +199,18 @@ fun CalendarContentScreen(
                     WheelsMonthPicker(
                         currentMonth = yearMonth,
                         onMonthChanged = { newYm ->
-                            pageDirection = if (newYm > yearMonth) CalendarSlideDirection.LEFT else CalendarSlideDirection.RIGHT
-                            yearMonth = newYm
-                            baseDate = newYm.atDay(baseDate.dayOfMonth.coerceAtMost(newYm.lengthOfMonth()))
+                            calendarViewModel.onMonthPickerChanged(newYm)
                         },
                         modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    TodayReturnButton(
+                        size = 40.dp,
+                        frameColor = Color(0xFF8C8C8C),
+                        dayTextColor = Color(0xFF8C8C8C),
+                        onClick = { calendarViewModel.goToToday() }
                     )
                 }
 
@@ -228,65 +229,30 @@ fun CalendarContentScreen(
                             state = rememberDraggableState { delta -> dragX += delta },
                             onDragStopped = {
                                 val threshold = 40f
-                                when (calendarMode) {
-                                    CalendarMode.MONTH -> {
-                                        if (dragX > threshold) {
-                                            pageDirection = CalendarSlideDirection.RIGHT
-                                            yearMonth = yearMonth.minusMonths(1)
-                                        } else if (dragX < -threshold) {
-                                            pageDirection = CalendarSlideDirection.LEFT
-                                            yearMonth = yearMonth.plusMonths(1)
-                                        }
+                                if (dragX > threshold) {
+                                    when (calendarMode) {
+                                        CalendarMode.MONTH -> calendarViewModel.swipeMonth(previous = true)
+                                        CalendarMode.DAY -> calendarViewModel.swipeDay(previous = true)
+                                        CalendarMode.WEEK -> calendarViewModel.swipeWeek(previous = true)
+                                        CalendarMode.THREE_DAY -> calendarViewModel.swipeThreeDay(previous = true)
+                                        else -> {}
                                     }
-                                    CalendarMode.DAY -> {
-                                        if (dragX > threshold) {
-                                            pageDirection = CalendarSlideDirection.RIGHT
-                                            val newDate = baseDate.minusDays(1)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        } else if (dragX < -threshold) {
-                                            pageDirection = CalendarSlideDirection.LEFT
-                                            val newDate = baseDate.plusDays(1)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
+                                } else if (dragX < -threshold) {
+                                    when (calendarMode) {
+                                        CalendarMode.MONTH -> calendarViewModel.swipeMonth(previous = false)
+                                        CalendarMode.DAY -> calendarViewModel.swipeDay(previous = false)
+                                        CalendarMode.WEEK -> calendarViewModel.swipeWeek(previous = false)
+                                        CalendarMode.THREE_DAY -> calendarViewModel.swipeThreeDay(previous = false)
+                                        else -> {}
                                     }
-                                    CalendarMode.WEEK -> {
-                                        if (dragX > threshold) {
-                                            pageDirection = CalendarSlideDirection.RIGHT
-                                            val newDate = baseDate.minusWeeks(1)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        } else if (dragX < -threshold) {
-                                            pageDirection = CalendarSlideDirection.LEFT
-                                            val newDate = baseDate.plusWeeks(1)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
-                                    }
-                                    CalendarMode.THREE_DAY -> {
-                                        if (dragX > threshold) {
-                                            pageDirection = CalendarSlideDirection.RIGHT
-                                            val newDate = baseDate.minusDays(3)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        } else if (dragX < -threshold) {
-                                            pageDirection = CalendarSlideDirection.LEFT
-                                            val newDate = baseDate.plusDays(3)
-                                            baseDate = newDate
-                                            yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        }
-                                    }
-                                    else -> {}
                                 }
                                 dragX = 0f
                             }
                         )
                 ) {
-                    // ページキー: モード毎に異なる軸
                     val pageKey = when (calendarMode) {
                         CalendarMode.MONTH -> "M_${yearMonth.year}_${yearMonth.monthValue}"
-                        CalendarMode.DAY -> "D_${currentDay}"
+                        CalendarMode.DAY -> "D_${baseDate}"
                         CalendarMode.WEEK -> "W_${currentWeekStart}"
                         CalendarMode.THREE_DAY -> "T3_${currentThreeDayStart}"
                         CalendarMode.SCHEDULE -> "S_${yearMonth.year}_${yearMonth.monthValue}"
@@ -301,12 +267,7 @@ fun CalendarContentScreen(
                                     yearMonth = yearMonth,
                                     events = filteredEvents,
                                     onDayClick = { day ->
-                                        val newDate = yearMonth.atDay(day)
-                                        baseDate = newDate
-                                        yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                        calendarMode = CalendarMode.DAY
-                                        cameFromMonth = true
-                                        pageDirection = CalendarSlideDirection.NONE
+                                        calendarViewModel.onDayFromMonthSelected(day)
                                     },
                                     onEventClick = onEventClick,
                                     showWeekNumbers = showWeekNumbers,
@@ -325,7 +286,7 @@ fun CalendarContentScreen(
                             }
                             CalendarMode.DAY -> {
                                 ScrollableDayTimeView(
-                                    day = currentDay,
+                                    day = baseDate,
                                     events = filteredEvents,
                                     onDayClick = { },
                                     onEventClick = onEventClick,
@@ -397,10 +358,11 @@ fun CalendarContentScreen(
             CalendarModeDialog(
                 currentMode = calendarMode,
                 onModeSelected = { mode ->
-                    calendarMode = mode
+                    calendarViewModel.setCalendarMode(mode)
+                    if (mode != CalendarMode.DAY) {
+                        calendarViewModel.setCameFromMonth(false)
+                    }
                     showModeDialog = false
-                    if (mode != CalendarMode.DAY) cameFromMonth = false
-                    pageDirection = CalendarSlideDirection.NONE
                 },
                 onDismiss = { showModeDialog = false }
             )

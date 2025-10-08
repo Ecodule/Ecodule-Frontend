@@ -1,6 +1,5 @@
 package com.example.ecodule.ui
 
-import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
@@ -31,8 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
+import com.example.ecodule.ui.CalendarContent.model.CalendarViewModel
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
-import com.example.ecodule.ui.CalendarContent.screen.AddTaskContent
+import com.example.ecodule.ui.addtaskcontent.screen.AddTaskContent
 import com.example.ecodule.ui.CalendarContentui.CalendarContent.screen.CalendarContentScreen
 import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 import com.example.ecodule.ui.settings.SettingsContentScreen
@@ -59,6 +59,7 @@ fun EcoduleAppNavigation(
 ) {
     val selectedDestination = remember { mutableStateOf(EcoduleRoute.CALENDAR) }
     val taskViewModel: TaskViewModel = hiltViewModel()
+    val calendarViewModel: CalendarViewModel = hiltViewModel()
     val userViewModel: UserViewModel = hiltViewModel()
     val authViewModel: EcoduleAuthViewModel = hiltViewModel()
     val editingEventId = remember { mutableStateOf<String?>(null) }
@@ -102,10 +103,9 @@ fun EcoduleAppNavigation(
     var pendingThreeDayStart by remember { mutableStateOf<LocalDate?>(null) }
     var pendingYearMonth by remember { mutableStateOf<YearMonth?>(null) }
 
-    // Bottom bar height (measured)
+    // Bottom bar animation
     val density = LocalDensity.current
-    var measuredBarHeight by remember { mutableStateOf(56.dp) } // fallback 初期値
-    // Transition for visibility + padding
+    var measuredBarHeight by remember { mutableStateOf(56.dp) }
     val animationDuration = 300
     val transition = updateTransition(targetState = showBottomBarTarget, label = "bottomBarVisibility")
 
@@ -134,6 +134,8 @@ fun EcoduleAppNavigation(
         }
     }
 
+    val calendarUiState by calendarViewModel.uiState.collectAsState()
+
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -148,6 +150,7 @@ fun EcoduleAppNavigation(
                 EcoduleRoute.CALENDAR -> {
                     CalendarContentScreen(
                         modifier = Modifier.fillMaxSize(),
+                        calendarViewModel = calendarViewModel,
                         selectedDestination = selectedDestination,
                         onEventClick = { eventId ->
                             editingEventId.value = eventId
@@ -302,7 +305,6 @@ fun EcoduleAppNavigation(
     }
 }
 
-// ルート・デスティネーション定義（変更なし）
 object EcoduleRoute {
     const val CALENDAR = "Calendar"
     const val TASKS = "Tasks"

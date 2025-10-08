@@ -27,11 +27,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import java.time.YearMonth
-import java.time.temporal.ChronoUnit
 import kotlin.math.abs
-import kotlin.math.min
 
 /* ---------------- Internal model ---------------- */
 private sealed class WheelItem {
@@ -100,6 +97,8 @@ fun WheelsMonthPicker(
     // Preview & commit
     var previewMonth by remember { mutableStateOf<YearMonth?>(currentMonth) }
     var lastCommittedMonth by rememberSaveable { mutableStateOf(currentMonth) }
+    // 新規追加: 親に通知済みの月
+    var lastNotifiedMonth by rememberSaveable { mutableStateOf(currentMonth) }
 
     val density = LocalDensity.current
     val snapAlignOffsetPx = with(density) { snapAlignOffsetDp.toPx() }
@@ -116,24 +115,22 @@ fun WheelsMonthPicker(
         val anchorX = layout.viewportStartOffset + startPaddingPx + snapAlignOffsetPx
         var bestIdx: Int? = null
         var bestDist = Float.MAX_VALUE
-
-        fun consider(idx: Int, refOffset: Int) {
-            val d = abs(refOffset - anchorX)
-            if (d < bestDist) {
-                bestDist = d
-                bestIdx = idx
-            }
-        }
         for (info in layout.visibleItemsInfo) {
-            when (val it = items.getOrNull(info.index)) {
-                is WheelItem.Month -> consider(info.index, info.offset)
+            val item = items.getOrNull(info.index)
+            val offsetCandidateIndex = when (item) {
+                is WheelItem.Month -> info.index
                 is WheelItem.YearHeader -> {
                     val nxt = info.index + 1
-                    if (items.getOrNull(nxt) is WheelItem.Month) {
-                        consider(nxt, info.offset)
-                    }
+                    if (items.getOrNull(nxt) is WheelItem.Month) nxt else null
                 }
-                else -> {}
+                else -> null
+            }
+            if (offsetCandidateIndex != null) {
+                val d = abs(info.offset - anchorX)
+                if (d < bestDist) {
+                    bestDist = d
+                    bestIdx = offsetCandidateIndex
+                }
             }
         }
         return bestIdx
@@ -165,10 +162,17 @@ fun WheelsMonthPicker(
             val idx = closestMonthIndex() ?: return
             val ym = monthAt(idx) ?: return
             snapTo(idx)
+            // コミット判定
             if (ym != lastCommittedMonth) {
                 lastCommittedMonth = ym
-                if (ym != currentMonth) onMonthChanged(ym)
-                if (debugLog) println("Commit [$reason] -> $ym")
+            }
+            // 親通知（currentMonth とは独立して「未通知なら必ず通知」）
+            if (ym != lastNotifiedMonth) {
+                if (debugLog) println("Notify [$reason] -> $ym (prevNotified=$lastNotifiedMonth)")
+                onMonthChanged(ym)
+                lastNotifiedMonth = ym
+            } else {
+                if (debugLog) println("Skip notify [$reason] ym=$ym alreadyNotified")
             }
             previewMonth = ym
         } catch (ce: CancellationException) {
@@ -178,22 +182,10 @@ fun WheelsMonthPicker(
         }
     }
 
-    fun forcePreviewUpdate(reason: String) {
-        try {
-            val idx = closestMonthIndex()
-            val ym = idx?.let { monthAt(it) }
-            if (ym != null && ym != lastCommittedMonth) {
-                previewMonth = ym
-            } else if (ym != null && previewMonth != ym) {
-                // commit済みと同じ → プレビューも揃えておく
-                previewMonth = ym
-            }
-            if (debugLog && ym != null) {
-                // println("Preview [$reason] -> $ym")
-            }
-        } catch (e: Throwable) {
-            if (debugLog) println("forcePreviewUpdate exception: $e")
-        }
+    fun forcePreviewUpdate() {
+        val idx = closestMonthIndex()
+        val ym = idx?.let { monthAt(it) } ?: return
+        if (ym != previewMonth) previewMonth = ym
     }
 
     /* ---------- Parent month change ---------- */
@@ -202,50 +194,38 @@ fun WheelsMonthPicker(
         snapTo(target)
         lastCommittedMonth = currentMonth
         previewMonth = currentMonth
+        // 親から直接月が変わった場合は通知済み状態を同期
+        lastNotifiedMonth = currentMonth
     }
 
-    /* ---------- Scroll-stop commit loop (await idle) ---------- */
+    /* ---------- Scroll-stop commit loop ---------- */
     LaunchedEffect(Unit) {
-        while (isActive) {
-            // 待機: スクロールが完全停止するまで
-            snapshotFlow { listState.isScrollInProgress }
-                .collect { scrolling ->
-                    if (!scrolling) {
-                        // 一度停止検知したら commit
-                        commitNearest("idle-detect")
-                        // break out to outer loop restart (再度監視)
-                        return@collect
-                    }
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { scrolling ->
+                if (!scrolling) {
+                    commitNearest("idle-detect")
                 }
-        }
+            }
     }
 
-    /* ---------- Continuous preview while scrolling (frame loop) ---------- */
+    /* ---------- Continuous preview while scrolling ---------- */
     LaunchedEffect(Unit) {
-        // フレーム駆動プレビュー
         while (isActive) {
             if (listState.isScrollInProgress) {
-                forcePreviewUpdate("frame")
+                forcePreviewUpdate()
                 // 間引き
-                var frames = 0
-                while (frames < previewFrameInterval && listState.isScrollInProgress) {
-                    withFrameNanos { }
-                    frames++
-                }
+                repeat(previewFrameInterval) { if (listState.isScrollInProgress) withFrameNanos { } }
             } else {
-                // 静止時は少し待ってループ継続
                 withFrameNanos { }
             }
         }
     }
 
-    /* ---------- InteractionSource：指離し（ドラッグ終端）で早期コミット予約 ---------- */
+    /* ---------- Interaction drag end early commit attempt ---------- */
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { inter ->
             if (inter is DragInteraction.Stop || inter is DragInteraction.Cancel) {
-                // 指を離した時点でまだ慣性中でもプレビューを確定方向へ近づける
-                forcePreviewUpdate("drag-stop")
-                // 一拍後に（慣性がすぐ終わったケース用）commit 試行
+                forcePreviewUpdate()
                 scope.launch {
                     delay(40)
                     if (!listState.isScrollInProgress) {
@@ -256,14 +236,17 @@ fun WheelsMonthPicker(
         }
     }
 
-    /* ---------- Click selection (immediate) ---------- */
+    /* ---------- Click selection ---------- */
     fun clickSelect(ym: YearMonth) {
         val idx = monthIndexMap[ym] ?: return
         scope.launch {
             snapTo(idx)
             if (ym != lastCommittedMonth) {
                 lastCommittedMonth = ym
-                if (ym != currentMonth) onMonthChanged(ym)
+            }
+            if (ym != lastNotifiedMonth) {
+                onMonthChanged(ym)
+                lastNotifiedMonth = ym
             }
             previewMonth = ym
         }
@@ -273,12 +256,11 @@ fun WheelsMonthPicker(
     LazyRow(
         modifier = modifier
             .height(barHeight)
-            // InteractionSource を設定してドラッグ終端検知
             .scrollable(
                 orientation = Orientation.Horizontal,
-                state = rememberScrollableState { delta -> -delta /* consume 0 (delegated) */ },
+                state = rememberScrollableState { delta -> -delta },
                 interactionSource = interactionSource,
-                enabled = false // 実際のスクロール処理は LazyRow 自身に任せる (interaction だけ得る)
+                enabled = false
             ),
         state = listState,
         flingBehavior = flingBehavior,
