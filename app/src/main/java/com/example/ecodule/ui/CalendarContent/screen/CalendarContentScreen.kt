@@ -31,6 +31,7 @@ import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
 import com.example.ecodule.ui.CalendarContent.ui.WheelsMonthPicker
+import com.example.ecodule.ui.CalendarContent.ui.TodayReturnButton
 import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.WeekdayHeader
@@ -170,8 +171,7 @@ fun CalendarContentScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (calendarMode == CalendarMode.DAY && cameFromMonth) {
                         Icon(
@@ -202,6 +202,15 @@ fun CalendarContentScreen(
                             calendarViewModel.onMonthPickerChanged(newYm)
                         },
                         modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    TodayReturnButton(
+                        size = 40.dp,
+                        frameColor = Color(0xFF8C8C8C),
+                        dayTextColor = Color(0xFF8C8C8C),
+                        onClick = { calendarViewModel.goToToday() }
                     )
                 }
 

@@ -20,8 +20,8 @@ data class CalendarUiState(
 )
 
 private const val KEY_MODE = "calendar_mode"
-private const val KEY_YEARMONTH = "calendar_yearmonth"      // ISO (e.g. 2025-10)
-private const val KEY_BASEDATE = "calendar_basedate"  // ISO (e.g. 2025-10-07)
+private const val KEY_YEARMONTH = "calendar_yearmonth"
+private const val KEY_BASEDATE = "calendar_basedate"
 private const val KEY_CAMEFROMMONTH = "calendar_camefrommonth"
 private const val KEY_PAGEDIR = "calendar_pagedir"
 
@@ -161,6 +161,20 @@ class CalendarViewModel @Inject constructor(
                 baseDate = newDate,
                 yearMonth = YearMonth.of(newDate.year, newDate.month),
                 pageDirection = if (previous) CalendarSlideDirection.RIGHT else CalendarSlideDirection.LEFT
+            )
+        }
+    }
+
+    /**
+     * 今日に戻る
+     */
+    fun goToToday() {
+        val today = LocalDate.now()
+        update { st ->
+            st.copy(
+                baseDate = today,
+                yearMonth = YearMonth.of(today.year, today.month),
+                pageDirection = CalendarSlideDirection.NONE
             )
         }
     }
