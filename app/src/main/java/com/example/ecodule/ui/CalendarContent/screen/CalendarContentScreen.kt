@@ -7,51 +7,37 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.painterResource
+import com.example.ecodule.R
 import com.example.ecodule.ui.CalendarContent.model.CalendarMode
 import com.example.ecodule.ui.CalendarContent.model.TaskViewModel
 import com.example.ecodule.ui.CalendarContent.ui.DrawCalendarGridLines
 import com.example.ecodule.ui.CalendarContent.ui.datedisplay.*
 import com.example.ecodule.ui.CalendarContent.ui.WeekNumberColumnWidthMonth
+import com.example.ecodule.ui.CalendarContent.ui.WheelsMonthPicker
 import com.example.ecodule.ui.CalendarContent.util.WeekConfig
 import com.example.ecodule.ui.CalendarContent.util.WeekdayHeader
 import com.example.ecodule.ui.CalendarContent.util.noRippleClickable
-import com.example.ecodule.ui.EcoduleRoute
 import com.example.ecodule.ui.UserViewModel
+import com.example.ecodule.ui.animation.CalendarPagedAnimatedContent
+import com.example.ecodule.ui.animation.CalendarPageState
+import com.example.ecodule.ui.animation.CalendarSlideDirection
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
@@ -78,9 +64,16 @@ fun CalendarContentScreen(
     selectedDestination: MutableState<String>,
     onEventClick: (String) -> Unit = {},
     userViewModel: UserViewModel,
-    taskViewModel: TaskViewModel, // ← TaskViewModelを追加
+    taskViewModel: TaskViewModel,
     showWeekNumbers: Boolean = false,
-    weekStart: DayOfWeek = DayOfWeek.SUNDAY // 追加: 設定から受け取る週設定
+    weekStart: DayOfWeek = DayOfWeek.SUNDAY,
+    onAddTaskRequest: (
+        CalendarMode,
+        LocalDate,
+        LocalDate,
+        LocalDate,
+        YearMonth
+    ) -> Unit = { _, _, _, _, _ -> }
 ) {
     var yearMonth by remember { mutableStateOf(initialYearMonth) }
     var calendarMode by remember { mutableStateOf(CalendarMode.MONTH) }
@@ -91,26 +84,25 @@ fun CalendarContentScreen(
 
     var cameFromMonth by remember { mutableStateOf(false) }
 
-    // 表示基準日（yearMonth と連動）
     var baseDate by remember {
         mutableStateOf(
             yearMonth.atDay(LocalDate.now().dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
         )
     }
 
-    // 週開始日に合わせた週頭日・3日開始日
+    // スライド方向管理
+    var pageDirection by remember { mutableStateOf(CalendarSlideDirection.NONE) }
+
     val currentDay by remember { derivedStateOf { baseDate } }
     val currentWeekStart by remember(weekStart, baseDate) {
         derivedStateOf { WeekConfig.getStartOfWeek(baseDate, weekStart) }
     }
     val currentThreeDayStart by remember { derivedStateOf { baseDate.minusDays(1) } }
 
-    // yearMonthが変更された時にbaseDateを更新
     LaunchedEffect(yearMonth) {
         baseDate = yearMonth.atDay(baseDate.dayOfMonth.coerceAtMost(yearMonth.lengthOfMonth()))
     }
 
-    // 年号付き月表示
     val currentYear = LocalDate.now().year
     val showYear = yearMonth.year != currentYear
     val monthLabel = if (showYear) "${yearMonth.year}年${yearMonth.month.value}月" else "${yearMonth.month.value}月"
@@ -120,7 +112,6 @@ fun CalendarContentScreen(
     val user by userViewModel.user.collectAsState()
     Log.d("CalendarContentScreen", "Current user: $user")
 
-    // 追加: ユーザーIDが変わったらTaskViewModelにセット
     DisposableEffect(user?.id) {
         user?.id?.let { uid ->
             taskViewModel.setUserId(uid)
@@ -128,14 +119,11 @@ fun CalendarContentScreen(
         onDispose { }
     }
 
-    // 追加: TaskViewModelの予定情報を購読
     val events by taskViewModel.events.collectAsState()
 
-    // 表示範囲の予定をフィルタリング
     val filteredEvents = remember(events, yearMonth, calendarMode, baseDate, weekStart) {
         when (calendarMode) {
             CalendarMode.MONTH -> {
-                // 月全体（繰り返し含める場合は既存ヘルパーを利用）
                 com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth(events, yearMonth)
             }
             CalendarMode.DAY -> {
@@ -181,7 +169,6 @@ fun CalendarContentScreen(
             }
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // 上部バー
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -195,22 +182,12 @@ fun CalendarContentScreen(
                             contentDescription = "戻る",
                             modifier = Modifier
                                 .size(32.dp)
-                                .pointerInput(Unit) {}
-                                .composed { this }
-                                .let { it }
-                                .padding(0.dp)
-                                .width(32.dp)
-                                .height(32.dp)
-                                .then(
-                                    Modifier
-                                        .padding(0.dp)
-                                        .width(32.dp)
-                                )
                                 .noRippleClickable {
                                     calendarMode = CalendarMode.MONTH
                                     yearMonth = YearMonth.of(baseDate.year, baseDate.month)
                                     cameFromMonth = false
                                     showModeDialog = false
+                                    pageDirection = CalendarSlideDirection.NONE
                                 }
                         )
                     } else {
@@ -224,29 +201,23 @@ fun CalendarContentScreen(
                     }
 
                     Spacer(Modifier.width(10.dp))
-                    Text(
-                        monthLabel,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF444444)
+
+                    WheelsMonthPicker(
+                        currentMonth = yearMonth,
+                        onMonthChanged = { newYm ->
+                            pageDirection = if (newYm > yearMonth) CalendarSlideDirection.LEFT else CalendarSlideDirection.RIGHT
+                            yearMonth = newYm
+                            baseDate = newYm.atDay(baseDate.dayOfMonth.coerceAtMost(newYm.lengthOfMonth()))
+                        },
+                        modifier = Modifier.weight(1f)
                     )
-                    if (calendarMode == CalendarMode.MONTH) {
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            nextMonthLabel,
-                            fontSize = 22.sp,
-                            color = Color(0xFFB0B0B0)
-                        )
-                    }
                 }
 
-                // 曜日ヘッダー（月表示のみ）
                 if (calendarMode == CalendarMode.MONTH) {
                     val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
                     WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
                 }
 
-                // 本体
                 var dragX by remember { mutableStateOf(0f) }
                 Box(
                     modifier = Modifier
@@ -259,15 +230,22 @@ fun CalendarContentScreen(
                                 val threshold = 40f
                                 when (calendarMode) {
                                     CalendarMode.MONTH -> {
-                                        if (dragX > threshold) yearMonth = yearMonth.minusMonths(1)
-                                        else if (dragX < -threshold) yearMonth = yearMonth.plusMonths(1)
+                                        if (dragX > threshold) {
+                                            pageDirection = CalendarSlideDirection.RIGHT
+                                            yearMonth = yearMonth.minusMonths(1)
+                                        } else if (dragX < -threshold) {
+                                            pageDirection = CalendarSlideDirection.LEFT
+                                            yearMonth = yearMonth.plusMonths(1)
+                                        }
                                     }
                                     CalendarMode.DAY -> {
                                         if (dragX > threshold) {
+                                            pageDirection = CalendarSlideDirection.RIGHT
                                             val newDate = baseDate.minusDays(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
                                         } else if (dragX < -threshold) {
+                                            pageDirection = CalendarSlideDirection.LEFT
                                             val newDate = baseDate.plusDays(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
@@ -275,10 +253,12 @@ fun CalendarContentScreen(
                                     }
                                     CalendarMode.WEEK -> {
                                         if (dragX > threshold) {
+                                            pageDirection = CalendarSlideDirection.RIGHT
                                             val newDate = baseDate.minusWeeks(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
                                         } else if (dragX < -threshold) {
+                                            pageDirection = CalendarSlideDirection.LEFT
                                             val newDate = baseDate.plusWeeks(1)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
@@ -286,10 +266,12 @@ fun CalendarContentScreen(
                                     }
                                     CalendarMode.THREE_DAY -> {
                                         if (dragX > threshold) {
+                                            pageDirection = CalendarSlideDirection.RIGHT
                                             val newDate = baseDate.minusDays(3)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
                                         } else if (dragX < -threshold) {
+                                            pageDirection = CalendarSlideDirection.LEFT
                                             val newDate = baseDate.plusDays(3)
                                             baseDate = newDate
                                             yearMonth = YearMonth.of(newDate.year, newDate.month)
@@ -301,99 +283,124 @@ fun CalendarContentScreen(
                             }
                         )
                 ) {
-                    when (calendarMode) {
-                        CalendarMode.MONTH -> {
-                            CalendarMonthView(
-                                yearMonth = yearMonth,
-                                events = filteredEvents,
-                                onDayClick = { day ->
-                                    val newDate = yearMonth.atDay(day)
-                                    baseDate = newDate
-                                    yearMonth = YearMonth.of(newDate.year, newDate.month)
-                                    calendarMode = CalendarMode.DAY
-                                    cameFromMonth = true
-                                },
-                                onEventClick = onEventClick,
-                                showWeekNumbers = showWeekNumbers,
-                                weekStart = weekStart
-                            )
-                        }
-                        CalendarMode.WEEK -> {
-                            ScrollableWeekDayTimeView(
-                                weekStart = currentWeekStart,
-                                events = filteredEvents,
-                                onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick,
-                                showWeekNumbers = showWeekNumbers,
-                                weekStartDay = weekStart
-                            )
-                        }
-                        CalendarMode.DAY -> {
-                            ScrollableDayTimeView(
-                                day = currentDay,
-                                events = filteredEvents,
-                                onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick,
-                                showWeekNumbers = showWeekNumbers,
-                                weekStartDay = weekStart
-                            )
-                        }
-                        CalendarMode.THREE_DAY -> {
-                            ScrollableThreeDayTimeView(
-                                startDay = currentThreeDayStart,
-                                events = filteredEvents,
-                                onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick,
-                                showWeekNumbers = showWeekNumbers,
-                                weekStartDay = weekStart
-                            )
-                        }
-                        CalendarMode.SCHEDULE -> {
-                            CalendarScheduleView(
-                                yearMonth = yearMonth,
-                                events = filteredEvents.sortedBy { it.startDate },
-                                onDayClick = { /* no-op */ },
-                                onEventClick = onEventClick
-                            )
-                        }
+                    // ページキー: モード毎に異なる軸
+                    val pageKey = when (calendarMode) {
+                        CalendarMode.MONTH -> "M_${yearMonth.year}_${yearMonth.monthValue}"
+                        CalendarMode.DAY -> "D_${currentDay}"
+                        CalendarMode.WEEK -> "W_${currentWeekStart}"
+                        CalendarMode.THREE_DAY -> "T3_${currentThreeDayStart}"
+                        CalendarMode.SCHEDULE -> "S_${yearMonth.year}_${yearMonth.monthValue}"
                     }
 
-                    if (calendarMode == CalendarMode.MONTH && !showWeekNumbers) {
-                        DrawCalendarGridLines(
-                            rowCount = ((WeekConfig.firstDayCellIndex(yearMonth, weekStart) + yearMonth.lengthOfMonth() + 6) / 7),
-                            colCount = 7
-                        )
+                    CalendarPagedAnimatedContent(
+                        pageState = CalendarPageState(pageKey, pageDirection)
+                    ) {
+                        when (calendarMode) {
+                            CalendarMode.MONTH -> {
+                                CalendarMonthView(
+                                    yearMonth = yearMonth,
+                                    events = filteredEvents,
+                                    onDayClick = { day ->
+                                        val newDate = yearMonth.atDay(day)
+                                        baseDate = newDate
+                                        yearMonth = YearMonth.of(newDate.year, newDate.month)
+                                        calendarMode = CalendarMode.DAY
+                                        cameFromMonth = true
+                                        pageDirection = CalendarSlideDirection.NONE
+                                    },
+                                    onEventClick = onEventClick,
+                                    showWeekNumbers = showWeekNumbers,
+                                    weekStart = weekStart
+                                )
+                            }
+                            CalendarMode.WEEK -> {
+                                ScrollableWeekDayTimeView(
+                                    weekStart = currentWeekStart,
+                                    events = filteredEvents,
+                                    onDayClick = { },
+                                    onEventClick = onEventClick,
+                                    showWeekNumbers = showWeekNumbers,
+                                    weekStartDay = weekStart
+                                )
+                            }
+                            CalendarMode.DAY -> {
+                                ScrollableDayTimeView(
+                                    day = currentDay,
+                                    events = filteredEvents,
+                                    onDayClick = { },
+                                    onEventClick = onEventClick,
+                                    showWeekNumbers = showWeekNumbers,
+                                    weekStartDay = weekStart
+                                )
+                            }
+                            CalendarMode.THREE_DAY -> {
+                                ScrollableThreeDayTimeView(
+                                    startDay = currentThreeDayStart,
+                                    events = filteredEvents,
+                                    onDayClick = { },
+                                    onEventClick = onEventClick,
+                                    showWeekNumbers = showWeekNumbers,
+                                    weekStartDay = weekStart
+                                )
+                            }
+                            CalendarMode.SCHEDULE -> {
+                                CalendarScheduleView(
+                                    yearMonth = yearMonth,
+                                    events = filteredEvents.sortedBy { it.startDate },
+                                    onDayClick = { },
+                                    onEventClick = onEventClick
+                                )
+                            }
+                        }
+
+                        if (calendarMode == CalendarMode.MONTH && !showWeekNumbers) {
+                            DrawCalendarGridLines(
+                                rowCount = ((WeekConfig.firstDayCellIndex(yearMonth, weekStart) + yearMonth.lengthOfMonth() + 6) / 7),
+                                colCount = 7
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // 予定追加ボタン等（既存）
         FloatingActionButton(
-            onClick = { selectedDestination.value = EcoduleRoute.TASKS },
+            onClick = {
+                onAddTaskRequest(
+                    calendarMode,
+                    baseDate,
+                    currentWeekStart,
+                    currentThreeDayStart,
+                    yearMonth
+                )
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
-            containerColor = Color(0xFF88C057)
+            containerColor = Color.Transparent,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp
+            )
         ) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                painter = painterResource(id = R.drawable.ecodule_icon_addtask),
                 contentDescription = "予定追加",
-                modifier = Modifier.size(36.dp),
-                tint = Color.White
+                modifier = Modifier.size(64.dp),
+                tint = Color.Unspecified
             )
         }
 
-        // 表示切替ダイアログ（既存）
         AnimatedVisibility(visible = showModeDialog) {
             CalendarModeDialog(
                 currentMode = calendarMode,
                 onModeSelected = { mode ->
                     calendarMode = mode
                     showModeDialog = false
-                    if (mode != CalendarMode.DAY) {
-                        cameFromMonth = false
-                    }
+                    if (mode != CalendarMode.DAY) cameFromMonth = false
+                    pageDirection = CalendarSlideDirection.NONE
                 },
                 onDismiss = { showModeDialog = false }
             )
@@ -413,7 +420,7 @@ fun CalendarModeDialog(
         dismissButton = {},
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("カレンダー", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("カレンダー", fontSize = 20.sp)
             }
         },
         text = {
@@ -437,7 +444,6 @@ fun CalendarModeDialog(
                         Text(
                             mode.label,
                             fontSize = 17.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             color = if (selected) Color(0xFF1565C0) else Color.Unspecified
                         )
                     }
@@ -446,21 +452,3 @@ fun CalendarModeDialog(
         }
     )
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun CalendarContentPreview() {
-    val context = LocalContext.current
-    val dummySelectedDestination = remember { mutableStateOf("Calendar") }
-    val dummyUserViewModel: UserViewModel = hiltViewModel()
-    val dummyTaskViewModel: TaskViewModel = hiltViewModel() // ← 追加
-    CalendarContentScreen(
-        selectedDestination = dummySelectedDestination,
-        userViewModel = dummyUserViewModel,
-        taskViewModel = dummyTaskViewModel // ← 追加
-    )
-}
-    CalendarContentScreen(selectedDestination = dummySelectedDestination, userViewModel = dummyUserViewModel)
-}
- */

@@ -24,7 +24,8 @@ data class CalendarEvent(
     val colorInt: Int = 0xFFB3E6FF.toInt(), // Intで保存
     val repeatGroupId: String? = null,
     @Transient
-    var color: Color = Color(0xFFFFEB3B) // ← 直列化しない（@Transientで外す）
+    var color: Color = Color(0xFFFFEB3B), // ← 直列化しない（@Transientで外す）
+    var isCompleted: Boolean = false
 ) {
     val timeRangeText: String get() = when {
         allDay -> "終日"

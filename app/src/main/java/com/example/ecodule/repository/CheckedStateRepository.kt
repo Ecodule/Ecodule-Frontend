@@ -13,6 +13,8 @@ interface CheckedStateRepository {
      */
     fun observeCheckedStates(userId: String): StateFlow<Map<String, Boolean>>
 
+    suspend fun getCheckedStatesOnce(userId: String): Map<String, Boolean>
+
     /**
      * 1件のチェック状態を更新します。
      */

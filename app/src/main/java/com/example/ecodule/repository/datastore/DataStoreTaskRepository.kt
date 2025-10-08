@@ -20,9 +20,15 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color
+
 import com.example.ecodule.notification.NotificationScheduler
 
-val Context.taskStore: DataStore<Preferences> by preferencesDataStore("task")
+import com.example.ecodule.di.TaskDataStore
+import com.example.ecodule.repository.UserData
+import kotlinx.coroutines.flow.first
+import javax.inject.Singleton
+
+
 fun taskKey(userId: String) = stringPreferencesKey("tasks_${userId}")
 
 fun getCategoryColorInt(category: String): Int {
@@ -44,20 +50,19 @@ fun getCategoryColor(category: String): Color {
     }
 }
 
+@Singleton
 class DataStoreTaskRepository @Inject constructor(
-    @ApplicationContext
-    private val context: Context
-
+    @TaskDataStore private val taskStore: DataStore<Preferences> // Hiltから直接DataStoreを注入
 ): TaskRepository {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun observeTasks(userId: String): StateFlow<List<CalendarEvent>> =
-        context.taskStore.data
+        taskStore.data
             .map { pref ->
-                Log.d("fromDataStore", "$pref")
                 val tasksJson = pref[taskKey(userId)] ?: "[]"
                 try {
                     val events = Json.decodeFromString(ListSerializer(CalendarEvent.serializer()), tasksJson)
+
                     events.map { event ->
                         val expectedColorInt = getCategoryColorInt(event.category)
                         val colorIntToUse = if (event.colorInt == 0xFFB3E6FF.toInt() && event.category.isNotBlank()) {
@@ -65,6 +70,8 @@ class DataStoreTaskRepository @Inject constructor(
                         } else {
                             event.colorInt
                         }
+
+                        Log.d("DataStoreTaskRepository", "Loaded ${event.label} tasks for userId=$userId")
                         event.copy(
                             color = Color(colorIntToUse)
                         )
@@ -76,8 +83,31 @@ class DataStoreTaskRepository @Inject constructor(
             }
             .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    // ウィジェットが同期的にタスクを取得できるようにするためのメソッド
+    override suspend fun getTasksOnce(userId: String): List<CalendarEvent> {
+        return try {
+            // .first()を呼ぶことで、ディスクからの最初のデータ emission を待つ
+            val pref = taskStore.data.first()
+            val tasksJson = pref[taskKey(userId)] ?: "[]"
+            val events = Json.decodeFromString(ListSerializer(CalendarEvent.serializer()), tasksJson)
+            // observeTasks と同じ色復元ロジック
+            events.map { event ->
+                val expectedColorInt = getCategoryColorInt(event.category)
+                val colorIntToUse = if (event.colorInt == 0xFFB3E6FF.toInt() && event.category.isNotBlank()) {
+                    expectedColorInt
+                } else {
+                    event.colorInt
+                }
+                event.copy(color = Color(colorIntToUse))
+            }
+        } catch (e: Exception) {
+            Log.e("DataStoreTaskRepository", "Failed to get tasks once: ${e.message}")
+            emptyList()
+        }
+    }
+
     override suspend fun addTask(userId: String, newTask: CalendarEvent) {
-        context.taskStore.edit { pref ->
+        taskStore.edit { pref ->
             val tasksJson = pref[taskKey(userId)] ?: "[]"
             val currentTasks = try {
                 Json.decodeFromString(ListSerializer(CalendarEvent.serializer()), tasksJson)
@@ -99,7 +129,7 @@ class DataStoreTaskRepository @Inject constructor(
     }
 
     override suspend fun deleteTask(userId: String, eventId: String) {
-        context.taskStore.edit { pref ->
+        taskStore.edit { pref ->
             val tasksJson = pref[taskKey(userId)] ?: "[]"
             val currentTasks = try {
                 Json.decodeFromString(ListSerializer(CalendarEvent.serializer()), tasksJson)
@@ -115,7 +145,7 @@ class DataStoreTaskRepository @Inject constructor(
     }
 
     override suspend fun clearTasks(userId: String) {
-        context.taskStore.edit { pref ->
+        taskStore.edit { pref ->
             pref.remove(taskKey(userId))
         }
     }
