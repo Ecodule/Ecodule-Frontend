@@ -84,13 +84,13 @@ fun SettingsAccountScreen(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "戻る",
-                    tint = Color(0xFF007AFF),
+                    tint = Color(0xFF95cf4d),
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "設定",
-                    color = Color(0xFF007AFF),
+                    color = Color(0xFF95cf4d),
                     fontSize = 14.sp
                 )
             }
