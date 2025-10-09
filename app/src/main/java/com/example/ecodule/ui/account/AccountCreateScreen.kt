@@ -6,17 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -36,12 +33,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecodule.R
 import com.example.ecodule.ui.account.component.GoogleAuthButton
 import com.example.ecodule.ui.account.model.AccountCreateViewModel
-import com.example.ecodule.ui.account.util.EmailValidator
 import com.example.ecodule.ui.account.model.GoogleAuthButtonViewModel
+import com.example.ecodule.ui.account.util.EmailValidator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,18 +46,19 @@ fun AccountCreateScreen(
     googleAuthButtonViewModel: GoogleAuthButtonViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
     onBackToLogin: () -> Unit,
+    onOpenTerms: () -> Unit,
+    termsAccepted: Boolean,                       // 追加: 親から受け取る
+    onTermsAcceptedChange: (Boolean) -> Unit,     // 追加: 親へ反映
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-//    var username by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var emailFocused by remember { mutableStateOf(false) }
     var passwordFocused by remember { mutableStateOf(false) }
     var confirmPasswordFocused by remember { mutableStateOf(false) }
     var usernameFocused by remember { mutableStateOf(false) }
-    var termsAccepted by remember { mutableStateOf(false) }
 
     // メールアドレス検証
     val isValidEmailAddress = EmailValidator.isValidEmailForSignup(email)
@@ -76,7 +73,6 @@ fun AccountCreateScreen(
             isValidEmailAddress &&
             password.isNotBlank() &&
             confirmPassword.isNotBlank() &&
-//            username.isNotBlank() &&
             passwordsMatch &&
             termsAccepted
 
@@ -97,7 +93,6 @@ fun AccountCreateScreen(
         googleAuthButtonViewModel.googleLoginSuccessEvent.collect {
             accountCreateMessage.value = ""
             accountCreateError.value = null
-
             onLoginSuccess()
         }
     }
@@ -108,15 +103,11 @@ fun AccountCreateScreen(
             .background(Color.White)
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
-                    onDragEnd = {
-                        // ドラッグ終了時の処理
-                    }
-                ) { change, dragAmount ->
-                    // 左から右へのスワイプを検出（50px以上の右方向のドラッグ）
+                    onDragEnd = { }
+                ) { _, dragAmount ->
                     if (dragAmount > 50f) {
                         accountCreateMessage.value = ""
                         accountCreateError.value = null
-
                         onBackToLogin()
                     }
                 }
@@ -127,7 +118,6 @@ fun AccountCreateScreen(
             onClick = {
                 accountCreateMessage.value = ""
                 accountCreateError.value = null
-
                 onBackToLogin()
             },
             modifier = Modifier
@@ -151,9 +141,7 @@ fun AccountCreateScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            //Spacer(modifier = Modifier.height(60.dp))
-
-            // Ecoduleロゴ（サイズを大きく）
+            // Ecoduleロゴ
             Image(
                 painter = painterResource(id = R.drawable.ecodule_icon_tab),
                 contentDescription = "Ecodule Logo",
@@ -172,7 +160,7 @@ fun AccountCreateScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // メールアドレス入力フィールド
+            // メールアドレス
             Text(
                 text = "メールアドレス",
                 modifier = Modifier
@@ -215,7 +203,7 @@ fun AccountCreateScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // パスワード入力フィールド
+            // パスワード
             Text(
                 text = "パスワード",
                 modifier = Modifier
@@ -260,7 +248,7 @@ fun AccountCreateScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // パスワード確認入力フィールド
+            // 確認パスワード
             Text(
                 text = "パスワード（確認用）",
                 modifier = Modifier
@@ -346,19 +334,18 @@ fun AccountCreateScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 利用規約同意チェックボックス
+            // 利用規約同意
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // チェックボックスのみクリック可能
                 Icon(
                     imageVector = if (termsAccepted) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
                     contentDescription = if (termsAccepted) "チェック済み" else "未チェック",
                     tint = if (termsAccepted) Color(0xFF7CB342) else Color.Gray,
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable { termsAccepted = !termsAccepted }
+                        .clickable { onTermsAcceptedChange(!termsAccepted) }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Row {
@@ -367,9 +354,7 @@ fun AccountCreateScreen(
                         color = Color(0xFF2196F3),
                         fontSize = 16.sp,
                         textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable {
-                            // TODO: 利用規約画面への遷移を実装
-                        }
+                        modifier = Modifier.clickable { onOpenTerms() }
                     )
                     Text(
                         text = "に同意する",
@@ -382,7 +367,6 @@ fun AccountCreateScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             /* 登録エラーメッセージ */
-
             if (accountCreateError.value?.isNotEmpty() == true) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -397,13 +381,12 @@ fun AccountCreateScreen(
             if (accountCreateMessage.value.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = accountCreateMessage.value ?: "",
+                    text = accountCreateMessage.value,
                     color = Color.Gray,
                     fontSize = 14.sp,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
 
             // アカウント作成ボタン
             Button(
@@ -489,5 +472,11 @@ fun AccountCreateScreen(
 @Preview
 @Composable
 fun PreviewScr(){
-    AccountCreateScreen(onBackToLogin = {} , onLoginSuccess = {})
+    AccountCreateScreen(
+        onBackToLogin = {},
+        onLoginSuccess = {},
+        onOpenTerms = {},
+        termsAccepted = true,
+        onTermsAcceptedChange = {}
+    )
 }
