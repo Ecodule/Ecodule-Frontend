@@ -6,9 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-
 @Composable
 fun DateSelectionSection(
+    initialYear: Int,
+    initialMonth: Int, // 1..12
+    initialDay: Int,
     onYearSelected: (String) -> Unit,
     onMonthSelected: (String) -> Unit,
     days: List<String>,
@@ -23,24 +25,30 @@ fun DateSelectionSection(
         // 年
         val years = (1950..2050).map { it.toString() }
         val modifiedYears = listOf("top") + years + "bottom" // 余白用にtopとbottomをリストに追加する
+        val clampedYear = initialYear.coerceIn(1950, 2050)
         ItemsPicker(
             items = modifiedYears,
-            firstIndex = currentYear - 1950,
+            firstIndex = clampedYear - 1950,
             onItemSelected = onYearSelected
         )
-        // 月
+
+        // 月（1 起点）
         val months = (1..12).map { it.toString() }
-        val modifiedMonths = listOf("top") + months + "bottom" // 余白用にtopとbottomをリストに追加する
+        val modifiedMonths = listOf("top") + months + "bottom"
+        val clampedMonth = initialMonth.coerceIn(1, 12)
         ItemsPicker(
             items = modifiedMonths,
-            firstIndex = currentMonth,
+            firstIndex = clampedMonth - 1,
             onItemSelected = onMonthSelected
         )
+
         // 日
-        val modifiedDays = listOf("top") + days + "bottom" // 余白用にtopとbottomをリストに追加する
+        val modifiedDays = listOf("top") + days + "bottom"
+        val maxDay = days.size.coerceAtLeast(1)
+        val clampedDay = initialDay.coerceIn(1, maxDay)
         ItemsPicker(
             items = modifiedDays,
-            firstIndex = currentDay - 1,
+            firstIndex = clampedDay - 1,
             onItemSelected = onDaySelected
         )
     }
