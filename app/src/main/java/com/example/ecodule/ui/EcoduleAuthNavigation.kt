@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ecodule.ui.account.AccountCreateScreen
 import com.example.ecodule.ui.account.AccountForgotPasswordScreen
 import com.example.ecodule.ui.account.AccountSignInScreen
+import com.example.ecodule.ui.account.AuthTermsScreen
 import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 
 @Composable
@@ -49,6 +50,9 @@ fun EcoduleAuthNavigation(
     // ログアウト状態内での画面遷移管理
     val screenState = remember { mutableStateOf(AuthScreenState.LOGIN) }
 
+    // 同意状態をナビゲーション側にホイスト
+    val termsAcceptedState = remember { mutableStateOf(false) }
+
     // 大枠 (AuthState) の切り替えはシンプルにフェード
     AnimatedContent(
         targetState = authState,
@@ -70,7 +74,7 @@ fun EcoduleAuthNavigation(
                 }
             }
             AuthState.LOGGED_OUT -> {
-                // ここで LOGIN / SIGNUP / FORGOT をアニメーション遷移
+                // ここで LOGIN / SIGNUP / FORGOT / TERMS をアニメーション遷移
                 EcoduleAnimatedNavContainer(
                     currentRoute = screenState.value.name
                 ) { routeKey ->
@@ -87,12 +91,27 @@ fun EcoduleAuthNavigation(
                                 onGuestMode = { authViewModel.onGuestMode() }
                             )
                             AuthScreenState.SIGNUP -> AccountCreateScreen(
-                                onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
+                                onBackToLogin = {
+                                    // 戻るときに利用規約チェックを必ずOFFにする
+                                    termsAcceptedState.value = false
+                                    screenState.value = AuthScreenState.LOGIN
+                                },
                                 onLoginSuccess = { authViewModel.onLoginSuccess() },
+                                onOpenTerms = { screenState.value = AuthScreenState.TERMS },
+                                termsAccepted = termsAcceptedState.value,
+                                onTermsAcceptedChange = { termsAcceptedState.value = it },
                             )
                             AuthScreenState.FORGOT_PASSWORD -> AccountForgotPasswordScreen(
                                 onBackToLogin = { screenState.value = AuthScreenState.LOGIN },
                                 onPasswordResetSent = { screenState.value = AuthScreenState.LOGIN }
+                            )
+                            AuthScreenState.TERMS -> AuthTermsScreen(
+                                onBack = { screenState.value = AuthScreenState.SIGNUP },
+                                onAgreeAndBack = {
+                                    // 「同意して戻る」でチェックONにしてサインアップ画面へ戻る
+                                    termsAcceptedState.value = true
+                                    screenState.value = AuthScreenState.SIGNUP
+                                }
                             )
                         }
                     }
@@ -112,5 +131,6 @@ fun EcoduleAuthNavigation(
 private enum class AuthScreenState {
     LOGIN,
     SIGNUP,
-    FORGOT_PASSWORD
+    FORGOT_PASSWORD,
+    TERMS
 }

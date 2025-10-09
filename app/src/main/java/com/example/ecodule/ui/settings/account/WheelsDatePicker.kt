@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import java.util.Calendar
 
-
 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+// 注意: Calendar.MONTH は 0 起点。既存参照を壊さないためここはそのまま残す
 val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
 
 @Composable
@@ -32,7 +32,6 @@ fun WheelsDatePickerDialog(
     ) {
         DatePickerUI(
             label = label,
-//            onSelectedDateChange = onSelectedDateChange,
             currentBirthDate = currentBirthDate,
             onDismissRequest = onDismissRequest,
             onBirthDateChanged = onBirthDateChanged,
@@ -44,11 +43,24 @@ fun WheelsDatePickerDialog(
 fun DatePickerUI(
     label: String,
     currentBirthDate: String,
-//    onSelectedDateChange: (String) -> Unit,
     onDismissRequest: () -> Unit,
     onBirthDateChanged: (String) -> Unit = {}
 ) {
-    var birthDate by remember { mutableStateOf(currentBirthDate) }//これであってる？
+    var birthDate by remember { mutableStateOf(currentBirthDate) }
+
+    // currentBirthDate を優先して初期年/月/日を決定（失敗時は今日）
+    val now = remember { Calendar.getInstance() }
+    val fallbackYear = now.get(Calendar.YEAR)
+    val fallbackMonth1Based = now.get(Calendar.MONTH) + 1
+    val fallbackDay = now.get(Calendar.DAY_OF_MONTH)
+
+    val (initYear, initMonth1Based, initDay) = remember(currentBirthDate) {
+        val parts = currentBirthDate.split("/", "-")
+        val y = parts.getOrNull(0)?.toIntOrNull() ?: fallbackYear
+        val m = parts.getOrNull(1)?.toIntOrNull() ?: fallbackMonth1Based
+        val d = parts.getOrNull(2)?.toIntOrNull() ?: fallbackDay
+        Triple(y, m, d)
+    }
 
     Card(
         shape = RoundedCornerShape(10.dp),
@@ -69,22 +81,26 @@ fun DatePickerUI(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            val chosenYear = remember { mutableStateOf(currentYear) }
-            val chosenMonth = remember { mutableStateOf(currentMonth) }
-            val chosenDay = remember { mutableStateOf(currentDay) }
+            // 選択中の年月日（1 起点で統一）
+            val chosenYear = remember(initYear) { mutableStateOf(initYear) }
+            val chosenMonth = remember(initMonth1Based) { mutableStateOf(initMonth1Based) } // 1..12
+            val chosenDay = remember(initDay) { mutableStateOf(initDay) }
 
             val daysInMonth = remember(chosenYear.value, chosenMonth.value) {
                 val calendar = Calendar.getInstance()
                 calendar.set(Calendar.YEAR, chosenYear.value)
-                calendar.set(Calendar.MONTH, chosenMonth.value - 1) // Calendarクラスでは月が0から始まるので1を引く
+                calendar.set(Calendar.MONTH, chosenMonth.value - 1) // Calendar は 0 起点
                 calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
             }
             val daysList = remember(chosenYear.value, chosenMonth.value) {
                 (1..daysInMonth).map { it.toString() }
             }
 
-            // 日付選択領域
+            // 日付選択領域（初期位置は currentBirthDate を反映）
             DateSelectionSection(
+                initialYear = initYear,
+                initialMonth = initMonth1Based, // 1..12
+                initialDay = initDay,
                 onYearSelected = { chosenYear.value = it.toInt() },
                 onMonthSelected = { chosenMonth.value = it.toInt() },
                 days = daysList,
@@ -100,12 +116,9 @@ fun DatePickerUI(
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp),
                 onClick = {
-                    birthDate =
-                        "${chosenYear.value}/${chosenMonth.value}/${chosenDay.value}"
+                    birthDate = "${chosenYear.value}/${chosenMonth.value}/${chosenDay.value}"
                     onBirthDateChanged(birthDate)
-//                  onSelectedDateChange(BirthDate)
                     onDismissRequest()
-
                 }
             ) {
                 Text(
