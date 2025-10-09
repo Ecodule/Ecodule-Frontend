@@ -16,18 +16,18 @@ fun NotificationSection(
     onNotificationChange: (Int) -> Unit
 ) {
     Row(
-        modifier = Modifier.Companion
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Companion.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("通知", modifier = Modifier.Companion.weight(1f))
+        Text("通知", modifier = Modifier.weight(1f))
         Slider(
             value = notificationMinutes.toFloat(),
             onValueChange = { onNotificationChange(it.toInt()) },
             valueRange = 0f..60f,
             steps = 5,
-            modifier = Modifier.Companion.weight(2f)
+            modifier = Modifier.weight(2f)
         )
         Text("${notificationMinutes}分前")
     }
