@@ -38,7 +38,9 @@ import com.example.ecodule.ui.animation.EcoduleAnimatedNavContainer
 import com.example.ecodule.ui.settings.SettingsContentScreen
 import com.example.ecodule.ui.settings.account.SettingsAccountScreen
 import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
+import com.example.ecodule.ui.settings.details.SettingTermsScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
+import com.example.ecodule.ui.settings.details.SettingsLicenseScreen
 import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
 import com.example.ecodule.ui.statistics.StatisticsContent
@@ -88,6 +90,8 @@ fun EcoduleAppNavigation(
     // Routes that hide bottom bar
     val hideBottomBarRoutes = listOf(
         EcoduleRoute.SETTINGSDETAILS,
+        EcoduleRoute.DETAILSLICENSE,
+        EcoduleRoute.DETAILSTERMS,
         EcoduleRoute.SETTINGSNOTIFICATIONS,
         EcoduleRoute.SETTINGSGOOGLEINTEGRATION,
         EcoduleRoute.SETTINGSACCOUNT,
@@ -215,8 +219,20 @@ fun EcoduleAppNavigation(
                     SettingsDetailsScreen(
                         modifier = Modifier.fillMaxSize(),
                         onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS },
-                        onNavigateLicense = { },
-                        onNavigateTerms = { }
+                        onNavigateLicense = { selectedDestination.value = EcoduleRoute.DETAILSLICENSE},
+                        onNavigateTerms = { selectedDestination.value = EcoduleRoute.DETAILSTERMS}
+                    )
+                }
+                EcoduleRoute.DETAILSLICENSE -> {
+                    SettingsLicenseScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackToDetails = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS}
+                    )
+                }
+                EcoduleRoute.DETAILSTERMS -> {
+                    SettingTermsScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackToDetails = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS}
                     )
                 }
                 EcoduleRoute.SETTINGSNOTIFICATIONS -> {
@@ -312,6 +328,8 @@ object EcoduleRoute {
     const val TASKSLIST = "TasksList"
     const val SETTINGS = "Settings"
     const val SETTINGSDETAILS = "SettingsDetails"
+    const val DETAILSLICENSE = "SettingsDetailsLicense"
+    const val DETAILSTERMS = "SettingsDetailsTerms"
     const val SETTINGSNOTIFICATIONS = "SettingsNotifications"
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
