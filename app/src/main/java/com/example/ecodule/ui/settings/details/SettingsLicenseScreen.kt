@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.sp
 fun SettingsLicenseScreen(
     modifier: Modifier = Modifier,
     onBackToDetails: () -> Unit = {},
+    onNavigateKotlin: () -> Unit = {},
 ) {
     var totalDragX by remember { mutableFloatStateOf(0f) }
 
@@ -90,6 +92,32 @@ fun SettingsLicenseScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+
+        // Kotlin ライセンス
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .clickable { onNavigateKotlin() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Kotlin",
+                fontSize = 18.sp,
+                color = Color.Black,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = "Kotlin ライセンスへ",
+                tint = Color(0xFF888888),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         //以降処理を書いてください
 

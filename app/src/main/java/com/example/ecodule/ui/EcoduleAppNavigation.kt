@@ -41,6 +41,7 @@ import com.example.ecodule.ui.settings.account.SettingsUserNameScreen
 import com.example.ecodule.ui.settings.details.SettingTermsScreen
 import com.example.ecodule.ui.settings.details.SettingsDetailsScreen
 import com.example.ecodule.ui.settings.details.SettingsLicenseScreen
+import com.example.ecodule.ui.settings.details.licenses.KotlinLicense
 import com.example.ecodule.ui.settings.integration.SettingsGoogleIntegrationScreen
 import com.example.ecodule.ui.settings.notifications.SettingNotificationsScreen
 import com.example.ecodule.ui.statistics.StatisticsContent
@@ -96,7 +97,10 @@ fun EcoduleAppNavigation(
         EcoduleRoute.SETTINGSGOOGLEINTEGRATION,
         EcoduleRoute.SETTINGSACCOUNT,
         EcoduleRoute.SETTINGSUSERNAME,
-        EcoduleRoute.TASKS
+        EcoduleRoute.TASKS,
+
+        //各ライセンス
+        EcoduleRoute.KOTLINLICENSE,
     )
     val showBottomBarTarget = !hideBottomBarRoutes.contains(selectedDestination.value)
 
@@ -226,7 +230,8 @@ fun EcoduleAppNavigation(
                 EcoduleRoute.DETAILSLICENSE -> {
                     SettingsLicenseScreen(
                         modifier = Modifier.fillMaxSize(),
-                        onBackToDetails = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS}
+                        onBackToDetails = { selectedDestination.value = EcoduleRoute.SETTINGSDETAILS},
+                        onNavigateKotlin = { selectedDestination.value = EcoduleRoute.KOTLINLICENSE },
                     )
                 }
                 EcoduleRoute.DETAILSTERMS -> {
@@ -274,6 +279,14 @@ fun EcoduleAppNavigation(
                         onCalendarLink = { },
                         onCalendarUnlink = { },
                         onBackToSettings = { selectedDestination.value = EcoduleRoute.SETTINGS }
+                    )
+                }
+
+                //各ライセンスのルート
+                EcoduleRoute.KOTLINLICENSE -> {
+                    KotlinLicense(
+                        modifier = Modifier.fillMaxSize(),
+                        onBackToLisence = { selectedDestination.value = EcoduleRoute.DETAILSLICENSE}
                     )
                 }
             }
@@ -334,6 +347,9 @@ object EcoduleRoute {
     const val SETTINGSACCOUNT = "SettingsAccount"
     const val SETTINGSUSERNAME = "SettingsUserName"
     const val SETTINGSGOOGLEINTEGRATION = "SettingsGoogleIntegration"
+
+    //各ライセンス画面のルート
+    const val KOTLINLICENSE = "KolinLicense"
 }
 
 data class EcoduleTopLevelDestination(
