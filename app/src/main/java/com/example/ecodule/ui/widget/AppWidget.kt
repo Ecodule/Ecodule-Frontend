@@ -113,10 +113,23 @@ class AppWidget : GlanceAppWidget() {
                     )
                 }
                 Spacer(modifier = GlanceModifier.width(8.dp))
-                Text(
-                    text = currentEvent?.label ?: "本日の予定はありません",
-                    style = TextStyle(color = black, fontWeight = FontWeight.Bold)
-                )
+                if (currentEvent == null) {
+                    Text(
+                        text = "本日の予定はありません",
+                        style = TextStyle(color = black, fontWeight = FontWeight.Bold)
+                    )
+                } else {
+                    Column {
+                        Text(
+                            text = currentEvent.label,
+                            style = TextStyle(color = black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        )
+                        Text(
+                            text = "${currentEvent.startHour}:${currentEvent.startMin} ~ ${currentEvent.endHour}:${currentEvent.endMin}"
+                        )
+                    }
+                }
+
                 Spacer(modifier = GlanceModifier.defaultWeight())
 
                 Button(
@@ -178,7 +191,7 @@ class AppWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.padding(end = 8.dp)
             )
             Text(
-                text = "${ecoAction.label}（CO₂: ${ecoAction.co2Kg}kg / ¥${ecoAction.savedYen}）",
+                text = "${ecoAction.label}\n ¥${ecoAction.savedYen} / CO₂: ${ecoAction.co2Kg}kg",
                 style = TextStyle(color = textColor, fontSize = 16.sp),
                 modifier = GlanceModifier.defaultWeight()
             )

@@ -10,7 +10,9 @@ data class CurrentEventState(
     val id: String,
     val label: String,
     val startHour: Int,
+    val startMin: Int,
     val endHour: Int,
+    val endMin: Int,
     val category: String
 ) {
     companion object {
@@ -19,7 +21,9 @@ data class CurrentEventState(
                 id = ev.id,
                 label = ev.label,
                 startHour = ev.startDate.hour,
+                startMin = ev.startDate.minute,
                 endHour = ev.endDate.hour,
+                endMin = ev.endDate.minute,
                 category = ev.category
             )
     }
