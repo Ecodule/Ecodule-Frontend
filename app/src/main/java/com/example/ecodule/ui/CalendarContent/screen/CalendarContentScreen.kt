@@ -122,31 +122,54 @@ fun CalendarContentScreen(
                 com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForMonth(events, yearMonth)
             }
             CalendarMode.DAY -> {
-                events.filter {
+                // 繰り返し含むその日分
+                val repeated = com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForDay(events, baseDate)
+                // その日開始の元イベント（単発も含む）
+                val singles = events.filter {
                     it.startDate.year == baseDate.year &&
                             it.startDate.monthValue == baseDate.monthValue &&
                             it.startDate.dayOfMonth == baseDate.dayOfMonth
                 }
+                // id+開始日時で重複排除
+                (repeated + singles).distinctBy { it.id + "_" + it.startDate }
             }
             CalendarMode.WEEK -> {
+                // 両方を合成したバージョン
+                val repeated = com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForWeek(
+                    events.filter { it.repeatOption != "しない" }, currentWeekStart
+                )
                 val weekEnd = currentWeekStart.plusDays(6)
-                events.filter { event ->
-                    val d = event.startDate.toLocalDate()
-                    !d.isBefore(currentWeekStart) && !d.isAfter(weekEnd)
+                val singles = events.filter { event ->
+                    event.repeatOption == "しない" &&
+                            !event.startDate.toLocalDate().isBefore(currentWeekStart) &&
+                            !event.startDate.toLocalDate().isAfter(weekEnd)
                 }
+                (repeated + singles).distinctBy { it.id + "_" + it.startDate.toLocalDate().toString() }
             }
             CalendarMode.THREE_DAY -> {
+                // 両方を合成したバージョン
+                val repeated = com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForThreeDays(
+                    events.filter { it.repeatOption != "しない" }, currentThreeDayStart
+                )
                 val threeDayEnd = currentThreeDayStart.plusDays(2)
-                events.filter { event ->
-                    val d = event.startDate.toLocalDate()
-                    !d.isBefore(currentThreeDayStart) && !d.isAfter(threeDayEnd)
+                val singles = events.filter { event ->
+                    event.repeatOption == "しない" &&
+                            !event.startDate.toLocalDate().isBefore(currentThreeDayStart) &&
+                            !event.startDate.toLocalDate().isAfter(threeDayEnd)
                 }
+                (repeated + singles).distinctBy { it.id + "_" + it.startDate.toLocalDate().toString() }
             }
             CalendarMode.SCHEDULE -> {
-                events.filter {
-                    it.startDate.monthValue == yearMonth.monthValue &&
+                // スケジュール表示用：繰り返しイベントも展開し、単発分も合成して重複排除
+                val repeated = com.example.ecodule.ui.CalendarContent.util.getDisplayEventsForSchedule(
+                    events.filter { it.repeatOption != "しない" }, yearMonth
+                )
+                val singles = events.filter {
+                    it.repeatOption == "しない" &&
+                            it.startDate.monthValue == yearMonth.monthValue &&
                             it.startDate.year == yearMonth.year
                 }
+                (repeated + singles).distinctBy { it.id + "_" + it.startDate }
             }
         }
     }
