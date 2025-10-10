@@ -198,6 +198,31 @@ fun StatisticsContent(
 //            label = "集めたりんごの数",
 //            value = "${appleCount} 個"
 //        )
+
+        // ▼▼▼▼▼ ここから追加 ▼▼▼▼▼
+
+        // このSpacerが後続の要素を画面下部に押し出す
+        // このSpacerが後続の要素を画面下部に押し出す
+        Spacer(modifier = Modifier.weight(1f))
+
+        // 注意書きをまとめるためのColumn
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(1f) // 幅を画面の60%に設定
+                .align(Alignment.End) // 親の水平中央揃えを上書きし、左に寄せる
+        ) {
+            Text(
+                text = "※効果算出には環境省による「デコ活データベース」を利用しています",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Text(
+                text = "※効果はあくまでも概算であり、実際の値を証明するものではありません",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        // ▲▲▲▲▲ ここまで追加 ▲▲▲▲▲
     }
 }
 

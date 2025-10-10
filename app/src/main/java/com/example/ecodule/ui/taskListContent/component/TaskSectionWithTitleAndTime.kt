@@ -106,7 +106,7 @@ fun TaskSectionWithTitleAndTime(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Text(
-                                    text = "CO₂削減量: ${ecoAction.co2Kg}kg / 節約額: ¥${ecoAction.savedYen}",
+                                    text = "節約: ¥${ecoAction.savedYen} / CO₂: ${ecoAction.co2Kg}kg  ",
                                     style = MaterialTheme.typography.bodySmall,
 //                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
