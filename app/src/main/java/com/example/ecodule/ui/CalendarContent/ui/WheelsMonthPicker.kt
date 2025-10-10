@@ -97,7 +97,7 @@ fun WheelsMonthPicker(
     // Preview & commit
     var previewMonth by remember { mutableStateOf<YearMonth?>(currentMonth) }
     var lastCommittedMonth by rememberSaveable { mutableStateOf(currentMonth) }
-    // 新規追加: 親に通知済みの月
+    // 親に通知済みの月
     var lastNotifiedMonth by rememberSaveable { mutableStateOf(currentMonth) }
 
     val density = LocalDensity.current
@@ -149,7 +149,9 @@ fun WheelsMonthPicker(
                 listState.animateScrollToItem(index, scrollOffset = desiredOffset)
             }
         } catch (ce: CancellationException) {
-            throw ce
+            // ユーザー操作などでスクロールが再開しても、外側の監視ループを壊さない
+            if (debugLog) println("snapTo cancelled (expected): $ce")
+            return
         } catch (e: Throwable) {
             if (debugLog) println("snapTo exception: $e")
         }
@@ -176,7 +178,9 @@ fun WheelsMonthPicker(
             }
             previewMonth = ym
         } catch (ce: CancellationException) {
-            throw ce
+            // アニメーション中断は想定内。commit 失敗時も監視ループは継続させる
+            if (debugLog) println("commitNearest cancelled (expected): $ce")
+            return
         } catch (e: Throwable) {
             if (debugLog) println("commitNearest exception: $e")
         }
@@ -203,7 +207,12 @@ fun WheelsMonthPicker(
         snapshotFlow { listState.isScrollInProgress }
             .collect { scrolling ->
                 if (!scrolling) {
-                    commitNearest("idle-detect")
+                    // ここでの失敗が外側の収集ループを殺さないように try-catch
+                    try {
+                        commitNearest("idle-detect")
+                    } catch (t: Throwable) {
+                        if (debugLog) println("idle-detect failed: $t")
+                    }
                 }
             }
     }
@@ -229,7 +238,11 @@ fun WheelsMonthPicker(
                 scope.launch {
                     delay(40)
                     if (!listState.isScrollInProgress) {
-                        commitNearest("drag-stop-fast")
+                        try {
+                            commitNearest("drag-stop-fast")
+                        } catch (t: Throwable) {
+                            if (debugLog) println("drag-stop-fast failed: $t")
+                        }
                     }
                 }
             }
@@ -240,7 +253,11 @@ fun WheelsMonthPicker(
     fun clickSelect(ym: YearMonth) {
         val idx = monthIndexMap[ym] ?: return
         scope.launch {
-            snapTo(idx)
+            try {
+                snapTo(idx)
+            } catch (_: CancellationException) {
+                // クリック直後のユーザー操作中断は許容
+            }
             if (ym != lastCommittedMonth) {
                 lastCommittedMonth = ym
             }
