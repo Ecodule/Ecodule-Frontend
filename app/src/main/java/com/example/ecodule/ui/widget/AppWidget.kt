@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -108,24 +109,28 @@ class AppWidget : GlanceAppWidget() {
                         style = TextStyle(
                             color = black,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp
+                            fontSize = 16.sp
                         )
                     )
                 }
                 Spacer(modifier = GlanceModifier.width(8.dp))
                 if (currentEvent == null) {
                     Text(
-                        text = "本日の予定はありません",
+                        text = "本日の予定はありません".truncate(11),
                         style = TextStyle(color = black, fontWeight = FontWeight.Bold)
                     )
                 } else {
                     Column {
                         Text(
-                            text = currentEvent.label,
-                            style = TextStyle(color = black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            text = currentEvent.label.truncate(11),
+                            style = TextStyle(
+                                color = black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                            )
                         )
                         Text(
-                            text = "${currentEvent.startHour}:${currentEvent.startMin} ~ ${currentEvent.endHour}:${currentEvent.endMin}"
+                            text = "${currentEvent.startHour.toString().padStart(2, '0')}:${currentEvent.startMin.toString().padStart(2, '0')} ~ ${currentEvent.endHour.toString().padStart(2, '0')}:${currentEvent.endMin.toString().padStart(2, '0')}"
                         )
                     }
                 }
@@ -197,4 +202,11 @@ class AppWidget : GlanceAppWidget() {
             )
         }
     }
+}
+
+fun String.truncate(maxLength: Int): String {
+    if (this.length <= maxLength) {
+        return this
+    }
+    return this.substring(0, maxLength) + "…" // … (三点リーダー)
 }
