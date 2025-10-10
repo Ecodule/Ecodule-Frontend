@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +35,9 @@ import com.example.ecodule.ui.CalendarContent.model.CalendarEvent
 import com.example.ecodule.ui.taskListContent.darkenColor
 import com.example.ecodule.ui.taskListContent.api.UpdateAchievement
 import com.example.ecodule.ui.taskListContent.model.TaskListViewModel
+import com.example.ecodule.ui.taskListContent.TaskListInformation
+import com.example.ecodule.ui.taskListContent.InfoIconButton
+import com.example.ecodule.ui.taskListContent.TaskInfoDialog
 import kotlin.collections.forEach
 
 
@@ -79,7 +86,11 @@ fun TaskSectionWithTitleAndTime(
                         val isLoading by taskListViewModel.isSendingAchievement.collectAsState()
                         val errorMessage by taskListViewModel.sendingAchievementError.collectAsState()
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 各タスク行（右端に「ⓘ」を配置し、タップで説明ポップアップ）
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             // チェックボックスとローディングインジケーターの切り替え
                             if (isLoading[key] == true) {
                                 CircularProgressIndicator(
@@ -100,7 +111,11 @@ fun TaskSectionWithTitleAndTime(
                                 )
                             }
 
-                            Column {
+                            // タスク名と数値情報（可読性のため余白を少し追加、右端まで広げる）
+                            Column(modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp)
+                            ) {
                                 Text(
                                     text = ecoAction.label,
                                     style = MaterialTheme.typography.bodyMedium
@@ -108,7 +123,6 @@ fun TaskSectionWithTitleAndTime(
                                 Text(
                                     text = "CO₂削減量: ${ecoAction.co2Kg}kg / 節約額: ¥${ecoAction.savedYen}",
                                     style = MaterialTheme.typography.bodySmall,
-//                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                                 if (errorMessage[key] != null) {
                                     Text(
@@ -117,6 +131,27 @@ fun TaskSectionWithTitleAndTime(
                                         color = MaterialTheme.colorScheme.error
                                     )
                                 }
+                            }
+
+                            // 右端のインフォメーションボタン
+                            var showInfo by remember(key) { mutableStateOf(false) }
+                            InfoIconButton(
+                                onClick = { showInfo = true },
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .size(32.dp)
+                            )
+
+                            // ポップアップ（説明は単一ソース TaskListInformation から取得）
+                            if (showInfo) {
+                                TaskInfoDialog(
+                                    title = ecoAction.label,
+                                    description = TaskListInformation.descriptionFor(
+                                        taskId = null, // 安定IDがあればここに渡してください
+                                        title = ecoAction.label
+                                    ),
+                                    onDismiss = { showInfo = false }
+                                )
                             }
                         }
                     }
