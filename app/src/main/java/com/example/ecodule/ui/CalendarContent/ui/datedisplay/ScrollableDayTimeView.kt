@@ -28,6 +28,8 @@ import com.example.ecodule.ui.CalendarContent.ui.calcWeekNumber
 import java.time.DayOfWeek
 import java.time.LocalDate
 
+import com.example.ecodule.ui.CalendarContent.util.WeekConfig
+
 private val HeaderHeight = 56.dp
 
 @Composable
@@ -75,30 +77,41 @@ fun ScrollableDayTimeView(
                     .padding(start = 8.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (day == today) {
-                    Surface(shape = CircleShape, color = Color(0xFF88C057), modifier = Modifier.size(28.dp)) {
+                // 表示順を「日付 → (曜日)」に変更
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (day == today) {
+                        Surface(shape = CircleShape, color = Color(0xFF88C057), modifier = Modifier.size(28.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("${day.dayOfMonth}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            }
+                        }
+                    } else {
                         Box(contentAlignment = Alignment.Center) {
-                            Text("${day.dayOfMonth}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text("${day.dayOfMonth}", color = Color(0xFF444444), fontSize = 18.sp)
                         }
                     }
-                } else {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("${day.dayOfMonth}", color = Color(0xFF444444), fontSize = 18.sp)
-                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    // 曜日は少し小さめのフォントで括弧付き表示
+                    Text(
+                        text = "(${WeekConfig.labelOf(day.dayOfWeek)})",
+                        color = Color(0xFF888888),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
 
         // 本体
         Row(Modifier.fillMaxSize()) {
-            // 左: 時間バー（この列に時間ラベルを表示）
+            // 左: 時間バー
             HourBar(
                 scrollState = scrollState,
-                labelNudgeY = (-5).dp, // 端末によって微調整
+                labelNudgeY = (-5).dp,
                 labelNudgeX = 5.dp
             )
 
-            // 右: グリッド + 予定（同じ scrollState で同期）
+            // 右: グリッド + 予定
             Box(
                 Modifier
                     .weight(1f)

@@ -109,3 +109,57 @@ fun WeekdayHeader(
         }
     }
 }
+
+/** 任意の日付配列に対する曜日ヘッダー（時間バーや左カラム分のスペースを leftSpacerWidth で与える） */
+@Composable
+fun WeekdayHeaderForDates(
+    dates: List<LocalDate>,
+    leftSpacerWidth: Dp = 0.dp
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFEAEAEA))
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (leftSpacerWidth > 0.dp) {
+            Box(Modifier.padding(start = leftSpacerWidth))
+        }
+        dates.forEach { date ->
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    WeekConfig.labelOf(date.dayOfWeek),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF888888),
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
+
+/** 週表示用（開始日から7日分）の曜日ヘッダー */
+@Composable
+fun WeekdayHeaderForWeek(
+    weekStartDate: LocalDate,
+    leftSpacerWidth: Dp = 0.dp
+) {
+    val days = (0..6).map { weekStartDate.plusDays(it.toLong()) }
+    WeekdayHeaderForDates(dates = days, leftSpacerWidth = leftSpacerWidth)
+}
+
+/** 3日表示用（開始日から3日分）の曜日ヘッダー */
+@Composable
+fun WeekdayHeaderForThreeDays(
+    startDay: LocalDate,
+    leftSpacerWidth: Dp = 0.dp
+) {
+    val days = (0..2).map { startDay.plusDays(it.toLong()) }
+    WeekdayHeaderForDates(dates = days, leftSpacerWidth = leftSpacerWidth)
+}
