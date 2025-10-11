@@ -32,13 +32,13 @@ object TaskListInformation {
         Code.WalkOrBike to "近距離の移動は徒歩や自転車を選びます。健康増進と同時に交通由来の排出を削減します。",
         Code.UsePublicTransport to "可能な移動は公共交通機関を利用します。自家用車の利用頻度を下げ、排出を抑制します。",
         Code.BringMyBottle to "外出時はマイボトルを持参し、使い捨て容器の利用を減らします。資源消費と廃棄を抑えます。",
-        Code.MilkCartonRecyclable to "牛乳パックを資源ごみへの説明文",
-        Code.EcocapParticipation to "エコキャップ活動への参加の説明文",
-        Code.ReduceFoodWasteMoisture to "生ごみは水分を絞るの説明文",
-        Code.PowerOffConfirmed to "電気やエアコンは消したかの説明文",
-        Code.HaveMybag to "マイバッグを持参するの説明文",
-        Code.BuyChickenInsteadOfBeef to "牛肉の代わりに鶏肉を買うの説明文",
-        Code.BuyChickenInsteadOfFish to "牛肉の代わりに魚を買うの説明文",
+        Code.MilkCartonRecyclable to "牛乳パックは、燃えるゴミでなく資源ごみに出します。資源消費と廃棄を抑えます。",
+        Code.EcocapParticipation to "ペットボトルのキャップを集めてリサイクルします。資源消費と廃棄を抑えます。",
+        Code.ReduceFoodWasteMoisture to "生ごみは水分を絞って捨てます。焼却の負担を減らします。",
+        Code.PowerOffConfirmed to "外出する際に電気とエアコンを消します。発電によるCO₂排出を抑制できます。",
+        Code.HaveMybag to "買い物の際はマイバックを持参し使い捨ての袋の利用を減らします。資源消費と廃棄を抑えます。",
+        Code.BuyChickenInsteadOfBeef to "牛肉の代わりに鶏肉を買います。牛由来のメタンガスの排出を減らします。",
+        Code.BuyChickenInsteadOfFish to "牛肉の代わりに魚を買います。牛由来のメタンガスの排出を減らします。",
     )
 
     // タイトルによるフォールバック（UI に安定 ID が無い場合）
@@ -46,13 +46,13 @@ object TaskListInformation {
     private val byTitle: Map<String, String> = mapOf(
         "ゴミを分別する" to byId.getValue(Code.SeparateWaste),
         "生ゴミはコンポスト利用" to byId.getValue(Code.UseCompost),
-        "徒歩や自転車で通う" to byId.getValue(Code.WalkOrBike),
+        "徒歩や自転車で移動する" to byId.getValue(Code.WalkOrBike),
         "公共交通機関を使う" to byId.getValue(Code.UsePublicTransport),
         "マイボトルを持参する" to byId.getValue(Code.BringMyBottle),
         "牛乳パックを資源ごみへ" to byId.getValue(Code.MilkCartonRecyclable),
         "エコキャップ活動への参加" to byId.getValue(Code.EcocapParticipation),
         "生ごみは水分を絞る" to byId.getValue(Code.ReduceFoodWasteMoisture),
-        "電気やエアコンは消したか" to byId.getValue(Code.PowerOffConfirmed),
+        "電気やエアコンを消す" to byId.getValue(Code.PowerOffConfirmed),
         "マイバックを持参する" to byId.getValue(Code.HaveMybag),
         "牛肉の代わりに鶏肉を買う" to byId.getValue(Code.BuyChickenInsteadOfBeef),
         "牛肉の代わりに魚を買う" to byId.getValue(Code.BuyChickenInsteadOfFish)
