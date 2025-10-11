@@ -48,6 +48,11 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
+// Added imports
+import com.example.ecodule.ui.CalendarContent.ui.HourBarWidth
+import com.example.ecodule.ui.CalendarContent.util.WeekdayHeaderForThreeDays
+import com.example.ecodule.ui.CalendarContent.util.WeekdayHeaderForWeek
+
 fun getCategoryColor(category: String): Color {
     return when (category) {
         "ゴミ出し" -> Color(0xFF2C8FC0)
@@ -237,9 +242,29 @@ fun CalendarContentScreen(
                     )
                 }
 
-                if (calendarMode == CalendarMode.MONTH) {
-                    val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
-                    WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
+                // 月選択ホイール下の曜日ヘッダー
+                when (calendarMode) {
+                    CalendarMode.MONTH -> {
+                        val leftSpacer = if (showWeekNumbers) WeekNumberColumnWidthMonth else 0.dp
+                        WeekdayHeader(weekStart = weekStart, leftSpacerWidth = leftSpacer)
+                    }
+                    CalendarMode.WEEK -> {
+                        // 時間バー分ずらして週の曜日を表示
+                        WeekdayHeaderForWeek(
+                            weekStartDate = currentWeekStart,
+                            leftSpacerWidth = HourBarWidth
+                        )
+                    }
+                    CalendarMode.THREE_DAY -> {
+                        // 時間バー分ずらして3日間の曜日を表示（開始日に合わせる）
+                        WeekdayHeaderForThreeDays(
+                            startDay = currentThreeDayStart,
+                            leftSpacerWidth = HourBarWidth
+                        )
+                    }
+                    else -> {
+                        // DAY と SCHEDULE はここでは表示しない（DAY は画面内ヘッダーに曜日を表示）
+                    }
                 }
 
                 var dragX by remember { mutableStateOf(0f) }
